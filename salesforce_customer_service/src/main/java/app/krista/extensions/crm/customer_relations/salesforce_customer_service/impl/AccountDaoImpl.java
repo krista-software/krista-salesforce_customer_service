@@ -1,10 +1,10 @@
 package app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl;
 
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.model.SFAccount;
-import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
-import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.SalesforceListResponse;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.Account;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.AccountDao;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.SalesforceListResponse;
 import com.google.gson.reflect.TypeToken;
 import org.jvnet.hk2.annotations.Service;
 
@@ -38,7 +38,7 @@ public final class AccountDaoImpl implements AccountDao {
     @Override
     public List<Account> getAccounts(long size, long page, String orderByField, String orderByOperand) throws IOException, ExecutionException, InterruptedException {
         String QUERY_FIELDS = "id,createdDate,phone,type,website,Name,ownership,AccountNumber,Industry,NumberOfEmployees";
-        return getAccountByQuery("Select " + QUERY_FIELDS + " from Account  ORDER BY " + orderByField + " "+ orderByOperand +" LIMIT " + size + " OFFSET " + Math.max((page - 1) * size, 0));
+        return getAccountByQuery("Select " + QUERY_FIELDS + " from Account  ORDER BY " + orderByField + " " + orderByOperand + " LIMIT " + size + " OFFSET " + Math.max((page - 1) * size, 0));
     }
 
     @Override
@@ -50,7 +50,7 @@ public final class AccountDaoImpl implements AccountDao {
         SalesforceListResponse<SFAccount> oppList =
                 Constants.GSON.fromJson(res, new TypeToken<SalesforceListResponse<SFAccount>>() {
                 }.getType());
-        if (oppList.records.size() > 0) {
+        if (!oppList.records.isEmpty()) {
             return oppList.records.stream().map(AccountImpl::new).collect(Collectors.toList());
         } else {
             return new ArrayList<>();

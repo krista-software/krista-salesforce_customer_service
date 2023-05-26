@@ -1,10 +1,10 @@
 package app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl;
 
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.model.SFContact;
-import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
-import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.SalesforceListResponse;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.Contact;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.ContactDao;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.SalesforceListResponse;
 import com.google.gson.reflect.TypeToken;
 import org.jvnet.hk2.annotations.Service;
 
@@ -44,7 +44,7 @@ public final class ContactDaoImpl implements ContactDao {
         SalesforceListResponse<SFContact> oppList =
                 Constants.GSON.fromJson(res, new TypeToken<SalesforceListResponse<SFContact>>() {
                 }.getType());
-        if (oppList.records.size() > 0) {
+        if (!oppList.records.isEmpty()) {
             return oppList.records.stream().map(ContactImpl::new).collect(Collectors.toList());
         } else {
             return List.of();

@@ -1,9 +1,6 @@
 package app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog;
 
-import app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog.entities.Account;
-import app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog.entities.Case;
-import app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog.entities.Contact;
-import app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog.entities.Individual;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog.entities.*;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 
 public final class CatalogTypes {
@@ -100,6 +97,7 @@ public final class CatalogTypes {
         }
         Individual newIndividual = new Individual();
         newIndividual.id = sfIndividual.getId();
+        newIndividual.firstName = sfIndividual.getFirstName();
         newIndividual.lastName = sfIndividual.getLastName();
         newIndividual.birthDate = sfIndividual.getBirthDate();
         newIndividual.createdDate = sfIndividual.getCreatedDate();
@@ -107,5 +105,19 @@ public final class CatalogTypes {
         newIndividual.lastModifiedDate = sfIndividual.getLastModifiedDate();
 
         return newIndividual;
+    }
+
+    public static Customer fromSFCustomer(app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.Customer sfCustomer) {
+        if (sfCustomer == null) {
+            throw new IllegalArgumentException("Customer entity is empty!");
+        }
+        Customer newCustomer = new Customer();
+        newCustomer.id = sfCustomer.getId();
+        newCustomer.name = sfCustomer.getName();
+        newCustomer.partyId = sfCustomer.getPartyId();
+        newCustomer.customerStatusType = sfCustomer.getCustomerStatusType();
+        newCustomer.totalLifeTimeValue = sfCustomer.getTotalLifeTimeValue();
+
+        return newCustomer;
     }
 }

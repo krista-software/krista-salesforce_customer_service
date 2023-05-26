@@ -137,10 +137,8 @@ public final class SFContact {
         contact.title = (String) entityDefinition.get(Constants.TITLE);
         String givenAccountId = (String) entityDefinition.get(Constants.ACCOUNT_ID);
         String givenAccountName = (String) entityDefinition.get(Constants.ACCOUNT_NAME);
-        if (givenAccountId == null || givenAccountId.isBlank()) {
-            if (StringHelper.isStringAvailable(givenAccountName)) {
-                throw new IllegalArgumentException(Constants.ACCOUNT_ID_IS_REQUIRED_TO_ADD_ACCOUNT_NAME);
-            }
+        if (givenAccountId == null || givenAccountId.isBlank() && (StringHelper.isStringAvailable(givenAccountName))) {
+            throw new IllegalArgumentException(Constants.ACCOUNT_ID_IS_REQUIRED_TO_ADD_ACCOUNT_NAME);
         }
         contact.createdDate = entityDefinition.get(Constants.CREATED_DATE) != null ? new Date((Long) entityDefinition.get(Constants.CREATED_DATE)) : null;
         contact.lastModifiedDate = entityDefinition.get(Constants.LAST_MODIFIED_DATE) != null ? new Date((Long) entityDefinition.get(Constants.LAST_MODIFIED_DATE)) : null;
@@ -149,6 +147,7 @@ public final class SFContact {
 
     public static class Account {
         public String Name;
+
         public Account(String name) {
             this.Name = name;
         }

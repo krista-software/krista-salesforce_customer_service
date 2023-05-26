@@ -2,6 +2,9 @@ package app.krista.extensions.crm.customer_relations.salesforce_customer_service
 
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.model.SFIndividual;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.Individual;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.DatePlus;
+
+import java.util.Objects;
 
 public class IndividualImpl implements Individual {
 
@@ -17,13 +20,20 @@ public class IndividualImpl implements Individual {
     }
 
     @Override
+    public String getFirstName() {
+        return sfIndividual.firstName;
+    }
+
+    @Override
     public String getLastName() {
         return sfIndividual.lastName;
     }
 
     @Override
     public Long getBirthDate() {
-        return sfIndividual.birthDate != null ? sfIndividual.birthDate.getTime() : null;
+        return sfIndividual.birthDate != null
+                ? Objects.requireNonNull(DatePlus.fromYYYYMMDD(sfIndividual.birthDate)).getTime()
+                : null;
     }
 
     @Override

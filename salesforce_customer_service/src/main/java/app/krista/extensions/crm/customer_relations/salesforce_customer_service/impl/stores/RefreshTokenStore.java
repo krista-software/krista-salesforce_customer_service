@@ -4,7 +4,6 @@ import app.krista.extensions.util.KeyValueStore;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
-import java.io.IOException;
 
 @Service
 public final class RefreshTokenStore {
@@ -16,11 +15,11 @@ public final class RefreshTokenStore {
         this.keyValueStore = keyValueStore;
     }
 
-    public void put(String key, String refToken) throws IOException {
+    public void put(String key, String refToken) {
         keyValueStore.put(key, refToken);
     }
 
-    public String get(String key) throws IOException {
+    public String get(String key) {
         return keyValueStore.get(key, String.class);
     }
 

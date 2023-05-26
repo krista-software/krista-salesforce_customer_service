@@ -12,12 +12,11 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper;
 import org.jvnet.hk2.annotations.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -30,8 +29,6 @@ import static app.krista.extensions.crm.customer_relations.salesforce_customer_s
 @Service
 public final class AccountStore implements EntityStore<Account> {
 
-    private static final Logger log = LoggerFactory.getLogger(AccountStore.class);
-
     private final AccountDaoImpl accountDao;
 
     @Inject
@@ -42,7 +39,6 @@ public final class AccountStore implements EntityStore<Account> {
     /**
      * @param entityDefinition input map with {@link Account} entity fields.
      * @return {@link Account} for the given input
-     * @throws InterruptedException if there is any interruption during execution of Salesforce API.
      */
     @Override
     public Account create(Map<String, Object> entityDefinition) throws InterruptedIOException {
@@ -53,12 +49,10 @@ public final class AccountStore implements EntityStore<Account> {
             String customerId = accountDao.createAccount(entityDefinition);
             return get(customerId);
         } catch (IOException | ExecutionException cause) {
-            log.debug(cause.getMessage());
             throw new RuntimeException(cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             throw new IllegalArgumentException(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
         } catch (InterruptedException interruptedException) {
-            log.debug(interruptedException.getMessage());
             Thread.currentThread().interrupt();
             throw new InterruptedIOException(interruptedException.getMessage());
         }
@@ -67,7 +61,6 @@ public final class AccountStore implements EntityStore<Account> {
     /**
      * @param primaryKey Id of the {@link Account}
      * @return {@link Account} for the given Id.
-     * @throws InterruptedException if there is any interruption during execution of Salesforce API.
      */
     @Override
     public Account get(String primaryKey) throws InterruptedIOException {
@@ -77,12 +70,10 @@ public final class AccountStore implements EntityStore<Account> {
         try {
             return CatalogTypes.fromSFAccount(accountDao.getAccountById(primaryKey));
         } catch (IOException | ExecutionException cause) {
-            log.debug(cause.getMessage());
             throw new RuntimeException(cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             throw new IllegalArgumentException(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
         } catch (InterruptedException interruptedException) {
-            log.debug(interruptedException.getMessage());
             Thread.currentThread().interrupt();
             throw new InterruptedIOException(interruptedException.getMessage());
         }
@@ -102,12 +93,10 @@ public final class AccountStore implements EntityStore<Account> {
             accountDao.updateAccount(new AccountImpl(SFAccount.from(account)));
             return get(account.id);
         } catch (IOException | ExecutionException | IllegalAccessException cause) {
-            log.debug(cause.getMessage());
             throw new RuntimeException(cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             throw new IllegalArgumentException(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
         } catch (InterruptedException interruptedException) {
-            log.debug(interruptedException.getMessage());
             Thread.currentThread().interrupt();
             throw new InterruptedIOException(interruptedException.getMessage());
         }
@@ -143,7 +132,7 @@ public final class AccountStore implements EntityStore<Account> {
      * @param searchQuery list of search conditions and query clauses given as input
      * @param pageIndex   page number of the query results
      * @param pageSize    number of results per page
-     * @return returns {@link List< Account >} as per the given query
+     * @return returns {@link List<Account>} as per the given query
      * @throws IOException if there is any error in the given input
      */
     @Override
@@ -163,12 +152,10 @@ public final class AccountStore implements EntityStore<Account> {
                 return accountDao.getAccountByQuery(query).stream().map(CatalogTypes::fromSFAccount).collect(Collectors.toList());
             }
         } catch (IOException | ExecutionException cause) {
-            log.debug(cause.getMessage());
             throw new RuntimeException(cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             throw new IllegalArgumentException(Constants.FAILED_TO_SEARCH + illegalArgumentException.getMessage());
         } catch (InterruptedException interruptedException) {
-            log.debug(interruptedException.getMessage());
             Thread.currentThread().interrupt();
             throw new InterruptedIOException(interruptedException.getMessage());
         }
@@ -181,7 +168,7 @@ public final class AccountStore implements EntityStore<Account> {
 
     @Override
     public List<String> lookup(Map<String, Object> map, List<String> list) {
-        return null;
+        return Collections.emptyList();
     }
 
     private String getConditionValue(List<SearchCondition> conditions, String fieldName) {

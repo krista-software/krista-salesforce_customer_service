@@ -4,6 +4,8 @@ public interface Individual {
 
     String getId();
 
+    String getFirstName();
+
     String getLastName();
 
     Long getBirthDate();

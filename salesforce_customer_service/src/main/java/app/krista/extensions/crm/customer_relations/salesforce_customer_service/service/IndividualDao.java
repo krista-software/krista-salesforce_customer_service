@@ -10,9 +10,13 @@ public interface IndividualDao {
     Individual getIndividualById(String id) throws IOException, ExecutionException, InterruptedException;
 
     List<Individual> getIndividuals(long size, long page, String orderByField, String orderByOperand) throws IOException, ExecutionException, InterruptedException;
+
     List<Individual> getIndividualsByQuery(String query) throws IOException, ExecutionException, InterruptedException;
+
     String createIndividual(Map<String, Object> entityDefinition) throws IOException, ExecutionException, InterruptedException;
+
     void updateIndividual(Individual individual) throws IOException, ExecutionException, InterruptedException, IllegalAccessException;
+
     void deleteIndividualById(String primaryKey) throws IOException, ExecutionException, InterruptedException;
 
 }

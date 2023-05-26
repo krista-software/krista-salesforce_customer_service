@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -32,7 +33,6 @@ import static app.krista.extensions.crm.customer_relations.salesforce_customer_s
 @Service
 public final class ContactStore implements EntityStore<Contact> {
 
-    private static final Logger log = LoggerFactory.getLogger(CaseStore.class);
 
     private final ContactDaoImpl contactDao;
 
@@ -55,12 +55,10 @@ public final class ContactStore implements EntityStore<Contact> {
             String contactId = contactDao.createContact(entityDefinition);
             return get(contactId);
         } catch (IOException | ExecutionException cause) {
-            log.debug(cause.getMessage());
             throw new RuntimeException(cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             throw new IllegalArgumentException(illegalArgumentException.getMessage());
         } catch (InterruptedException interruptedException) {
-            log.debug(interruptedException.getMessage());
             Thread.currentThread().interrupt();
             throw new InterruptedIOException(interruptedException.getMessage());
         }
@@ -79,12 +77,10 @@ public final class ContactStore implements EntityStore<Contact> {
         try {
             return CatalogTypes.fromSFContact(contactDao.getContactById(primaryKey));
         } catch (IOException | ExecutionException cause) {
-            log.debug(cause.getMessage());
             throw new RuntimeException(cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             throw new IllegalArgumentException(illegalArgumentException.getMessage());
         } catch (InterruptedException interruptedException) {
-            log.debug(interruptedException.getMessage());
             Thread.currentThread().interrupt();
             throw new InterruptedIOException(interruptedException.getMessage());
         }
@@ -104,12 +100,10 @@ public final class ContactStore implements EntityStore<Contact> {
             contactDao.updateContact(new ContactImpl(SFContact.from(contact)));
             return get(contact.id);
         } catch (IOException | ExecutionException | IllegalAccessException cause) {
-            log.debug(cause.getMessage());
             throw new RuntimeException(cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             throw new IllegalArgumentException(illegalArgumentException.getMessage());
         } catch (InterruptedException interruptedException) {
-            log.debug(interruptedException.getMessage());
             Thread.currentThread().interrupt();
             throw new InterruptedIOException(interruptedException.getMessage());
         }
@@ -165,12 +159,10 @@ public final class ContactStore implements EntityStore<Contact> {
                 return contactDao.getContactsByQuery(query).stream().map(CatalogTypes::fromSFContact).collect(Collectors.toList());
             }
         } catch (IOException | ExecutionException cause) {
-            log.debug(cause.getMessage());
             throw new RuntimeException(cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             throw new IllegalArgumentException(illegalArgumentException.getMessage());
         } catch (InterruptedException interruptedException) {
-            log.debug(interruptedException.getMessage());
             Thread.currentThread().interrupt();
             throw new InterruptedIOException(interruptedException.getMessage());
         }
@@ -183,7 +175,7 @@ public final class ContactStore implements EntityStore<Contact> {
 
     @Override
     public List<String> lookup(Map<String, Object> map, List<String> list) {
-        return null;
+        return Collections.emptyList();
     }
 
     private String getConditionValue(List<SearchCondition> conditions, String fieldName) {

@@ -23,8 +23,10 @@ import java.util.concurrent.ExecutionException;
 public class SalesforceService {
 
     public static final String DATE = "date";
+    public static final String SALESFORCE_SOBJECTS_PATH = "/services/data/v53.0/sobjects/";
     private final SalesforceTokenProvider tokenProvider;
     private final SalesforceCustomerServiceAttributes customerServiceAttributes;
+
     @Inject
     public SalesforceService(SalesforceTokenProviderFactory providerFactory, SalesforceCustomerServiceAttributes customerServiceAttributes) {
         this.tokenProvider = providerFactory.create();
@@ -42,15 +44,22 @@ public class SalesforceService {
             Object value2 = field.get(newObj);
             if (value1 != null && value2 != null) {
                 if (!Objects.equals(value1, value2) && !field.getName().toLowerCase().contains(DATE) && !field.getName().equalsIgnoreCase("id")) {
-                    values.put(field.getName(), (String) value2);
+                    values.put(field.getName(), getStringValue(value2));
                 }
             } else if (value1 != null) {
-                values.put(field.getName(), null);
+                values.put(field.getName(), "");
             } else if (value2 != null) {
-                values.put(field.getName(), (String) value2);
+                values.put(field.getName(), getStringValue(value2));
             }
         }
         return values;
+    }
+
+    private static String getStringValue(Object value) {
+        if (value instanceof Double) {
+            return String.valueOf(((Double) value).intValue());
+        }
+        return (String) value;
     }
 
     public String getUserEmail() throws IOException, ExecutionException, InterruptedException {
@@ -65,7 +74,7 @@ public class SalesforceService {
             throw new IllegalArgumentException("Failed to get record by id. Input is null.");
         }
         SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
-        String url = salesforceToken.getInstanceUrl() + "/services/data/v53.0/sobjects/" + sobject + "/" + id;
+        String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + sobject + "/" + id;
         final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
         return getResponse(salesforceToken, request);
     }
@@ -75,7 +84,7 @@ public class SalesforceService {
             throw new IllegalArgumentException("Failed to delete record by id. Input is null or empty.");
         }
         SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
-        String url = salesforceToken.getInstanceUrl() + "/services/data/v53.0/sobjects/" + sobject + "/" + id;
+        String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + sobject + "/" + id;
         final OAuthRequest request = getOauthRequest(Verb.DELETE, null, url, salesforceToken);
         getResponse(salesforceToken, request);
     }
@@ -85,7 +94,7 @@ public class SalesforceService {
             throw new IllegalArgumentException("Failed to update record by id. Input is null.");
         }
         SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
-        String url = salesforceToken.getInstanceUrl() + "/services/data/v53.0/sobjects/" + sobject + "/" + id + "?_HttpMethod=PATCH";
+        String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + sobject + "/" + id + "?_HttpMethod=PATCH";
         final OAuthRequest request = getOauthRequest(Verb.POST, body, url, salesforceToken);
         getResponse(salesforceToken, request);
     }
@@ -106,10 +115,8 @@ public class SalesforceService {
             throw new IllegalArgumentException("Failed to create record by id. Input is null.");
         }
         SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
-        System.out.println("Sobject: " + sobject);
-        String url = salesforceToken.getInstanceUrl() + "/services/data/v53.0/sobjects/" + sobject;
+        String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + sobject;
         final OAuthRequest request = getOauthRequest(Verb.POST, body, url, salesforceToken);
-        System.out.println("Payload Body: " + body);
         return getResponse(salesforceToken, request);
     }
 
@@ -126,15 +133,10 @@ public class SalesforceService {
     private String getResponse(SalesforceToken salesforceToken, OAuthRequest request) throws IOException, ExecutionException, InterruptedException {
         customerServiceAttributes.getOauthService().signRequest(salesforceToken, request);
         try (com.github.scribejava.core.model.Response response = customerServiceAttributes.getOauthService().execute(request)) {
-            System.out.println("Response: " + response.toString());
             if (!response.isSuccessful()) {
                 throw new IllegalArgumentException("Bad Request, Incorrect input is provided. The error is " + response.getBody());
             }
             return response.getBody();
         }
-    }
-
-    private static class Email {
-        String email;
     }
 }

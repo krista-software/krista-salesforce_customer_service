@@ -13,7 +13,7 @@ if (rootProject.file('builder.txt').canRead()) {
 task updateVersion {
     doFirst {
         project.ext.newbuilder = Integer.parseInt(project.ext.builder) + 1
-        print "Building extension version: " + version.toString()+ "-" + project.ext.newbuilder
+        print "Building extension version: " + version.toString() + "-" + project.ext.newbuilder
         rootProject.file('builder.txt').text = project.ext.newbuilder
         System.clearProperty("extensionVersion")
         System.setProperty("extensionVersion", version.toString() + "-" + project.ext.newbuilder)
@@ -48,7 +48,6 @@ dependencies {
     compileOnly 'app.krista:krista-apis:1.0.67'
     compileOnly 'org.glassfish.hk2:hk2-api:3.0.3'
     implementation 'com.github.scribejava:scribejava-apis:8.3.3'
-//    implementation 'org.apache.commons:commons-lang3:3.4'
 
     testImplementation 'com.kristasoft.common:common-test:1.0.30'
     testImplementation 'app.krista:krista-apis:1.0.67'

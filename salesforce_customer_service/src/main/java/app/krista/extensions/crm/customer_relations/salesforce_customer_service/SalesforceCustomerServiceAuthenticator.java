@@ -20,6 +20,7 @@ public class SalesforceCustomerServiceAuthenticator implements RequestAuthentica
 
     private final SalesforceCustomerServiceAttributes salesforceCustomerServiceAttributes;
     private final SalesforceCustomerServiceAttributesStore attributesStore;
+
     @Inject
     public SalesforceCustomerServiceAuthenticator(SalesforceCustomerServiceAttributes salesforceCustomerServiceAttributes,
                                                   SalesforceCustomerServiceAttributesStore attributesStore) {
@@ -82,24 +83,20 @@ public class SalesforceCustomerServiceAuthenticator implements RequestAuthentica
 
     @Override
     public AuthorizationResponse getMustAuthorizeResponse(MustAuthorizeException cause) {
-        try {
-            String userId = (String) cause.getDetails().get(0).getValue();
-            Optional<NamedValuedField> authContextIdField = cause.getDetails().stream().filter(f -> Objects.equals(f.getName(), "authContextId")).findFirst();
-            SalesforceCustomerServiceAttributes effectiveSalesforceCustomerServiceAttributes;
-            String state;
-            if (authContextIdField.isPresent()) {
-                String authContextId = (String) authContextIdField.get().getValue();
-                effectiveSalesforceCustomerServiceAttributes = attributesStore.load(authContextId);
-                state = userId + "#" + authContextId;
-            } else {
-                effectiveSalesforceCustomerServiceAttributes = salesforceCustomerServiceAttributes;
-                state = userId;
-            }
-            OAuth20Service salesforceSaleService = effectiveSalesforceCustomerServiceAttributes.getOauthService();
-            String url = salesforceSaleService.getAuthorizationUrl(state);
-            return new AuthorizationResponse(url, List.of());
-        } catch (IOException ioException) {
-            throw new RuntimeException("Failed to get authorize response", ioException);
+        String userId = (String) cause.getDetails().get(0).getValue();
+        Optional<NamedValuedField> authContextIdField = cause.getDetails().stream().filter(f -> Objects.equals(f.getName(), "authContextId")).findFirst();
+        SalesforceCustomerServiceAttributes effectiveSalesforceCustomerServiceAttributes;
+        String state;
+        if (authContextIdField.isPresent()) {
+            String authContextId = (String) authContextIdField.get().getValue();
+            effectiveSalesforceCustomerServiceAttributes = attributesStore.load(authContextId);
+            state = userId + "#" + authContextId;
+        } else {
+            effectiveSalesforceCustomerServiceAttributes = salesforceCustomerServiceAttributes;
+            state = userId;
         }
+        OAuth20Service salesforceSaleService = effectiveSalesforceCustomerServiceAttributes.getOauthService();
+        String url = salesforceSaleService.getAuthorizationUrl(state);
+        return new AuthorizationResponse(url, List.of());
     }
 }

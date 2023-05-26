@@ -16,7 +16,8 @@ public final class CaseQueryBuilder {
 
     private static final String QUERY_FIELDS = "Contact.Name, ContactId, ContactEmail, ContactPhone, Account.Name, AccountId, Subject, Priority, Description, IsClosed, ClosedDate, OwnerId, CreatedById, CaseNumber, Status, Type, CreatedDate, LastModifiedDate, Id, Origin";
 
-    private CaseQueryBuilder() {}
+    private CaseQueryBuilder() {
+    }
 
     public static String getQuery(List<SearchCondition> conditions, long size, long page, String orderByField, String orderByOperand) {
         if (conditions == null || conditions.isEmpty()) {
@@ -88,7 +89,7 @@ public final class CaseQueryBuilder {
                 .append(isStringAvailable(modifiedDateLessThan) ? " modifiedDate < " + modifiedDateLessThan + " " + AND : "")
                 .append(isStringAvailable(modifiedDateGreaterThan) ? " modifiedDate > " + modifiedDateGreaterThan + " " + AND : "");
         StringHelper.setQueryEndIndex(builder);
-        StringHelper.appendOrderByClause(size, page, orderByField, orderByOperand,builder);
+        StringHelper.appendOrderByClause(size, page, orderByField, orderByOperand, builder);
         return builder.toString();
     }
 }

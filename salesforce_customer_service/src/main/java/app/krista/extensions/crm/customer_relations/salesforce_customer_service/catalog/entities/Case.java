@@ -7,6 +7,7 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 
 import java.util.Map;
 
+@Searchable
 @Domain(id = "catEntryDomain_a66f83b1-fa58-427f-b8b9-0c83a401bf53", name = "Customer Relations", ecosystemId = "catEntryEcosystem_8a0e8ce7-6289-492f-9202-52284024280c", ecosystemName = "CRM", ecosystemVersion = "02f1a8e5-3d30-4717-89ad-535dce7c1789")
 @Entity(name = "Case", id = "localDomainEntity_a0d5ba68-bab0-4146-abb7-a2cc8cedfb69", primaryKey = "Id")
 public class Case {

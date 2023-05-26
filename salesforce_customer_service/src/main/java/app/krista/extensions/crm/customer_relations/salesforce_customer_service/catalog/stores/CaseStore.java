@@ -12,12 +12,11 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.CaseQueryBuilder;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import org.jvnet.hk2.annotations.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -25,7 +24,6 @@ import java.util.stream.Collectors;
 
 @Service
 public final class CaseStore implements EntityStore<Case> {
-    private static final Logger log = LoggerFactory.getLogger(CaseStore.class);
 
     private final CaseDaoImpl caseDao;
 
@@ -47,12 +45,10 @@ public final class CaseStore implements EntityStore<Case> {
             String caseId = caseDao.createCase(entityDefinition);
             return get(caseId);
         } catch (IOException | ExecutionException cause) {
-            log.debug(cause.getMessage());
             throw new RuntimeException(cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             throw new IllegalArgumentException(illegalArgumentException.getMessage());
         } catch (InterruptedException interruptedException) {
-            log.debug(interruptedException.getMessage());
             Thread.currentThread().interrupt();
             throw new InterruptedIOException(interruptedException.getMessage());
         }
@@ -71,12 +67,11 @@ public final class CaseStore implements EntityStore<Case> {
         try {
             return CatalogTypes.fromSFCase(caseDao.getCaseById(primaryKey));
         } catch (IOException | ExecutionException cause) {
-            log.debug(cause.getMessage());
+
             throw new RuntimeException(cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             throw new IllegalArgumentException(illegalArgumentException.getMessage());
         } catch (InterruptedException interruptedException) {
-            log.debug(interruptedException.getMessage());
             Thread.currentThread().interrupt();
             throw new InterruptedIOException(interruptedException.getMessage());
         }
@@ -96,12 +91,11 @@ public final class CaseStore implements EntityStore<Case> {
             caseDao.updateCase(new CaseImpl(SFCase.from(aCase)));
             return get(aCase.id);
         } catch (IOException | ExecutionException | IllegalAccessException cause) {
-            log.debug(cause.getMessage());
+
             throw new RuntimeException(cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             throw new IllegalArgumentException(illegalArgumentException.getMessage());
         } catch (InterruptedException interruptedException) {
-            log.debug(interruptedException.getMessage());
             Thread.currentThread().interrupt();
             throw new InterruptedIOException(interruptedException.getMessage());
         }
@@ -157,14 +151,13 @@ public final class CaseStore implements EntityStore<Case> {
                 return caseDao.getCasesByQuery(query).stream().map(CatalogTypes::fromSFCase).collect(Collectors.toList());
             }
         } catch (IOException | ExecutionException cause) {
-            log.debug(cause.getMessage());
+
             throw new RuntimeException(Constants.FAILED_TO_SEARCH + cause.getMessage());
 
         } catch (IllegalArgumentException illegalArgumentException) {
-            log.debug(illegalArgumentException.getMessage());
+
             throw new IllegalArgumentException(illegalArgumentException.getMessage());
         } catch (InterruptedException interruptedException) {
-            log.debug(interruptedException.getMessage());
             Thread.currentThread().interrupt();
             throw new InterruptedIOException(interruptedException.getMessage());
         }
@@ -177,6 +170,6 @@ public final class CaseStore implements EntityStore<Case> {
 
     @Override
     public List<String> lookup(Map<String, Object> map, List<String> list) {
-        return null;
+        return Collections.emptyList();
     }
 }

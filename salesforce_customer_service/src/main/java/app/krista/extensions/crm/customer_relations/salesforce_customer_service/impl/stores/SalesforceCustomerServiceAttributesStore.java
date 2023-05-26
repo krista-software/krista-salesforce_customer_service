@@ -9,7 +9,6 @@ import app.krista.extensions.util.KeyValueStore;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
@@ -24,7 +23,7 @@ public class SalesforceCustomerServiceAttributesStore {
         this.invoker = invoker;
     }
 
-    public String save(SalesforceCustomerServiceAttributes salesforceCustomerServiceAttributes) throws IOException {
+    public String save(SalesforceCustomerServiceAttributes salesforceCustomerServiceAttributes) {
         String authContextId = UUID.randomUUID().toString();
         store.put(authContextId, Constants.GSON.toJson(Map.of(SalesforceCustomerServiceAttributes.CLIENT_ID,
                 salesforceCustomerServiceAttributes.getClientId(),
@@ -32,7 +31,7 @@ public class SalesforceCustomerServiceAttributesStore {
         return authContextId;
     }
 
-    public SalesforceCustomerServiceAttributes load(String authContextId) throws IOException {
+    public SalesforceCustomerServiceAttributes load(String authContextId) {
         var attributes = Constants.GSON.fromJson(store.get(authContextId).toString(), Map.class);
         return new SalesforceCustomerServiceAttributes((String) attributes.get(SalesforceCustomerServiceAttributes.CLIENT_ID),
                 (String) attributes.get(SalesforceCustomerServiceAttributes.CLIENT_SECRET),
@@ -42,7 +41,7 @@ public class SalesforceCustomerServiceAttributesStore {
                 invoker.getRoutingInfo().getRoutingURL(HttpProtocol.PROTOCOL_NAME, RoutingInfo.Type.APPLIANCE));
     }
 
-    public void remove(String authContextId) throws IOException {
+    public void remove(String authContextId) {
         store.remove(authContextId);
     }
 }

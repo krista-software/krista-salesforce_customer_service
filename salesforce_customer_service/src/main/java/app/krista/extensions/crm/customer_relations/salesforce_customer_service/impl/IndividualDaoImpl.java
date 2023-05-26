@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public class IndividualDaoImpl implements IndividualDao {
 
     public static final String INDIVIDUAL = "Individual";
-    public final String QUERY_FIELDS = "id, createdDate, lastName, lastModifiedDate, birthDate, createdById";
+    public static final String QUERY_FIELDS = "id, createdDate, firstName, lastName, lastModifiedDate, birthDate, createdById";
     private final SalesforceService salesforceService;
 
 
@@ -50,7 +50,7 @@ public class IndividualDaoImpl implements IndividualDao {
         SalesforceListResponse<SFIndividual> individualsList =
                 Constants.GSON.fromJson(result, new TypeToken<SalesforceListResponse<SFIndividual>>() {
                 }.getType());
-        if (individualsList.records.size() > 0) {
+        if (!individualsList.records.isEmpty()) {
             return individualsList.records.stream().map(IndividualImpl::new).collect(Collectors.toList());
         } else {
             return new ArrayList<>();

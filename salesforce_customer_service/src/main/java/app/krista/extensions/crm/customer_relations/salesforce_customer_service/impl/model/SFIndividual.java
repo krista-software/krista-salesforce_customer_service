@@ -2,6 +2,7 @@ package app.krista.extensions.crm.customer_relations.salesforce_customer_service
 
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog.entities.Individual;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.DatePlus;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Date;
@@ -11,6 +12,9 @@ public final class SFIndividual {
     @SerializedName("Id")
     public String id;
 
+    @SerializedName("FirstName")
+    public String firstName;
+
     @SerializedName("LastName")
     public String lastName;
 
@@ -18,7 +22,7 @@ public final class SFIndividual {
     public Date createdDate;
 
     @SerializedName("BirthDate")
-    public Date birthDate;
+    public String birthDate;
 
     @SerializedName("CreatedById")
     public String createdById;
@@ -32,9 +36,10 @@ public final class SFIndividual {
         }
         SFIndividual individual = new SFIndividual();
         individual.id = sfIndividual.id;
+        individual.firstName = sfIndividual.firstName;
         individual.lastName = sfIndividual.lastName;
-        if (sfIndividual.birthDate != null) {
-            individual.birthDate = new Date(sfIndividual.birthDate);
+        if (sfIndividual.birthDate != null && sfIndividual.birthDate > 0) {
+            individual.birthDate = DatePlus.getYYYYMMDD(sfIndividual.birthDate);
         }
         individual.createdById = sfIndividual.createdById;
         if (sfIndividual.lastModifiedDate != null) {
@@ -52,8 +57,9 @@ public final class SFIndividual {
         }
         SFIndividual individual = new SFIndividual();
         individual.id = sfIndividual.getId();
+        individual.firstName = sfIndividual.getFirstName();
         individual.lastName = sfIndividual.getLastName();
-        individual.birthDate = new Date(sfIndividual.getBirthDate());
+        individual.birthDate = DatePlus.getYYYYMMDD(sfIndividual.getBirthDate());
         individual.createdById = sfIndividual.getCreatedById();
 
         return individual;
@@ -65,10 +71,11 @@ public final class SFIndividual {
         }
         SFIndividual individual = new SFIndividual();
         individual.id = (String) entityDefinition.get("Id");
+        individual.firstName = (String) entityDefinition.get("First Name");
         individual.lastName = (String) entityDefinition.get("Last Name");
-        if (entityDefinition.get("Birth Date") != null) {
-            individual.birthDate = new Date((Long) entityDefinition.get("Birth Date"));
-        }
+        Long parseBirthDate = (Long) entityDefinition.get("Birth Date");
+        individual.birthDate = parseBirthDate != null && parseBirthDate > 0 ? DatePlus.getYYYYMMDD(parseBirthDate) : null;
+
         if (entityDefinition.get("Created Date") != null) {
             individual.createdDate = new Date((Long) entityDefinition.get("Created Date"));
         }
