@@ -1,8 +1,8 @@
 [comment]: <> (Home Page)
 
-# Home Page #
+# Salesforce Customer Service Module Extension #
 
-### Salesforce Customer Service Module Extension
+### Home Page
 
 The Krista Salesforce Customer Service Module Extension connects to Salesforce system and its Customer Service module to perform various operation.
 

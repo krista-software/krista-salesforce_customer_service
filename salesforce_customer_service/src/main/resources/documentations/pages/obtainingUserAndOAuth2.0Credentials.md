@@ -11,7 +11,7 @@
 * If you don’t have a pre-existing account, sign up for a new Salesforce Developer Account.
 
 
-* Go to Service account page of salesforce sale portal from [here](https://developer.salesforce.com/).
+* Go to Service account page of salesforce portal from [here](https://developer.salesforce.com/).
 
 
 * Now click **Sign Up** button. A new page will appear. Enter all the personal details and click **Sign Me Up**.
@@ -38,7 +38,7 @@
 
 ### Obtaining Client ID and Client Secret for OAuth2.0
 
-* Go to the login page of the salesforce portal. [Click Here](https://login.salesforce.com/)
+* Go to the login page of the salesforce portal from [ here](https://login.salesforce.com/).
 
 
 * Navigate to the Setup icon and then click **Setup**.
@@ -98,6 +98,6 @@
   * Select Refresh Token Policy as **Refresh token is valid until revoked**.
     ![Edit Policies](../_media/editPolicies.png)
 
-* Click **Save**
+* Click **Save**.
 
 * Provide the values of Client ID and Client Secret in your Salesforce Customer Service Extension setup page and proceed with the Extension request.

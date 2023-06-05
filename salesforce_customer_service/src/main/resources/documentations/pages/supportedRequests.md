@@ -8,12 +8,12 @@ Krista Salesforce Customer Service Module Extension does not support any Catalog
 
 ## Entity Requests
 
-The following Entity Requests are supported
+The following Entity Requests are supported.
 
 ### Individual
 
 * Search Individual
-    * Description: This will return the list of Individuals.
+    * Description: This request will return the list of Individuals.
     * Input Parameters:
 
 |                    |                    |               |                    |
@@ -22,7 +22,7 @@ The following Entity Requests are supported
 | Id                 | Text               | No            | 0065w00002AlDtDAAM |
 | Last Name          | Text               | No            | Demo Individual    |
 
-* Output Parameters:
+* Output:
 
 |                    |                     |
 |--------------------|---------------------|
@@ -30,9 +30,9 @@ The following Entity Requests are supported
 | Individual         | List&lt;Individual> |
 
 * Get Individual
-    * Description: This will return the Selected Individual.
+    * Description: This request will return the Selected Individual.
     * Input Parameters: NA
-    * Output Parameters:
+    * Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -54,7 +54,7 @@ The following Entity Requests are supported
 
     - The above given fields are the only supported input fields. Any other field present in the entity is for internal purpose only.
 
-* Output Parameters:
+* Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -77,7 +77,7 @@ The following Entity Requests are supported
 
     - The above given fields are the only supported input fields. Any other field present in the entity is for internal purpose only.
 
-* Output Parameters:
+* Output:
 
 |                    |                    |               |                    |
 |--------------------|--------------------|---------------|--------------------|
@@ -85,7 +85,7 @@ The following Entity Requests are supported
 | Individual         | Individual         |
 
 * Delete Individual
-    * Description: This will delete the selected Individual from the salesforce instance.
+    * Description: This request will delete the selected Individual from the salesforce instance.
     * Input Parameters:
 
 |                    |                    |
@@ -93,12 +93,12 @@ The following Entity Requests are supported
 | **Parameter Name** | **Parameter Type** |
 | Individual         | Individual         |
 
-* Output Parameters: NA
+* Output: NA
 
 ### Customer
 
 * Search Customer
-    * Description: This will return the list of Customers.
+    * Description: This request will return the list of Customers.
     * Input Parameters:
 
 |                    |                    |               |                    |
@@ -108,7 +108,7 @@ The following Entity Requests are supported
 | Party Id           | Text               | No            | 0065w00002aeWETBBM |
 | Name               | Text               | No            | Demo Customer      |
 
-* Output Parameters:
+* Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -116,9 +116,9 @@ The following Entity Requests are supported
 | Customer           | List&lt;Customer>  |
 
 * Get Customer
-    * Description: This will return the Selected Customer.
+    * Description: This request will return the Selected Customer.
     * Input Parameters: NA
-    * Output Parameters:
+    * Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -142,7 +142,7 @@ The following Entity Requests are supported
     - Party is the Id of the Individual
     - The above given fields are the only supported input fields. Any other field present in the entity is for internal purpose only.
 
-* Output Parameters:
+* Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -166,7 +166,7 @@ The following Entity Requests are supported
     - Party Id is the Id of the Individual
     - The above given fields are the only supported input fields. Any other field present in the entity is for internal purpose only.
 
-* Output Parameters:
+* Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -174,7 +174,7 @@ The following Entity Requests are supported
 | Customer           | Customer           |
 
 * Delete Customer
-    * Description: This will delete the selected Customer from the salesforce instance.
+    * Description: This request will delete the selected Customer from the salesforce instance.
     * Input Parameters:
 
 |                    |                    |
@@ -182,12 +182,12 @@ The following Entity Requests are supported
 | **Parameter Name** | **Parameter Type** |
 | Customer           | Customer           |
 
-* Output Parameters: NA
+* Output: NA
 
 ### Account
 
 * Search Account
-    * Description: This will return the list of Accounts
+    * Description: This request will return the list of Accounts.
     * Input Parameters:
 
 |                    |                    |               |                    |
@@ -198,7 +198,7 @@ The following Entity Requests are supported
 | Account Number     | Text               | No            | 0055w00000D9a8iAAC |
 | Phone              | Text               | No            | 000015328782       |
 
-* Output Parameters:
+* Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -206,9 +206,9 @@ The following Entity Requests are supported
 | Account            | List&lt;Account>   |
 
 * Get Account
-    * Description: This will return the Selected Account.
+    * Description: This request will return the Selected Account.
     * Input Parameters: NA
-    * Output Parameters:
+    * Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -251,7 +251,7 @@ The following Entity Requests are supported
 | Ownership            | Text               | No            | Public             |
 | Industry             | Text               | No            | Construction       |
 
-* Output Parameters:
+* Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -294,7 +294,7 @@ The following Entity Requests are supported
 | Ownership            | Text               | No            | Public                  |
 | Industry             | Text               | No            | Construction            |
 
-* Output Parameters:
+* Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -302,7 +302,7 @@ The following Entity Requests are supported
 | Account            | Account            |
 
 * Delete Account
-    * Description: This will delete the selected Account
+    * Description: This request will delete the selected Account.
     * Input Parameters:
 
 |                    |                    |
@@ -310,12 +310,12 @@ The following Entity Requests are supported
 | **Parameter Name** | **Parameter Type** |
 | Account            | Account            |
 
-* Output Parameters: NA
+* Output: NA
 
 ### Case
 
 * Search Case
-    * Description: This will return the list of Cases.
+    * Description: This request will return the list of Cases.
     * Input Parameters:
 
 |                    |                    |               |                    |
@@ -335,7 +335,7 @@ The following Entity Requests are supported
 | Contact Phone      | Text               | No            | 0055w00000D9       |
 | Status             | Text               | No            | Closed             |
 
-* Output Parameters:
+* Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -343,9 +343,9 @@ The following Entity Requests are supported
 | Case               | List&lt;Case>      |
 
 * Get Case
-    * Description: This will return the selected Case.
+    * Description: This request will return the selected Case.
     * Input Parameters: NA
-    * Output Parameters:
+    * Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -383,7 +383,7 @@ The following Entity Requests are supported
 * To add Contact Email or Contact Phone or Contact Name, Contact Id is required.
 * To add Account Name, Account Id is required.
 
-* Output Parameters:
+* Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -391,7 +391,7 @@ The following Entity Requests are supported
 | Case               | Case               |
 
 * Update Case
-    * Description: This will update the selected case with given details and returns it.
+    * Description: This request will update the selected case with given details and returns it.
     * Input Parameters:
 
 |                    |                    |               |                         |
@@ -421,7 +421,7 @@ The following Entity Requests are supported
 * To update Contact Email or Contact Phone or Contact Name, Contact Id is required.
 * To update Account Name, Account Id is required.
 
-* Output Parameters:
+* Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -429,7 +429,7 @@ The following Entity Requests are supported
 | Case               | Case               |
 
 * Delete Case
-    * Description: This will delete the selected Case
+    * Description: This request will delete the selected Case.
     * Input Parameters:
 
 |                    |                    |
@@ -437,12 +437,12 @@ The following Entity Requests are supported
 | **Parameter Name** | **Parameter Type** |
 | Case               | Case               |
 
-* Output Parameters: NA
+* Output: NA
 
 ### Contact
 
 * Search Contact
-    * Description: This will return list of contacts.
+    * Description: This request will return list of contacts.
     * Input Parameters:
 
 |                    |                    |               |                 |
@@ -454,7 +454,7 @@ The following Entity Requests are supported
 | Phone              | Text               | No            | 00ii0015328782  |
 | Email              | Email              | No            | user@email.com  |
 
-* Output Parameters:
+* Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -462,9 +462,9 @@ The following Entity Requests are supported
 | Contact            | List&lt;Contact>   |
 
 * Get Contact
-    * Description: This will return the selected Contact.
+    * Description: This request will return the selected Contact.
     * Input Parameters: NA
-    * Output Parameters:
+    * Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -495,7 +495,7 @@ The following Entity Requests are supported
 
 * To add Account Name, Account ID is required.
 
-* Output Parameters:
+* Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -526,7 +526,7 @@ The following Entity Requests are supported
 
 * To add Account Name, Account ID is required.
 
-* Output Parameters:
+* Output:
 
 |                    |                    |
 |--------------------|--------------------|
@@ -534,7 +534,7 @@ The following Entity Requests are supported
 | Contact            | Contact            |
 
 * Delete Contact
-    * Description: This will delete the selected Contact
+    * Description: This request will delete the selected Contact.
     * Input Parameters:
 
 |                    |                    |
@@ -542,4 +542,4 @@ The following Entity Requests are supported
 | **Parameter Name** | **Parameter Type** |
 | Contact            | Contact            |
 
-* Output Parameters: NA
+* Output: NA
