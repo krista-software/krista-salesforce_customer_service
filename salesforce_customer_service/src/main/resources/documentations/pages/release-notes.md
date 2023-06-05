@@ -1,6 +1,6 @@
 [<span style = "color : blue ; text-decoration: none">< Back<span>](/)
 
-# Release Notes - Salesforce Customer Service Extension
+# Release Notes - Krista Salesforce Customer Service Extension
 
 ## Version 2.0.5
 

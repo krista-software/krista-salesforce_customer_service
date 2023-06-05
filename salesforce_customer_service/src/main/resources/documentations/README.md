@@ -1,6 +1,6 @@
 [comment]: <> (Home Page)
 
-# Salesforce Customer Service Module Extension #
+# Krista Salesforce Customer Service Module Extension #
 
 ### Home Page
 
