@@ -1,5 +1,7 @@
 package app.krista.extensions.crm.customer_relations.salesforce_customer_service.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -71,4 +73,21 @@ public interface CaseDao {
      * @param primaryKey id of the account to be deleted
      */
     void deleteCaseById(String primaryKey) throws IOException, ExecutionException, InterruptedException;
+
+    /**
+     * This function is used to get the feed updates for the given case id.
+     *
+     * @param caseId case entity id
+     * @return list of Feed items.
+     */
+    List<Map<String, Object>> getFeedItemsForCaseId(String caseId) throws ExecutionException, InterruptedException, JsonProcessingException;
+
+    /**
+     * This function will add update to the feed posts.
+     *
+     * @param caseId        case entity id.
+     * @param updateMessage message to be added to the post
+     * @return {@link Boolean} value of updated or not
+     */
+    Boolean addFeedUpdateToCase(String caseId, String updateMessage) throws ExecutionException, InterruptedException;
 }
