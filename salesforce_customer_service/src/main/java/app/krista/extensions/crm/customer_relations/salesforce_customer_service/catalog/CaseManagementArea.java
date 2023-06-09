@@ -41,11 +41,11 @@ public class CaseManagementArea {
         caseId = FieldValues.toString(textField, caseId);
         try {
             return caseDao.getFeedItemsForCaseId(caseId);
-        } catch (ExecutionException | JsonProcessingException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
+        } catch (ExecutionException | JsonProcessingException cause) {
+            throw new RuntimeException(cause);
+        } catch (InterruptedException interruptedException) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
+            throw new RuntimeException(interruptedException);
         }
     }
 
@@ -61,7 +61,7 @@ public class CaseManagementArea {
             @Field(name = "Update Message", type = "Paragraph") String updateMessage) throws InterruptedException {
         caseId = FieldValues.toString(textField, caseId);
         try {
-            return caseDao.addFeedUpdateToCase(caseId, updateMessage);
+            return caseDao.addFeedUpdateToCaseById(caseId, updateMessage);
         } catch (ExecutionException cause) {
             throw new RuntimeException(cause.getMessage(), cause);
         }

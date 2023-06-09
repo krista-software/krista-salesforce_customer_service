@@ -89,5 +89,5 @@ public interface CaseDao {
      * @param updateMessage message to be added to the post
      * @return {@link Boolean} value of updated or not
      */
-    Boolean addFeedUpdateToCase(String caseId, String updateMessage) throws ExecutionException, InterruptedException;
+    Boolean addFeedUpdateToCaseById(String caseId, String updateMessage) throws ExecutionException, InterruptedException;
 }

@@ -112,7 +112,7 @@ public final class CaseDaoImpl implements CaseDao {
         return feedPosts;
     }
 
-    public Boolean addFeedUpdateToCase(String caseId, String updateMessage) throws ExecutionException, InterruptedException {
+    public Boolean addFeedUpdateToCaseById(String caseId, String updateMessage) throws ExecutionException, InterruptedException {
         String postData = StringHelper.createFeedPostBody(caseId, updateMessage);
         String response = salesforceService.createFeedPost(postData);
         final JsonObject responseObject = Constants.GSON.fromJson(response, JsonObject.class);
