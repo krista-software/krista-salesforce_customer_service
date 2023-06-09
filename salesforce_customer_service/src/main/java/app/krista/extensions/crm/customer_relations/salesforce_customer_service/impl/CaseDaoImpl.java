@@ -5,13 +5,17 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.CaseDao;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.SalesforceListResponse;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -78,5 +82,44 @@ public final class CaseDaoImpl implements CaseDao {
     @Override
     public void deleteCaseById(String caseId) throws IOException, ExecutionException, InterruptedException {
         salesforceService.deleteRecordById(caseId, CASE);
+    }
+
+    @Override
+    public List<Map<String, Object>> getFeedItemsForCaseId(String caseId) throws ExecutionException, InterruptedException, JsonProcessingException {
+        String response = salesforceService.getFeedsByCaseId(caseId);
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode rootNode = mapper.readTree(response);
+        JsonNode elementsNode = rootNode.get("elements");
+
+        List<Map<String, Object>> feedPosts = new ArrayList<>();
+        Map<String, Object> post = new LinkedHashMap<>(2);
+        for (JsonNode elementNode : elementsNode) {
+            String feedElementType = elementNode.get("feedElementType").asText();
+            if (feedElementType.equalsIgnoreCase("FeedItem")) {
+                JsonNode actorNode = elementNode.get("actor");
+                if (actorNode != null) {
+                    post.put("Actor Name", actorNode.get("name").asText());
+                }
+                JsonNode bodyNode = elementNode.get("body");
+                if (bodyNode != null) {
+                    post.put("Post Message", bodyNode.get("text").asText());
+                }
+                feedPosts.add(post);
+            }
+            post = new HashMap<>();
+        }
+        return feedPosts;
+    }
+
+    public Boolean addFeedUpdateToCaseById(String caseId, String updateMessage) throws ExecutionException, InterruptedException {
+        String postData = StringHelper.createFeedPostBody(caseId, updateMessage);
+        String response = salesforceService.createFeedPost(postData);
+        final JsonObject responseObject = Constants.GSON.fromJson(response, JsonObject.class);
+        if (responseObject.get("id") != null) {
+            return Boolean.TRUE;
+        } else {
+            return Boolean.FALSE;
+        }
     }
 }

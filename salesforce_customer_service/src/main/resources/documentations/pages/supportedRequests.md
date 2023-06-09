@@ -4,7 +4,39 @@
 
 ## Catalog Requests
 
-Krista Salesforce Customer Service Module Extension does not support any Catalog Requests.
+Krista Salesforce Customer Service Module Extension supports the following Catalog Requests:
+
+### Case Management Area
+
+* Get Case Feed Items By Case Id
+    * Description: This request will fetch the list of post items for the given Case Id.
+    * Input Parameters:
+
+| **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**        |
+|--------------------|--------------------|---------------|--------------------|
+| Case Id            | Text               | Yes           | 0065w00002AlDtDAAM |
+
+* Output:
+
+| **Parameter Name** | **Parameter Type**   |
+|--------------------|----------------------|
+| Feed Items         | List&lt;Multi Field> |
+
+* Share Update to Case
+    * Description: This request will add update to the Feed of the Case for the given Case Id.
+    * Input Parameters:
+
+| **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**          |
+|--------------------|--------------------|---------------|----------------------|
+| Case Id            | Text               | Yes           | 0065w00002AlDtDAAM   |
+| Update Message     | Paragraph          | Yes           | Message to be posted |
+
+* Output:
+
+| **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
+| Is Updated         | Boolean            |
+
 
 ## Entity Requests
 
@@ -16,17 +48,15 @@ The following Entity Requests are supported.
     * Description: This request will return the list of Individuals.
     * Input Parameters:
 
-|                    |                    |               |                    |
-|--------------------|--------------------|---------------|--------------------|
 | **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**        |
+|--------------------|--------------------|---------------|--------------------|
 | Id                 | Text               | No            | 0065w00002AlDtDAAM |
 | Last Name          | Text               | No            | Demo Individual    |
 
 * Output:
 
-|                    |                     |
-|--------------------|---------------------|
 | **Parameter Name** | **Parameter Type**  |
+|--------------------|---------------------|
 | Individual         | List&lt;Individual> |
 
 * Get Individual
@@ -34,18 +64,16 @@ The following Entity Requests are supported.
     * Input Parameters: NA
     * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Individual         | Individual         |
 
 * Create Individual
     * Description: This request will create an Individual in the Salesforce system and returns it.
     * Input Parameters:
 
-|                    |                    |               |                    |
-|--------------------|--------------------|---------------|--------------------|
 | **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**        |
+|--------------------|--------------------|---------------|--------------------|
 | First Name         | Text               | No            | Create             |
 | Last Name          | Text               | Yes           | Individual         |
 | Birth Date         | Date               | No            | 2022-07-11         |
@@ -56,18 +84,16 @@ The following Entity Requests are supported.
 
 * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Individual         | Individual         |
 
 * Update Individual
     * Description: This requests will update the Individual with given details and returns it.
     * Input Parameters:
 
-|                    |                    |               |                    |
-|--------------------|--------------------|---------------|--------------------|
 | **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**        |
+|--------------------|--------------------|---------------|--------------------|
 | Id                 | Text               | No            | 0065w00002AlDtDAAM |
 | First Name         | Text               | No            | Update             |
 | Last Name          | Text               | Yes           | Individual         |
@@ -79,19 +105,17 @@ The following Entity Requests are supported.
 
 * Output:
 
-|                    |                    |               |                    |
-|--------------------|--------------------|---------------|--------------------|
-| **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**        |
+| **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Individual         | Individual         |
 
 * Delete Individual
     * Description: This request will delete the selected Individual from the salesforce instance.
     * Input Parameters:
 
-|                    |                    |
-|--------------------|--------------------|
-| **Parameter Name** | **Parameter Type** |
-| Individual         | Individual         |
+| **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**       |
+|--------------------|--------------------|---------------|-------------------|
+| Individual         | Individual         | Yes           | Individual Entity |
 
 * Output: NA
 
@@ -101,18 +125,16 @@ The following Entity Requests are supported.
     * Description: This request will return the list of Customers.
     * Input Parameters:
 
-|                    |                    |               |                    |
-|--------------------|--------------------|---------------|--------------------|
 | **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**        |
+|--------------------|--------------------|---------------|--------------------|
 | Id                 | Text               | No            | 0065w00002AlDtDAAM |
 | Party Id           | Text               | No            | 0065w00002aeWETBBM |
 | Name               | Text               | No            | Demo Customer      |
 
 * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Customer           | List&lt;Customer>  |
 
 * Get Customer
@@ -120,18 +142,16 @@ The following Entity Requests are supported.
     * Input Parameters: NA
     * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Customer           | Customer           |
 
 * Create Customer
     * Description: This request will create a Customer in the Salesforce system and returns it.
     * Input Parameters:
 
-|                       |                    |               |                  |
-|-----------------------|--------------------|---------------|------------------|
 | **Parameter Name**    | **Parameter Type** | **Mandatory** | **Example**      |
+|-----------------------|--------------------|---------------|------------------|
 | Name                  | Text               | Yes           | Create Customer  |
 | Party Id              | Text               | Yes           | 0065w00002aeWEBM |
 | Customer Status Type  | Pick One           | No            | Active           |
@@ -144,18 +164,16 @@ The following Entity Requests are supported.
 
 * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Customer           | Customer           |
 
 * Update Customer
     * Description: This requests will update the Customer with given details and returns it.
     * Input Parameters:
 
-|                       |                    |               |                    |
-|-----------------------|--------------------|---------------|--------------------|
 | **Parameter Name**    | **Parameter Type** | **Mandatory** | **Example**        |
+|-----------------------|--------------------|---------------|--------------------|
 | Id                    | Text               | No            | 0065w00002AlDtDAAM |
 | Party Id              | Text               | No            | Update Customer    |
 | Customer Status Type  | Pick One           | No            | Inactive           |
@@ -168,18 +186,16 @@ The following Entity Requests are supported.
 
 * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Customer           | Customer           |
 
 * Delete Customer
     * Description: This request will delete the selected Customer from the salesforce instance.
     * Input Parameters:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Customer           | Customer           |
 
 * Output: NA
@@ -190,9 +206,8 @@ The following Entity Requests are supported.
     * Description: This request will return the list of Accounts.
     * Input Parameters:
 
-|                    |                    |               |                    |
-|--------------------|--------------------|---------------|--------------------|
 | **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**        |
+|--------------------|--------------------|---------------|--------------------|
 | ID                 | Text               | No            | 0065w00002AlDtDAAM |
 | Name               | Text               | No            | Demo Account       |
 | Account Number     | Text               | No            | 0055w00000D9a8iAAC |
@@ -200,9 +215,8 @@ The following Entity Requests are supported.
 
 * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Account            | List&lt;Account>   |
 
 * Get Account
@@ -210,18 +224,16 @@ The following Entity Requests are supported.
     * Input Parameters: NA
     * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Account            | Account            |
 
 * Create Account
     * Description: This request will create a Account in the Salesforce system and returns it.
     * Input Parameters:
 
-|                      |                    |               |                    |
-|----------------------|--------------------|---------------|--------------------|
 | **Parameter Name**   | **Parameter Type** | **Mandatory** | **Example**        |
+|----------------------|--------------------|---------------|--------------------|
 | ID                   | Text               | No            | 0065w00002AlDtDAAM |
 | Name                 | Text               | Yes           | Create Account     |
 | Type                 | Text               | No            | TypeABC            |
@@ -253,18 +265,16 @@ The following Entity Requests are supported.
 
 * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Account            | Account            |
 
 * Update Account
     * Description: This requests will update the Account with given details and returns it.
     * Input Parameters:
 
-|                      |                    |               |                         |
-|----------------------|--------------------|---------------|-------------------------|
 | **Parameter Name**   | **Parameter Type** | **Mandatory** | **Example**             |
+|----------------------|--------------------|---------------|-------------------------|
 | ID                   | Text               | No            | 0065w00002AlDtDAAM      |
 | Name                 | Text               | Yes           | Create Account          |
 | Type                 | Text               | No            | TypeABC                 |
@@ -296,18 +306,16 @@ The following Entity Requests are supported.
 
 * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Account            | Account            |
 
 * Delete Account
     * Description: This request will delete the selected Account.
     * Input Parameters:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Account            | Account            |
 
 * Output: NA
@@ -318,9 +326,8 @@ The following Entity Requests are supported.
     * Description: This request will return the list of Cases.
     * Input Parameters:
 
-|                    |                    |               |                    |
-|--------------------|--------------------|---------------|--------------------|
 | **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**        |
+|--------------------|--------------------|---------------|--------------------|
 | ID                 | Text               | No            | 0065w00002AlDtDAAM | 
 | Contact ID         | Text               | No            | 0055w00000D9a8iAAC |             
 | Account ID         | Text               | No            | 0015w00002inu5PAAP |  
@@ -337,9 +344,8 @@ The following Entity Requests are supported.
 
 * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Case               | List&lt;Case>      |
 
 * Get Case
@@ -347,18 +353,16 @@ The following Entity Requests are supported.
     * Input Parameters: NA
     * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Case               | Case               |
 
 * Create Case
     * Description: This request will create a Case in the Salesforce system and returns it.
     * Input Parameters:
 
-|                    |                    |               |                     |
-|--------------------|--------------------|---------------|---------------------|
 | **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**         |
+|--------------------|--------------------|---------------|---------------------|
 | ID                 | Text               | No            | 0065w00002AlDtDAAM  | 
 | Contact ID         | Text               | No            | 0055w00000D9a8iAAC  |             
 | Account ID         | Text               | No            | 0015w00002inu5PAAP  |  
@@ -385,18 +389,16 @@ The following Entity Requests are supported.
 
 * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Case               | Case               |
 
 * Update Case
     * Description: This request will update the selected case with given details and returns it.
     * Input Parameters:
 
-|                    |                    |               |                         |
-|--------------------|--------------------|---------------|-------------------------|
 | **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**             |
+|--------------------|--------------------|---------------|-------------------------|
 | ID                 | Text               | No            | 0065w00002AlDtDAAM      | 
 | Contact ID         | Text               | No            | 0055w00000D9a8iAAC      |             
 | Account ID         | Text               | No            | 0015w00002inu5PAAP      |  
@@ -423,18 +425,16 @@ The following Entity Requests are supported.
 
 * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Case               | Case               |
 
 * Delete Case
     * Description: This request will delete the selected Case.
     * Input Parameters:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Case               | Case               |
 
 * Output: NA
@@ -445,9 +445,8 @@ The following Entity Requests are supported.
     * Description: This request will return list of contacts.
     * Input Parameters:
 
-|                    |                    |               |                 |
-|--------------------|--------------------|---------------|-----------------|
 | **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**     |
+|--------------------|--------------------|---------------|-----------------|
 | Name               | Text               | No            | Demo Contact    |
 | Account ID         | Text               | No            | 0055w00000D9AAC |
 | Account Name       | Text               | No            | AccountName     |
@@ -456,9 +455,8 @@ The following Entity Requests are supported.
 
 * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Contact            | List&lt;Contact>   |
 
 * Get Contact
@@ -466,18 +464,16 @@ The following Entity Requests are supported.
     * Input Parameters: NA
     * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Contact            | Contact            |
 
 * Create Contact
     * Description: This request will create a contact in the Salesforce system and returns it.
     * Input Parameters:
 
-|                    |                    |               |                     |
-|--------------------|--------------------|---------------|---------------------|
 | **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**         |
+|--------------------|--------------------|---------------|---------------------|
 | Name               | Text               | Yes           | Create contact      |
 | Title              | Text               | No            | Contact title       |
 | Reports to ID      | Text               | No            | 0055w00000D9a8iAAC  |
@@ -497,18 +493,16 @@ The following Entity Requests are supported.
 
 * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Contact            | Contact            |
 
 * Update Contact
     * Description: This request will update the Contact with given details and returns it.
     * Input Parameters:
 
-|                    |                    |               |                     |
-|--------------------|--------------------|---------------|---------------------|
 | **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**         |
+|--------------------|--------------------|---------------|---------------------|
 | Name               | Text               | Yes           | Create contact      |
 | Title              | Text               | No            | Contact title       |
 | Reports to ID      | Text               | No            | 0055w00000D9a8iAAC  |
@@ -528,18 +522,16 @@ The following Entity Requests are supported.
 
 * Output:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Contact            | Contact            |
 
 * Delete Contact
     * Description: This request will delete the selected Contact.
     * Input Parameters:
 
-|                    |                    |
-|--------------------|--------------------|
 | **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
 | Contact            | Contact            |
 
 * Output: NA

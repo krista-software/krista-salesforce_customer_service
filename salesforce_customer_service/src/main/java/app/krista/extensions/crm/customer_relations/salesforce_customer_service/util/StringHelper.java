@@ -38,4 +38,19 @@ public final class StringHelper {
             builder.setLength(builder.lastIndexOf(SPACE_AND));
         }
     }
+
+    public static String createFeedPostBody(String caseId, String postMessage) {
+        return "{" +
+                "\"body\": {" +
+                "\"messageSegments\": [" +
+                "{" +
+                "\"type\": \"" + "Text" + "\"," +
+                "\"text\": \"" + postMessage + "\"" +
+                "}" +
+                "]" +
+                "}," +
+                "\"feedElementType\": \"" + "FeedItem" + "\"," +
+                "\"subjectId\": \"" + caseId + "\"" +
+                "}";
+    }
 }
