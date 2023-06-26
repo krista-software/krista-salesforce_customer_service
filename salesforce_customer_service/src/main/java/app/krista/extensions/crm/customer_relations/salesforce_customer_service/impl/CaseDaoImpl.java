@@ -34,7 +34,7 @@ public final class CaseDaoImpl implements CaseDao {
     @Override
     public Case getCaseById(String id) throws IOException, ExecutionException, InterruptedException {
         if (id == null || id.isBlank()) {
-            throw new IllegalArgumentException("Failed get case by Id. " + Constants.ID_IS_NULL_OR_EMPTY);
+            System.err.println("Failed get case by Id. " + Constants.ID_IS_NULL_OR_EMPTY);
         }
         return getCasesByQuery("Select " + QUERY_FIELDS + "  from Case where id = '" + id + "'").stream().findFirst().orElseThrow(() -> new RuntimeException(CASE + " Not found for id " + id));
     }
@@ -42,7 +42,7 @@ public final class CaseDaoImpl implements CaseDao {
     @Override
     public List<Case> getCasesByQuery(String query) throws IOException, ExecutionException, InterruptedException {
         if (query == null || query.isBlank()) {
-            throw new IllegalArgumentException("Failed get case by query request. " + Constants.QUERY_IS_NULL_OR_EMPTY);
+            System.err.println("Failed get case by query request. " + Constants.QUERY_IS_NULL_OR_EMPTY);
         }
         String res = salesforceService.getRecordByQuery(query);
         SalesforceListResponse<SFCase> oppList =
@@ -63,7 +63,7 @@ public final class CaseDaoImpl implements CaseDao {
     @Override
     public String createCase(Map<String, Object> entityDefinition) throws IOException, ExecutionException, InterruptedException {
         if (entityDefinition == null || entityDefinition.isEmpty()) {
-            throw new IllegalArgumentException("Failed create case request. " + Constants.ENTITY_MAP_IS_NULL_OR_EMPTY);
+            System.err.println("Failed create case request. " + Constants.ENTITY_MAP_IS_NULL_OR_EMPTY);
         }
         var response = Constants.GSON.fromJson(salesforceService.createRecord(Constants.GSON.toJson(SFCase.from(entityDefinition)), CASE), Map.class);
         return String.valueOf(response.get("id"));
@@ -72,7 +72,7 @@ public final class CaseDaoImpl implements CaseDao {
     @Override
     public void updateCase(Case aCase) throws IOException, IllegalAccessException, ExecutionException, InterruptedException {
         if (aCase == null || aCase.getId() == null || aCase.getId().isEmpty())
-            throw new IllegalArgumentException("Failed to update case. Case not found to update.");
+            System.err.println("Failed to update case. Case not found to update.");
         SFCase updatedCase = SFCase.from(aCase);
         SFCase oldCase = SFCase.from(getCaseById(aCase.getId()));
         Map<String, String> diff = SalesforceService.getDifference(oldCase, updatedCase);

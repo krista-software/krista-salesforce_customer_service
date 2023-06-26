@@ -30,7 +30,7 @@ public final class ContactDaoImpl implements ContactDao {
     @Override
     public Contact getContactById(String id) throws IOException, ExecutionException, InterruptedException {
         if (id == null || id.isBlank()) {
-            throw new IllegalArgumentException("Failed to get contact by id request. " + Constants.ID_IS_NULL_OR_EMPTY);
+            System.err.println("Failed to get contact by id request. " + Constants.ID_IS_NULL_OR_EMPTY);
         }
         return getContactsByQuery("Select " + QUERY_FIELDS + "  from Contact where id = '" + id + "'").stream().findFirst().orElseThrow(() -> new RuntimeException(CONTACT + " Not found for id " + id));
     }
@@ -38,7 +38,7 @@ public final class ContactDaoImpl implements ContactDao {
     @Override
     public List<Contact> getContactsByQuery(String query) throws IOException, ExecutionException, InterruptedException {
         if (query == null || query.isBlank()) {
-            throw new IllegalArgumentException("Failed to get case by query request. " + Constants.QUERY_IS_NULL_OR_EMPTY);
+            System.err.println("Failed to get case by query request. " + Constants.QUERY_IS_NULL_OR_EMPTY);
         }
         String res = salesforceService.getRecordByQuery(query.trim());
         SalesforceListResponse<SFContact> oppList =
@@ -54,7 +54,7 @@ public final class ContactDaoImpl implements ContactDao {
     @Override
     public String createContact(Map<String, Object> entityDefinition) throws IOException, ExecutionException, InterruptedException {
         if (entityDefinition == null || entityDefinition.isEmpty()) {
-            throw new IllegalArgumentException("Failed to create contact. " + Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
+            System.err.println("Failed to create contact. " + Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
         }
         var response = Constants.GSON.fromJson(salesforceService.createRecord(Constants.GSON.toJson(SFContact.from(entityDefinition)), CONTACT), Map.class);
         return String.valueOf(response.get("id"));
@@ -63,7 +63,7 @@ public final class ContactDaoImpl implements ContactDao {
     @Override
     public void updateContact(Contact contact) throws IOException, ExecutionException, InterruptedException, IllegalAccessException {
         if (contact == null || contact.getId() == null || contact.getId().isEmpty())
-            throw new IllegalArgumentException("Failed to update contact. Contact not found with given Id.");
+            System.err.println("Failed to update contact. Contact not found with given Id.");
         SFContact updatedContact = SFContact.from(contact);
         SFContact oldContact = SFContact.from(getContactById(contact.getId()));
         Map<String, String> diff = SalesforceService.getDifference(oldContact, updatedContact);

@@ -30,7 +30,7 @@ public final class AccountDaoImpl implements AccountDao {
     @Override
     public Account getAccountById(String id) throws IOException, ExecutionException, InterruptedException {
         if (id == null || id.isBlank()) {
-            throw new IllegalArgumentException("Failed to fetch account by Id. " + Constants.ID_IS_NULL_OR_EMPTY);
+            System.err.println("Failed to fetch account by Id. " + Constants.ID_IS_NULL_OR_EMPTY);
         }
         return new AccountImpl(Constants.GSON.fromJson(salesforceService.getRecordById(id, ACCOUNT), SFAccount.class));
     }
@@ -44,7 +44,7 @@ public final class AccountDaoImpl implements AccountDao {
     @Override
     public List<Account> getAccountByQuery(String query) throws IOException, ExecutionException, InterruptedException {
         if (query == null || query.isBlank()) {
-            throw new IllegalArgumentException("Failed fetch account by query request. " + Constants.QUERY_IS_NULL_OR_EMPTY);
+            System.err.println("Failed fetch account by query request. " + Constants.QUERY_IS_NULL_OR_EMPTY);
         }
         String res = salesforceService.getRecordByQuery(query.trim());
         SalesforceListResponse<SFAccount> oppList =
@@ -60,7 +60,7 @@ public final class AccountDaoImpl implements AccountDao {
     @Override
     public String createAccount(Map<String, Object> entityDefinition) throws IOException, ExecutionException, InterruptedException {
         if (entityDefinition == null || entityDefinition.isEmpty()) {
-            throw new IllegalArgumentException("Failed create account request. " + Constants.ENTITY_MAP_IS_NULL_OR_EMPTY);
+            System.err.println("Failed create account request. " + Constants.ENTITY_MAP_IS_NULL_OR_EMPTY);
         }
         var response = Constants.GSON.fromJson(salesforceService.createRecord(Constants.GSON.toJson(SFAccount.from(entityDefinition)), ACCOUNT), Map.class);
         return String.valueOf(response.get("id"));
@@ -69,7 +69,7 @@ public final class AccountDaoImpl implements AccountDao {
     @Override
     public void updateAccount(Account account) throws IllegalAccessException, IOException, ExecutionException, InterruptedException, IllegalArgumentException {
         if (account == null || account.getId() == null || account.getId().isBlank()) {
-            throw new IllegalArgumentException("Failed to update account. Account not found for update.");
+            System.err.println("Failed to update account. Account not found for update.");
         }
         SFAccount updatedOpportunity = SFAccount.from(account);
         SFAccount oldOpportunity1 = SFAccount.from(getAccountById(account.getId()));

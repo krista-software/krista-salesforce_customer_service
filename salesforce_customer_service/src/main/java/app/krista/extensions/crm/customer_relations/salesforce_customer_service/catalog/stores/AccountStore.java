@@ -48,14 +48,12 @@ public final class AccountStore implements EntityStore<Account> {
         try {
             String customerId = accountDao.createAccount(entityDefinition);
             return get(customerId);
-        } catch (IOException | ExecutionException cause) {
-            throw new RuntimeException(cause.getMessage());
+        } catch (IOException | ExecutionException | InterruptedException cause) {
+            System.err.println(cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
-            throw new IllegalArgumentException(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new InterruptedIOException(interruptedException.getMessage());
+            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
         }
+        return new Account();
     }
 
     /**
@@ -69,14 +67,12 @@ public final class AccountStore implements EntityStore<Account> {
         }
         try {
             return CatalogTypes.fromSFAccount(accountDao.getAccountById(primaryKey));
-        } catch (IOException | ExecutionException cause) {
-            throw new RuntimeException(cause.getMessage());
+        } catch (IOException | ExecutionException | InterruptedException cause) {
+            System.err.println(cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
-            throw new IllegalArgumentException(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new InterruptedIOException(interruptedException.getMessage());
+            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
         }
+        return new Account();
     }
 
     /**
@@ -92,14 +88,12 @@ public final class AccountStore implements EntityStore<Account> {
         try {
             accountDao.updateAccount(new AccountImpl(SFAccount.from(account)));
             return get(account.id);
-        } catch (IOException | ExecutionException | IllegalAccessException cause) {
-            throw new RuntimeException(cause.getMessage());
+        } catch (IOException | ExecutionException | IllegalAccessException | InterruptedException cause) {
+            System.err.println(cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
-            throw new IllegalArgumentException(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new InterruptedIOException(interruptedException.getMessage());
+            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
         }
+        return new Account();
     }
 
     @Override
@@ -110,10 +104,9 @@ public final class AccountStore implements EntityStore<Account> {
         try {
             accountDao.deleteAccountById(primaryKey);
         } catch (IOException | ExecutionException cause) {
-            throw new RuntimeException(cause.getMessage(), cause);
+            System.err.println(cause.getMessage());
         } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(interruptedException.getMessage(), interruptedException);
+            System.err.println(interruptedException.getMessage());
         }
     }
 
@@ -151,14 +144,12 @@ public final class AccountStore implements EntityStore<Account> {
                 String query = getQuery(conditions, pageSize, pageIndex, orderByField, orderByOperand);
                 return accountDao.getAccountByQuery(query).stream().map(CatalogTypes::fromSFAccount).collect(Collectors.toList());
             }
-        } catch (IOException | ExecutionException cause) {
-            throw new RuntimeException(cause.getMessage());
+        } catch (IOException | ExecutionException | InterruptedException cause) {
+            System.err.println(cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
-            throw new IllegalArgumentException(Constants.FAILED_TO_SEARCH + illegalArgumentException.getMessage());
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new InterruptedIOException(interruptedException.getMessage());
+            System.err.println(Constants.FAILED_TO_SEARCH + illegalArgumentException.getMessage());
         }
+        return List.of();
     }
 
     @Override
