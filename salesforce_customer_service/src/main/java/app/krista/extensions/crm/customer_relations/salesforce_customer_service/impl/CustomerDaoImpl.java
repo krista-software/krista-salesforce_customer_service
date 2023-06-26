@@ -5,6 +5,7 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.CustomerDao;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.SalesforceListResponse;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import org.jvnet.hk2.annotations.Service;
 
@@ -63,13 +64,20 @@ public class CustomerDaoImpl implements CustomerDao {
     }
 
     @Override
-    public String createCustomer(Map<String, Object> entityDefinition) throws IOException, ExecutionException, InterruptedException {
+    public String createCustomer(Map<String, Object> entityDefinition) {
         if (entityDefinition == null || entityDefinition.isEmpty()) {
             System.err.println("Failed to create customer. " + Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
         }
-        var response = Constants.GSON.fromJson(salesforceService.createRecord(
-                Constants.GSON.toJson(SFCustomer.from(entityDefinition)), CUSTOMER), Map.class);
-        return String.valueOf(response.get("id"));
+        try {
+            var response = Constants.GSON.fromJson(salesforceService.createRecord(
+                    Constants.GSON.toJson(SFCustomer.from(entityDefinition)), CUSTOMER), Map.class);
+            return String.valueOf(response.get("id"));
+        } catch (JsonSyntaxException ex) {
+            System.err.println("Failed to create the customer record. Please ensure the provided information is correct and try again.");
+        } catch (IOException | ExecutionException | InterruptedException ex) {
+            System.err.println("An unexpected error occurred while creating the customer record. Please try again.");
+        }
+        return "";
     }
 
     @Override

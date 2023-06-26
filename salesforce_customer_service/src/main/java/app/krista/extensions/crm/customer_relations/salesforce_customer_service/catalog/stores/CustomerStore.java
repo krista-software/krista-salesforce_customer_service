@@ -14,7 +14,6 @@ import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +41,7 @@ public final class CustomerStore implements EntityStore<Customer> {
         try {
             String customerId = customerDao.createCustomer(entityDefinition);
             return get(customerId);
-        } catch (IOException | ExecutionException | InterruptedException cause) {
+        } catch (IOException cause) {
             System.err.println(cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             System.err.println(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
