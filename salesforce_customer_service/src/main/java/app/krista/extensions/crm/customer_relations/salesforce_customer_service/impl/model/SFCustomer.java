@@ -25,7 +25,7 @@ public final class SFCustomer {
 
     public static SFCustomer from(Customer sfCustomer) {
         if (sfCustomer == null) {
-            throw new IllegalArgumentException(Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
+            System.err.println(Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
         }
         SFCustomer newCustomer = new SFCustomer();
         newCustomer.id = sfCustomer.id;
@@ -39,7 +39,7 @@ public final class SFCustomer {
 
     public static SFCustomer from(app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.Customer sfCustomer) {
         if (sfCustomer == null) {
-            throw new IllegalArgumentException(Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
+            System.err.println(Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
         }
         SFCustomer newCustomer = new SFCustomer();
         newCustomer.id = sfCustomer.getId();
@@ -53,7 +53,7 @@ public final class SFCustomer {
 
     public static SFCustomer from(Map<String, Object> entityDefinition) {
         if (entityDefinition == null || entityDefinition.isEmpty()) {
-            throw new IllegalArgumentException(Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
+            System.err.println(Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
         }
         SFCustomer newCustomer = new SFCustomer();
         newCustomer.id = (String) entityDefinition.get("Id");

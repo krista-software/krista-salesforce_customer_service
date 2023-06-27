@@ -14,7 +14,6 @@ import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -37,68 +36,54 @@ public final class CustomerStore implements EntityStore<Customer> {
     @Override
     public Customer create(Map<String, Object> entityDefinition) throws IOException {
         if (entityDefinition == null || entityDefinition.isEmpty()) {
-            throw new IllegalArgumentException("Failed to create customer. " + Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
+            System.err.println("Failed to create customer. " + Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
         }
         try {
             String customerId = customerDao.createCustomer(entityDefinition);
             return get(customerId);
-        } catch (IOException | ExecutionException cause) {
-            throw new RuntimeException(cause.getMessage());
-        } catch (IllegalArgumentException illegalArgumentException) {
-            throw new IllegalArgumentException(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new InterruptedIOException(interruptedException.getMessage());
+        } catch (IOException | IllegalArgumentException cause) {
+            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + cause.getMessage());
         }
+        return new Customer();
     }
 
     @Override
     public Customer get(String primaryKey) throws IOException {
         if (primaryKey == null || primaryKey.isBlank()) {
-            throw new IllegalArgumentException(Constants.FAILED_TO_GET_CUSTOMER + Constants.PRIMARY_KEY_IS_EMPTY);
+            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + Constants.PRIMARY_KEY_IS_EMPTY);
         }
         try {
             return CatalogTypes.fromSFCustomer(customerDao.getCustomerById(primaryKey));
-        } catch (IOException | ExecutionException cause) {
-            throw new RuntimeException(cause.getMessage());
-        } catch (IllegalArgumentException illegalArgumentException) {
-            throw new IllegalArgumentException(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new InterruptedIOException(interruptedException.getMessage());
+        } catch (IOException | ExecutionException | InterruptedException | IllegalArgumentException cause) {
+            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + cause.getMessage());
         }
+        return new Customer();
     }
 
     @Override
     public Customer update(Customer customer) throws IOException {
         if (customer == null) {
-            throw new IllegalArgumentException("Failed to update customer. Customer not found for update");
+            System.err.println("Failed to update customer. Customer not found for update");
         }
         try {
             customerDao.updateCustomer(new CustomerImpl(SFCustomer.from(customer)));
             return get(customer.id);
-        } catch (IOException | ExecutionException | IllegalAccessException cause) {
-            throw new RuntimeException(cause.getMessage());
-        } catch (IllegalArgumentException illegalArgumentException) {
-            throw new IllegalArgumentException(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new InterruptedIOException(interruptedException.getMessage());
+        } catch (IOException | ExecutionException | InterruptedException | IllegalAccessException |
+                 IllegalArgumentException cause) {
+            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + cause.getMessage());
         }
+        return new Customer();
     }
 
     @Override
     public void delete(String primaryKey) throws IOException {
         if (primaryKey == null || primaryKey.isBlank()) {
-            throw new IllegalArgumentException("Failed to delete case." + Constants.PRIMARY_KEY_IS_EMPTY);
+            System.err.println("Failed to delete case." + Constants.PRIMARY_KEY_IS_EMPTY);
         }
         try {
             customerDao.deleteCustomerById(primaryKey);
-        } catch (IOException | ExecutionException cause) {
-            throw new RuntimeException(cause.getMessage(), cause);
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(interruptedException.getMessage(), interruptedException);
+        } catch (IOException | ExecutionException | InterruptedException cause) {
+            System.err.println("Failed to delete" + cause.getMessage());
         }
     }
 
@@ -132,14 +117,10 @@ public final class CustomerStore implements EntityStore<Customer> {
                 return customerDao.getCustomerByQuery(query).stream()
                         .map(CatalogTypes::fromSFCustomer).collect(Collectors.toList());
             }
-        } catch (IOException | ExecutionException cause) {
-            throw new RuntimeException(cause.getMessage());
-        } catch (IllegalArgumentException illegalArgumentException) {
-            throw new IllegalArgumentException(Constants.FAILED_TO_SEARCH + illegalArgumentException.getMessage());
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new InterruptedIOException(interruptedException.getMessage());
+        } catch (IOException | ExecutionException | InterruptedException | IllegalArgumentException cause) {
+            System.err.println(Constants.FAILED_TO_SEARCH + cause.getMessage());
         }
+        return List.of();
     }
 
     @Override
