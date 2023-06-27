@@ -41,10 +41,8 @@ public final class CustomerStore implements EntityStore<Customer> {
         try {
             String customerId = customerDao.createCustomer(entityDefinition);
             return get(customerId);
-        } catch (IOException cause) {
-            System.err.println(cause.getMessage());
-        } catch (IllegalArgumentException illegalArgumentException) {
-            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
+        } catch (IOException | IllegalArgumentException cause) {
+            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + cause.getMessage());
         }
         return new Customer();
     }
@@ -56,10 +54,8 @@ public final class CustomerStore implements EntityStore<Customer> {
         }
         try {
             return CatalogTypes.fromSFCustomer(customerDao.getCustomerById(primaryKey));
-        } catch (IOException | ExecutionException | InterruptedException cause) {
-            System.err.println(cause.getMessage());
-        } catch (IllegalArgumentException illegalArgumentException) {
-            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
+        } catch (IOException | ExecutionException | InterruptedException | IllegalArgumentException cause) {
+            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + cause.getMessage());
         }
         return new Customer();
     }
@@ -72,10 +68,9 @@ public final class CustomerStore implements EntityStore<Customer> {
         try {
             customerDao.updateCustomer(new CustomerImpl(SFCustomer.from(customer)));
             return get(customer.id);
-        } catch (IOException | ExecutionException | InterruptedException | IllegalAccessException cause) {
-            System.err.println(cause.getMessage());
-        } catch (IllegalArgumentException illegalArgumentException) {
-            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
+        } catch (IOException | ExecutionException | InterruptedException | IllegalAccessException |
+                 IllegalArgumentException cause) {
+            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + cause.getMessage());
         }
         return new Customer();
     }
@@ -87,10 +82,8 @@ public final class CustomerStore implements EntityStore<Customer> {
         }
         try {
             customerDao.deleteCustomerById(primaryKey);
-        } catch (IOException | ExecutionException cause) {
-            System.err.println(cause.getMessage());
-        } catch (InterruptedException interruptedException) {
-            System.err.println(interruptedException.getMessage() + interruptedException);
+        } catch (IOException | ExecutionException | InterruptedException cause) {
+            System.err.println("Failed to delete" + cause.getMessage());
         }
     }
 
@@ -124,10 +117,8 @@ public final class CustomerStore implements EntityStore<Customer> {
                 return customerDao.getCustomerByQuery(query).stream()
                         .map(CatalogTypes::fromSFCustomer).collect(Collectors.toList());
             }
-        } catch (IOException | ExecutionException | InterruptedException cause) {
-            System.err.println(cause.getMessage());
-        } catch (IllegalArgumentException illegalArgumentException) {
-            System.err.println(Constants.FAILED_TO_SEARCH + illegalArgumentException.getMessage());
+        } catch (IOException | ExecutionException | InterruptedException | IllegalArgumentException cause) {
+            System.err.println(Constants.FAILED_TO_SEARCH + cause.getMessage());
         }
         return List.of();
     }

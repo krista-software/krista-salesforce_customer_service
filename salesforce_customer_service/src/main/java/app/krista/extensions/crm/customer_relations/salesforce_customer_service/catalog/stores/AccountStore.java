@@ -49,7 +49,7 @@ public final class AccountStore implements EntityStore<Account> {
             String customerId = accountDao.createAccount(entityDefinition);
             return get(customerId);
         } catch (IOException | ExecutionException | InterruptedException cause) {
-            System.err.println(cause.getMessage());
+            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             System.err.println(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
         }
@@ -68,7 +68,7 @@ public final class AccountStore implements EntityStore<Account> {
         try {
             return CatalogTypes.fromSFAccount(accountDao.getAccountById(primaryKey));
         } catch (IOException | ExecutionException | InterruptedException cause) {
-            System.err.println(cause.getMessage());
+            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             System.err.println(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
         }
@@ -89,7 +89,7 @@ public final class AccountStore implements EntityStore<Account> {
             accountDao.updateAccount(new AccountImpl(SFAccount.from(account)));
             return get(account.id);
         } catch (IOException | ExecutionException | IllegalAccessException | InterruptedException cause) {
-            System.err.println(cause.getMessage());
+            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             System.err.println(Constants.FAILED_TO_GET_CUSTOMER + illegalArgumentException.getMessage());
         }
@@ -104,9 +104,9 @@ public final class AccountStore implements EntityStore<Account> {
         try {
             accountDao.deleteAccountById(primaryKey);
         } catch (IOException | ExecutionException cause) {
-            System.err.println(cause.getMessage());
+            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + cause.getMessage());
         } catch (InterruptedException interruptedException) {
-            System.err.println(interruptedException.getMessage());
+            System.err.println(Constants.FAILED_TO_GET_CUSTOMER + interruptedException.getMessage());
         }
     }
 
@@ -145,7 +145,7 @@ public final class AccountStore implements EntityStore<Account> {
                 return accountDao.getAccountByQuery(query).stream().map(CatalogTypes::fromSFAccount).collect(Collectors.toList());
             }
         } catch (IOException | ExecutionException | InterruptedException cause) {
-            System.err.println(cause.getMessage());
+            System.err.println(Constants.FAILED_TO_SEARCH + cause.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             System.err.println(Constants.FAILED_TO_SEARCH + illegalArgumentException.getMessage());
         }

@@ -72,10 +72,10 @@ public class CustomerDaoImpl implements CustomerDao {
             var response = Constants.GSON.fromJson(salesforceService.createRecord(
                     Constants.GSON.toJson(SFCustomer.from(entityDefinition)), CUSTOMER), Map.class);
             return String.valueOf(response.get("id"));
-        } catch (JsonSyntaxException ex) {
-            System.err.println("Failed to create the customer record. Please ensure the provided information is correct and try again.");
-        } catch (IOException | ExecutionException | InterruptedException ex) {
-            System.err.println("An unexpected error occurred while creating the customer record. Please try again.");
+        } catch (JsonSyntaxException cause) {
+            System.err.println("Failed to create the customer record. Please ensure the provided information is correct and try again." + cause.getMessage());
+        } catch (IOException | ExecutionException | InterruptedException cause) {
+            System.err.println("An unexpected error occurred while creating the customer record. Please try again." + cause.getMessage());
         }
         return "";
     }
