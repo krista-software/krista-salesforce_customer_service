@@ -37,6 +37,79 @@ Krista Salesforce Customer Service Module Extension supports the following Catal
 |--------------------|--------------------|
 | Is Updated         | Boolean            |
 
+#### Account Change Alert
+
+- **Description**: This request is for the changes(creation and update) in the accounts.
+- **Input Parameters**: No Parameters Required
+
+- **Output Parameters**:
+
+| **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
+| Response           | MultiField         |
+
+
+**Steps To Create Alert In Salesforce Sale**
+
+- Navigate to the Setup icon and then click **Setup**.
+  ![Setup](../_media/setup.png)
+
+- On the SETUP Home page, under the **Process Automation** menu on the left panel, under the **Workflow Actions**,
+  click **Outbound Messages**.
+  ![Outbound Messages](../_media/outboundMessages.png)
+
+- On the **Outbound Messages** page, click on **New Outbound Message**.
+
+  - Select **Case** object and then click on **Next**.
+
+  - On the next page enter **Name**.
+
+  - Enter **Endpoint URL**
+    - Go to the Detail's page of the extension and copy the Routing id from there. After that, append **'
+      /rest/salesforcecustomerservice/caseChanged'** at the end of the routing id (This is your endpoint uri)
+
+      ![Routing Id Reference](../_media/routingId.png)
+
+  - Select Case fields from case entity list to send and then click **Save**.
+
+    ![Create Outbound Message](../_media/createCaseOutboundMessage.png)
+
+  - Now create **Workflow Rule**.
+
+  - On the SETUP Home page, under the **Process Automation** menu on the left panel, click **Workflow Rules**.
+    ![Setup](../_media/workflowRules.png)
+
+  - On the **Workflow Rules**, click **New Role** and select **Continue with Workflow Rules**.
+
+  - On the workflow rule page, select **Case** as object then click **Next**.
+
+  - On the next page add **Rule Name**, **Evaluation Criteria**, and **Rule Criteria** and then click **Save and Next
+    **.
+
+  - On the next page click **Add Workflow Action** and select **Select Existing Action**.
+
+  - On the next page select **Outbound Message** under the **Choose Action Type**.
+
+  - And select your created Outbound Message under **Available Actions** and click Add arrow, and then click **Save**
+
+  - Now click on **Done** button
+
+* Now **Set History Tracking**:
+  - Click on Setup icon on the upper right of the salesforce page.
+  - Select object manager on the left upper navigation bar.
+  - Select Case if you are working with case change alert  as the LABEL.
+  - Select Fields and Relationships from the left menu.
+  - Click on **Set History Tracking** on the upper right and enable Case History.
+  - Select the below given fields and save.
+    ![Setup](../pages/../_media/addCasesFields.png)
+
+  - Select Page Layouts from the left menu.
+  - Click on Case Layout if you are working with case change alert  from the given options.
+  - Click on Related Lists.
+  - Drag and drop the Case History icon for case change alert in the Related Fields below and save the changes.
+    ![Setup](../pages/../_media/addCaseTab.png)
+
+
 
 ## Entity Requests
 
