@@ -6,7 +6,6 @@ import app.krista.extension.impl.anno.Domain;
 import app.krista.extension.impl.anno.Field;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.CaseDaoImpl;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
-import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.DatePlus;
 import app.krista.model.base.FreeForm;
 import app.krista.model.field.util.FieldValues;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -16,11 +15,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
-import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Validators.getDoubleOrZero;
-import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Validators.getStringOrEmpty;
+import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.SFObjectHelper.upsertCaseMap;
 
 @Domain(id = "catEntryDomain_a66f83b1-fa58-427f-b8b9-0c83a401bf53",
         name = "Customer Relations",
@@ -89,16 +86,16 @@ public class CaseManagementArea {
         try {
             if (eventName.equals("Case Change Alert")) {
                 caseMap.put("Case Id", eventData.get("Id"));
-                setCaseDetails(eventData, caseMap);
+                upsertCaseMap(eventData, caseMap);
                 updateCaseDetails(eventData, caseMap);
             }
         } catch (IllegalArgumentException cause) {
-            System.err.println(cause.getMessage());
+            System.err.println("This error is for case change alert." + cause.getMessage());
         } catch (IOException | ExecutionException cause) {
-            throw new RuntimeException(cause);
+            throw new IllegalStateException(cause);
         } catch (InterruptedException cause) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException(cause);
+            throw new IllegalStateException(cause);
         }
         return caseMap;
     }
@@ -110,28 +107,9 @@ public class CaseManagementArea {
 
         Map<String, Object> fetched = caseDao.getCaseUpdatedFields(query);
         if (fetched.size() != 1 || !fetched.containsKey(Constants.CREATED)) {
-            setCaseDetails(fetched, caseMap);
+            upsertCaseMap(fetched, caseMap);
         }
     }
 
-    private static void setCaseDetails(Map<String, Object> caseData, Map<String, Object> caseMap) {
-        caseMap.put("Case Contact Id", getStringOrEmpty(caseData.get("ContactId")));
-        caseMap.put("Case Account Id", getStringOrEmpty(caseData.get("AccountId")));
-        caseMap.put("Case Subject", getStringOrEmpty(caseData.get("Subject")));
-        caseMap.put("Case Is Closed", caseData.get("IsClosed"));
-        caseMap.put("Case Owner Id", getStringOrEmpty(caseData.get("OwnerId")));
-        caseMap.put("Case Created Date", caseData.get("CreatedDate") != null
-                ? Objects.requireNonNull(DatePlus.fromYYYYMMDD(caseData.get("CreatedDate").toString())).getTime()
-                : null);
-        caseMap.put("Case Last Modified Case", caseData.get("LastModifiedDate") != null
-                ? Objects.requireNonNull(DatePlus.fromYYYYMMDD(caseData.get("LastModifiedDate").toString())).getTime()
-                : null);
-        caseMap.put("Case Number", getDoubleOrZero(caseData.get("CaseNumber")));
-        caseMap.put("Case Status", getStringOrEmpty(caseData.get("Status")));
-        caseMap.put("Case Reason", getStringOrEmpty(caseData.get("Reason")));
-        caseMap.put("Case Origin", getStringOrEmpty(caseData.get("Origin")));
-        caseMap.put("Case Description", getStringOrEmpty(caseData.get("Description")));
-        caseMap.put("Case Priority", getStringOrEmpty(caseData.get("Priority")));
-    }
 }
 
