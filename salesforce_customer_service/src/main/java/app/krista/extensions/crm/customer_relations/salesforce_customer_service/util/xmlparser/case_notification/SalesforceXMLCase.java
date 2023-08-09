@@ -17,7 +17,7 @@ public final class SalesforceXMLCase {
     @XmlElement(name = "Subject", namespace = ENTERPRISE_SOAP_SFORCE_COM)
     public String Subject;
     @XmlElement(name = "IsClosed", namespace = ENTERPRISE_SOAP_SFORCE_COM)
-    public String IsClosed;
+    public Boolean IsClosed;
     @XmlElement(name = "OwnerId", namespace = ENTERPRISE_SOAP_SFORCE_COM)
     public String OwnerId;
     @XmlElement(name = "CreatedDate", namespace = ENTERPRISE_SOAP_SFORCE_COM)
@@ -43,7 +43,7 @@ public final class SalesforceXMLCase {
         freeForm.put("ContactId", TEXT, ContactId);
         freeForm.put("AccountId", TEXT, AccountId);
         freeForm.put("Subject", TEXT, Subject);
-        freeForm.put("IsClosed", TEXT, IsClosed);
+        freeForm.put("IsClosed", "Switch", IsClosed);
         freeForm.put("OwnerId", TEXT, OwnerId);
         freeForm.put("CreatedDate", LONG, CreatedDate);
         freeForm.put("LastModifiedDate", LONG, LastModifiedDate);

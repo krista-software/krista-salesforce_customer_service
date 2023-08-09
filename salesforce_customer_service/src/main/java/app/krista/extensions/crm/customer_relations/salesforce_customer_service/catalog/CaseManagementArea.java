@@ -78,10 +78,10 @@ public class CaseManagementArea {
     @CatalogRequest(
             id = "localDomainRequest_6efb4f6c-745d-4c2f-8582-f03e447c5e15",
             name = "Case Change Alert",
-            description = "This request is for the changes(creation and update) in the cases.",
+            description = "This request will alert the user whenever you create a case or update any case.",
             area = "Case management",
             type = CatalogRequest.Type.WAIT_FOR_EVENT)
-    @Field.Desc(name = "CaseResponse", type = "{ Case Id: Text, Case Contact Id: Text, Case Account Id: Text, Case Subject: Text, Case Is Closed: Text, Case Owner Id: Text, Case Created Date: Date, Case Last Modified Case: Date, Case Number: Number, Case Status: Text, Case Reason: Text, Case Origin: Text, Case Description: Paragraph, Case Priority: Text }", required = false)
+    @Field.Desc(name = "CaseResponse", type = "{ Case Id: Text, Case Contact Id: Text, Case Account Id: Text, Case Subject: Text, Case Is Closed: Boolean, Case Owner Id: Text, Case Created Date: Date, Case Last Modified Case: Date, Case Number: Number, Case Status: Text, Case Reason: Text, Case Origin: Text, Case Description: Paragraph, Case Priority: Text }",required = false)
     public Map<String, Object> caseChangeAlert(
             @Field(name = "eventName", type = "Text") String eventName,
             @Field(name = "eventData", type = "FreeForm") FreeForm eventData) {
@@ -94,11 +94,11 @@ public class CaseManagementArea {
             }
         } catch (IllegalArgumentException cause) {
             System.err.println(cause.getMessage());
-        } catch (IOException | ExecutionException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
+        } catch (IOException | ExecutionException cause) {
+            throw new RuntimeException(cause);
+        } catch (InterruptedException cause) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
+            throw new RuntimeException(cause);
         }
         return caseMap;
     }
@@ -118,7 +118,7 @@ public class CaseManagementArea {
         caseMap.put("Case Contact Id", getStringOrEmpty(caseData.get("ContactId")));
         caseMap.put("Case Account Id", getStringOrEmpty(caseData.get("AccountId")));
         caseMap.put("Case Subject", getStringOrEmpty(caseData.get("Subject")));
-        caseMap.put("Case Is Closed", getStringOrEmpty(caseData.get("IsClosed")));
+        caseMap.put("Case Is Closed", caseData.get("IsClosed"));
         caseMap.put("Case Owner Id", getStringOrEmpty(caseData.get("OwnerId")));
         caseMap.put("Case Created Date", caseData.get("CreatedDate") != null
                 ? Objects.requireNonNull(DatePlus.fromYYYYMMDD(caseData.get("CreatedDate").toString())).getTime()

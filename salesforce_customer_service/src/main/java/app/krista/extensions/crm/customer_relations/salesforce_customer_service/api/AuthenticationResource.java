@@ -97,7 +97,7 @@ public final class AuthenticationResource {
     }
 
     @POST
-    @Path("/caseChanged")
+    @Path("/casechanged")
     public Response handleCaseChangedEvent(String xml) throws Exception {
         JAXBElement<CaseNotifications> caseNotifications = XMlResponseParser.parseCaseXmlResponse(xml);
         if (caseNotifications != null) {
