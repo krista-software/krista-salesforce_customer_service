@@ -10,14 +10,14 @@ public class SFCaseHistory {
     public boolean done;
     public List<Record> records;
 
-    public Map<String, Object> toArrayList() {
+    public Map<String, Object> toMap() {
         Map<String, Object> newRecord = new HashMap<>();
         newRecord.put(records.get(0).Field, records.get(0).NewValue);
         Long createdDate = records.get(0).CreatedDate.getTime();
-        for (int i = 1;i<records.size();i++) {
-            if(createdDate>records.get(i).CreatedDate.getTime()) {
+        for (int i = 1; i < records.size(); i++) {
+            if (createdDate > records.get(i).CreatedDate.getTime()) {
                 return newRecord;
-            } else if (createdDate==records.get(i).CreatedDate.getTime()) {
+            } else if (createdDate == records.get(i).CreatedDate.getTime()) {
                 newRecord.put(records.get(i).Field, records.get(i).NewValue);
             }
         }
@@ -29,7 +29,6 @@ public class SFCaseHistory {
         public Attributes attributes;
         public String Id;
         public boolean IsDeleted;
-        //public String AccountId;
         public String CreatedById;
         public Date CreatedDate;
         public String Field;

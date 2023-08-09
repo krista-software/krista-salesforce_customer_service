@@ -6,68 +6,53 @@ import app.krista.model.base.FreeForm;
 import javax.xml.bind.annotation.XmlElement;
 
 import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants.*;
-import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants.LONG;
 
 public final class SalesforceXMLCase {
-
-    @XmlElement(name = "AccountId", namespace = "urn:sobject.enterprise.soap.sforce.com")
-    public String AccountId;
-    @XmlElement(name = "CaseNumber", namespace = "urn:sobject.enterprise.soap.sforce.com")
-    public Double CaseNumber;
-    @XmlElement(name = "ContactEmail", namespace = "urn:sobject.enterprise.soap.sforce.com")
-    public String ContactEmail;
-    @XmlElement(name = "Id", namespace = "urn:sobject.enterprise.soap.sforce.com")
+    @XmlElement(name = "Id", namespace = ENTERPRISE_SOAP_SFORCE_COM)
     public String Id;
-    @XmlElement(name = "ContactId", namespace = "urn:sobject.enterprise.soap.sforce.com")
+    @XmlElement(name = "ContactId", namespace = ENTERPRISE_SOAP_SFORCE_COM)
     public String ContactId;
-    @XmlElement(name = "ContactPhone", namespace = "urn:sobject.enterprise.soap.sforce.com")
-    public String ContactPhone;
-    @XmlElement(name = "Description", namespace = "urn:sobject.enterprise.soap.sforce.com")
-    public String Description;
-    @XmlElement(name = "IsClosed", namespace = "urn:sobject.enterprise.soap.sforce.com")
-    public String IsClosed;
-    @XmlElement(name = "Origin", namespace = "urn:sobject.enterprise.soap.sforce.com")
-    public String Origin;
-    @XmlElement(name = "OwnerId", namespace = "urn:sobject.enterprise.soap.sforce.com")
-    public String OwnerId;
-    @XmlElement(name = "Priority", namespace = "urn:sobject.enterprise.soap.sforce.com")
-    public String Priority;
-    @XmlElement(name = "Reason", namespace = "urn:sobject.enterprise.soap.sforce.com")
-    public String Reason;
-    @XmlElement(name = "Status", namespace = "urn:sobject.enterprise.soap.sforce.com")
-    public String Status;
-    @XmlElement(name = "Subject", namespace = "urn:sobject.enterprise.soap.sforce.com")
+    @XmlElement(name = "AccountId", namespace = ENTERPRISE_SOAP_SFORCE_COM)
+    public String AccountId;
+    @XmlElement(name = "Subject", namespace = ENTERPRISE_SOAP_SFORCE_COM)
     public String Subject;
-    @XmlElement(name = "MobilePhone", namespace = "urn:sobject.enterprise.soap.sforce.com")
-    public String MobilePhone;
-    @XmlElement(name = "Email", namespace = "urn:sobject.enterprise.soap.sforce.com")
-    public String Email;
-    @XmlElement(name = "CreatedDate", namespace = "urn:sobject.enterprise.soap.sforce.com")
+    @XmlElement(name = "IsClosed", namespace = ENTERPRISE_SOAP_SFORCE_COM)
+    public String IsClosed;
+    @XmlElement(name = "OwnerId", namespace = ENTERPRISE_SOAP_SFORCE_COM)
+    public String OwnerId;
+    @XmlElement(name = "CreatedDate", namespace = ENTERPRISE_SOAP_SFORCE_COM)
     public Long CreatedDate;
-
-    @XmlElement(name = "LastModifiedDate", namespace = "urn:sobject.enterprise.soap.sforce.com")
+    @XmlElement(name = "LastModifiedDate", namespace = ENTERPRISE_SOAP_SFORCE_COM)
     public Long LastModifiedDate;
+    @XmlElement(name = "CaseNumber", namespace = ENTERPRISE_SOAP_SFORCE_COM)
+    public Double CaseNumber;
+    @XmlElement(name = "Status", namespace = ENTERPRISE_SOAP_SFORCE_COM)
+    public String Status;
+    @XmlElement(name = "Reason", namespace = ENTERPRISE_SOAP_SFORCE_COM)
+    public String Reason;
+    @XmlElement(name = "Origin", namespace = ENTERPRISE_SOAP_SFORCE_COM)
+    public String Origin;
+    @XmlElement(name = "Description", namespace = ENTERPRISE_SOAP_SFORCE_COM)
+    public String Description;
+    @XmlElement(name = "Priority", namespace = ENTERPRISE_SOAP_SFORCE_COM)
+    public String Priority;
 
-    public FreeForm toLeadFreeForm() {
+    public FreeForm toCaseFreeForm() {
         FreeForm freeForm = new FreeForm();
         freeForm.put("Id", TEXT, Id);
-        freeForm.put("AccountId", TEXT, AccountId);
-        freeForm.put("ContactEmail", TEXT, ContactEmail);
         freeForm.put("ContactId", TEXT, ContactId);
-        freeForm.put("ContactPhone", TEXT, ContactPhone);
-        freeForm.put("Description", TEXT, Description);
+        freeForm.put("AccountId", TEXT, AccountId);
+        freeForm.put("Subject", TEXT, Subject);
         freeForm.put("IsClosed", TEXT, IsClosed);
+        freeForm.put("OwnerId", TEXT, OwnerId);
+        freeForm.put("CreatedDate", LONG, CreatedDate);
+        freeForm.put("LastModifiedDate", LONG, LastModifiedDate);
+        freeForm.put("CaseNumber", DOUBLE, CaseNumber);
+        freeForm.put("Status", TEXT, Status);
+        freeForm.put("Reason", TEXT, Reason);
         freeForm.put("Origin", TEXT, Origin);
-        freeForm.put("OwnerId", TEXT, OwnerId);//
-        freeForm.put("Priority", TEXT, Priority);//
-        freeForm.put("Reason", TEXT, Reason);//
-        freeForm.put("Status", TEXT, Status);//
-        freeForm.put("Subject", TEXT, Subject);//
-        freeForm.put("MobilePhone", TEXT, MobilePhone);//
-        freeForm.put("Email", TEXT, Email);//
-        freeForm.put("CaseNumber", DOUBLE, CaseNumber);//
-        freeForm.put("CreatedDate", LONG, CreatedDate);//
-        freeForm.put("LastModifiedDate", LONG, LastModifiedDate);//
+        freeForm.put("Description", TEXT, Description);
+        freeForm.put("Priority", TEXT, Priority);
         return freeForm;
     }
 }

@@ -125,9 +125,10 @@ public final class CaseDaoImpl implements CaseDao {
             return Boolean.FALSE;
         }
     }
+
     public Map<String, Object> getCaseUpdatedFields(String query) throws IOException, ExecutionException, InterruptedException {
         String response = salesforceService.getRecordByQuery(query);
         SFCaseHistory sfCaseHistory = GSON.fromJson(response, SFCaseHistory.class);
-        return sfCaseHistory.toArrayList();
+        return sfCaseHistory.toMap();
     }
 }

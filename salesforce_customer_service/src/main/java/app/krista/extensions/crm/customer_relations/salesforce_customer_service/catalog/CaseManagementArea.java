@@ -19,8 +19,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
-import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Validators.getValidatedDouble;
-import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Validators.getValidatedString;
+import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Validators.getDoubleOrZero;
+import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Validators.getStringOrEmpty;
 
 @Domain(id = "catEntryDomain_a66f83b1-fa58-427f-b8b9-0c83a401bf53",
         name = "Customer Relations",
@@ -82,34 +82,26 @@ public class CaseManagementArea {
             description = "This request is for the changes(creation and update) in the cases.",
             area = "Case management",
             type = CatalogRequest.Type.WAIT_FOR_EVENT)
-    @Field.Desc(name = "CaseResponse", type = "{ Case Id: Text, Case Contact Id: Text, Case Account Id: Text, Case Contact Name: Text, Case Subject: Text, Case Is Closed: Boolean, Case Owner Id: Text, Case Account Name: Text, Case Created Date: Date, Case Last Modified Case: Date, Case Number: Number, Case Contact Email: Email, Case Contact Phone: Phone, Case Status: Text, Case Reason: Text, Case Origin: Text, Case Description: Paragraph, Case Priority: Text }", required = false)
+    @Field.Desc(name = "CaseResponse", type = "{ Case Id: Text, Case Contact Id: Text, Case Account Id: Text, Case Subject: Text, Case Is Closed: Text, Case Owner Id: Text, Case Created Date: Date, Case Last Modified Case: Date, Case Number: Number, Case Status: Text, Case Reason: Text, Case Origin: Text, Case Description: Paragraph, Case Priority: Text }", required = false)
     public Map<String, Object> caseChangeAlert(
             @Field(name = "eventName", type = "Text") String eventName,
             @Field(name = "eventData", type = "FreeForm") FreeForm eventData) {
+        Map<String, Object> caseMap = new HashMap<>();
         try {
-            System.out.println("In wait for event");
             if (eventName.equals("Case Change Alert")) {
-                System.out.println("got event data");
-                Map<String, Object> caseMap = new HashMap<>();
-                System.out.println("created map");
                 caseMap.put("Case Id", eventData.get("Id"));
-                System.out.println("Added case id: " + eventData.get("Id"));
                 setCaseDetails(eventData, caseMap);
-                System.out.println("set default details");
                 updateCaseDetails(eventData, caseMap);
-                System.out.println("updated details");
-                return caseMap;
             }
-            return Map.of();
         } catch (IllegalArgumentException cause) {
             System.err.println(cause.getMessage());
-            return Map.of();
         } catch (IOException | ExecutionException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
+        return caseMap;
     }
 
     private void updateCaseDetails(FreeForm eventData, Map<String, Object> caseMap) throws IOException, ExecutionException, InterruptedException {
@@ -123,31 +115,11 @@ public class CaseManagementArea {
     }
 
     private static void setCaseDetails(Map<String, Object> caseData, Map<String, Object> caseMap) {
-        /*String accountName = "";
-        if (caseData.containsKey("Name")) {
-            accountName = caseData.get("Name").toString();
-        } else if (caseData.containsKey("TextName")) {
-            accountName = caseData.get("TextName").toString();
-        }.*/
-        //caseMap.put("Account Name", accountName);
-        //caseMap.put("Case Contact Id", getValidatedString(caseData.get("Fax")));
-        caseMap.put("Case Account Id", getValidatedString(caseData.get("AccountId")));//
-        //caseMap.put("Case Contact Name", getValidatedString(caseData.get("ContactEmail")));
-        caseMap.put("Case Subject", getValidatedString(caseData.get("Subject")));//
-        caseMap.put("Case Is Closed", getValidatedString(caseData.get("IsClosed")));//
-        caseMap.put("Case Owner Id", getValidatedString(caseData.get("OwnerId")));//
-        //caseMap.put("Case Account Name", getValidatedString(caseData.get("Email")));
-        caseMap.put("Case Contact Id", getValidatedString(caseData.get("ContactId")));
-        caseMap.put("Case Priority", getValidatedString(caseData.get("Priority")));
-        //caseMap.put("Case Number", getValidatedString(caseData.get("MobilePhone")));
-        caseMap.put("Case Contact Email", getValidatedString(caseData.get("ContactEmail")));//
-        caseMap.put("Case Contact Phone", getValidatedString(caseData.get("ContactPhone")));//
-        caseMap.put("Case Status", getValidatedString(caseData.get("Status")));//
-        caseMap.put("Case Reason", getValidatedString(caseData.get("Reason")));//
-        caseMap.put("Case Origin", getValidatedString(caseData.get("Origin")));//
-        caseMap.put("Case Description", getValidatedString(caseData.get("Description")));//
-
-        caseMap.put("Case Number", getValidatedDouble(caseData.get("CaseNumber")));
+        caseMap.put("Case Contact Id", getStringOrEmpty(caseData.get("ContactId")));
+        caseMap.put("Case Account Id", getStringOrEmpty(caseData.get("AccountId")));
+        caseMap.put("Case Subject", getStringOrEmpty(caseData.get("Subject")));
+        caseMap.put("Case Is Closed", getStringOrEmpty(caseData.get("IsClosed")));
+        caseMap.put("Case Owner Id", getStringOrEmpty(caseData.get("OwnerId")));//
         caseMap.put("Case Created Date", caseData.get("CreatedDate") != null
                 ? Objects.requireNonNull(
                 DatePlus.fromYYYYMMDD(caseData.get("CreatedDate").toString())).getTime()
@@ -156,11 +128,12 @@ public class CaseManagementArea {
                 ? Objects.requireNonNull(
                 DatePlus.fromYYYYMMDD(caseData.get("LastModifiedDate").toString())).getTime()
                 : null);//
-
-        caseMap.forEach((k, v) -> {
-            System.out.println(k + " : " + v);
-        });
-
+        caseMap.put("Case Number", getDoubleOrZero(caseData.get("CaseNumber")));
+        caseMap.put("Case Status", getStringOrEmpty(caseData.get("Status")));
+        caseMap.put("Case Reason", getStringOrEmpty(caseData.get("Reason")));
+        caseMap.put("Case Origin", getStringOrEmpty(caseData.get("Origin")));
+        caseMap.put("Case Description", getStringOrEmpty(caseData.get("Description")));
+        caseMap.put("Case Priority", getStringOrEmpty(caseData.get("Priority")));
     }
 }
 

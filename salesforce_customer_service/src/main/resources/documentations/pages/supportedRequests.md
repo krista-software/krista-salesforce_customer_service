@@ -37,9 +37,9 @@ Krista Salesforce Customer Service Module Extension supports the following Catal
 |--------------------|--------------------|
 | Is Updated         | Boolean            |
 
-#### Account Change Alert
+#### Case Change Alert
 
-- **Description**: This request is for the changes(creation and update) in the accounts.
+- **Description**: This request is for the changes(creation and update) in the case.
 - **Input Parameters**: No Parameters Required
 
 - **Output Parameters**:
@@ -49,7 +49,7 @@ Krista Salesforce Customer Service Module Extension supports the following Catal
 | Response           | MultiField         |
 
 
-**Steps To Create Alert In Salesforce Sale**
+**Steps To Create Alert In Salesforce Customer Service**
 
 - Navigate to the Setup icon and then click **Setup**.
   ![Setup](../_media/setup.png)
@@ -58,15 +58,15 @@ Krista Salesforce Customer Service Module Extension supports the following Catal
   click **Outbound Messages**.
   ![Outbound Messages](../_media/outboundMessages.png)
 
-- On the **Outbound Messages** page, click on **New Outbound Message**.
+- On the **Outbound Messages** page, click **New Outbound Message**.
 
-  - Select **Case** object and then click on **Next**.
+  - Select **Case** object and then click **Next**.
 
   - On the next page enter **Name**.
 
   - Enter **Endpoint URL**
     - Go to the Detail's page of the extension and copy the Routing id from there. After that, append **'
-      /rest/salesforcecustomerservice/caseChanged'** at the end of the routing id (This is your endpoint uri)
+      /rest/salesforcecustomerservice/caseChanged'** at the end of the routing id (This is your endpoint url).
 
       ![Routing Id Reference](../_media/routingId.png)
 
@@ -79,27 +79,26 @@ Krista Salesforce Customer Service Module Extension supports the following Catal
   - On the SETUP Home page, under the **Process Automation** menu on the left panel, click **Workflow Rules**.
     ![Setup](../_media/workflowRules.png)
 
-  - On the **Workflow Rules**, click **New Role** and select **Continue with Workflow Rules**.
+  - On the **Workflow Rules**, click **New Rule** and select **Continue with Workflow Rules**.
 
-  - On the workflow rule page, select **Case** as object then click **Next**.
+  - On the Workflow Rules page, From the Object drop-down list, select **Case** as an object then click **Next**.
 
-  - On the next page add **Rule Name**, **Evaluation Criteria**, and **Rule Criteria** and then click **Save and Next
-    **.
+  - On the next page add **Rule Name**, **Evaluation Criteria**, and **Rule Criteria** and then click **Save & Next**.
 
   - On the next page click **Add Workflow Action** and select **Select Existing Action**.
 
   - On the next page select **Outbound Message** under the **Choose Action Type**.
 
-  - And select your created Outbound Message under **Available Actions** and click Add arrow, and then click **Save**
+  - And select your created Outbound Message under **Available Actions** and click Add arrow, and then click **Save**.
 
-  - Now click on **Done** button
+  - Now click **Done** button.
 
-* Now **Set History Tracking**:
-  - Click on Setup icon on the upper right of the salesforce page.
+* For the purpose of tracking history of attribute values, perform the following steps:
+  - Click Setup icon on the upper right of the salesforce page.
   - Select object manager on the left upper navigation bar.
   - Select Case if you are working with case change alert  as the LABEL.
   - Select Fields and Relationships from the left menu.
-  - Click on **Set History Tracking** on the upper right and enable Case History.
+  - Click **Set History Tracking** on the upper right and enable Case History.
   - Select the below given fields and save.
     ![Setup](../pages/../_media/addCasesFields.png)
 

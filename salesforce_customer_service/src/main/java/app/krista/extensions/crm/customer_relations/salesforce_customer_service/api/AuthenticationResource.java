@@ -6,14 +6,13 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.RefreshTokenStore;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.SalesforceCustomerServiceAttributesStore;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
-import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.xmlparser.case_notification.CaseNotifications;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.xmlparser.XMlResponseParser;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.xmlparser.case_notification.CaseNotifications;
 import app.krista.extensions.util.EventHandler;
 import app.krista.ksdk.authentication.AuthorizationListener;
 import app.krista.ksdk.context.AuthorizationContext;
 import app.krista.model.base.FreeForm;
 import com.github.scribejava.core.model.OAuth2AccessToken;
-
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -43,13 +42,13 @@ public final class AuthenticationResource {
     @Inject
     public AuthenticationResource(RefreshTokenStore refreshTokenStore, SalesforceCustomerServiceAttributesStore attributesStore,
                                   SalesforceTokenProviderFactory providerFactory, AuthorizationContext context,
-                                  AuthorizationListener authorizationListener,EventHandler eventHandler) {
+                                  AuthorizationListener authorizationListener, EventHandler eventHandler) {
         this.refreshTokenStore = refreshTokenStore;
         this.attributesStore = attributesStore;
         this.providerFactory = providerFactory;
         this.authorizationListener = authorizationListener;
         this.context = context;
-        this.eventHandler=eventHandler;
+        this.eventHandler = eventHandler;
     }
 
     @GET
@@ -96,15 +95,15 @@ public final class AuthenticationResource {
         }
         return response;
     }
+
     @POST
     @Path("/caseChanged")
     public Response handleLeadChangedEvent(String xml) throws Exception {
         JAXBElement<CaseNotifications> caseNotifications = XMlResponseParser.parseCaseXmlResponse(xml);
         if (caseNotifications != null) {
-            FreeForm caseNotificationSObject = caseNotifications.getValue().caseNotification.salesforceXMLCase.toLeadFreeForm();
-            System.out.println("got free form for case");
+            FreeForm caseNotificationSObject = caseNotifications.getValue().getCaseNotification().getSalesforceXMLCase()
+                    .toCaseFreeForm();
             eventHandler.handleEvent("Case Change Alert", caseNotificationSObject);
-            System.out.println("Event handled");
         }
         return Response.ok().build();
     }
