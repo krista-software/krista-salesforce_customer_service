@@ -26,7 +26,7 @@ import static app.krista.extensions.crm.customer_relations.salesforce_customer_s
         name = "Customer Relations",
         ecosystemId = "catEntryEcosystem_8a0e8ce7-6289-492f-9202-52284024280c",
         ecosystemName = "CRM",
-        ecosystemVersion = "77982b01-4fdd-4818-b140-360c9a3fe957")
+        ecosystemVersion = "abc90187-31a8-460e-b19b-99ae146e6ee8")
 public class CaseManagementArea {
     private final CaseDaoImpl caseDao;
 
