@@ -8,6 +8,12 @@ import static app.krista.extensions.crm.customer_relations.salesforce_customer_s
 
 public class SFObjectHelper {
 
+    /**
+     * This method is used to put entity fields in map.
+     *
+     * @param caseData
+     * @param caseMap
+     */
     public static void upsertCaseMap(Map<String, Object> caseData, Map<String, Object> caseMap) {
         caseMap.put("Case Contact Id", getStringOrEmpty(caseData.get("ContactId")));
         caseMap.put("Case Account Id", getStringOrEmpty(caseData.get("AccountId")));

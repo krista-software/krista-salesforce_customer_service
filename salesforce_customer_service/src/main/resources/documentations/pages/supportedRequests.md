@@ -8,30 +8,31 @@ Krista Salesforce Customer Service Module Extension supports the following Catal
 
 ### Case Management Area
 
-* Get Case Feed Items By Case Id
-    * Description: This request will fetch the list of post items for the given Case Id.
-    * Input Parameters:
+#### Get Case Feed Items By Case Id
+- **Description**: This request will fetch the list of post items for the given Case Id.
+- **Input Parameters**:
 
 | **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**        |
 |--------------------|--------------------|---------------|--------------------|
 | Case Id            | Text               | Yes           | 0065w00002AlDtDAAM |
 
-* Output:
+- **Output**:
 
 | **Parameter Name** | **Parameter Type**   |
 |--------------------|----------------------|
 | Feed Items         | List&lt;Multi Field> |
 
-* Share Update to Case
-    * Description: This request will add update to the Feed of the Case for the given Case Id.
-    * Input Parameters:
+#### Share Update to Case
+
+- **Description**: This request will add update to the Feed of the Case for the given Case Id. 
+- **Input Parameters**:
 
 | **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**          |
 |--------------------|--------------------|---------------|----------------------|
 | Case Id            | Text               | Yes           | 0065w00002AlDtDAAM   |
 | Update Message     | Paragraph          | Yes           | Message to be posted |
 
-* Output:
+- **Output**:
 
 | **Parameter Name** | **Parameter Type** |
 |--------------------|--------------------|
@@ -42,7 +43,7 @@ Krista Salesforce Customer Service Module Extension supports the following Catal
 - **Description**: This request is for the changes(creation and update) in the case.
 - **Input Parameters**: No Parameters Required
 
-- **Output Parameters**:
+- **Output**:
 
 | **Parameter Name** | **Parameter Type** |
 |--------------------|--------------------|
