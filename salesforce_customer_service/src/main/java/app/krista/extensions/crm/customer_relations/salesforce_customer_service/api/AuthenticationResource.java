@@ -24,13 +24,13 @@ import java.util.Map;
 import java.util.Objects;
 
 import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants.INVALID_STATE_PARAMETERS;
+import static com.github.scribejava.core.model.OAuthConstants.CODE;
+import static com.github.scribejava.core.model.OAuthConstants.STATE;
 
 @Path("/salesforcecustomerservice")
 public final class AuthenticationResource {
     public static final String USER_AUTHENTICATED_SUCCESSFULLY = "User authenticated successfully.";
     public static final String SAVE_THE_CHANGES = " Save the changes.";
-    private static final String CODE = "code";
-    private static final String STATE = "state";
     private final RefreshTokenStore refreshTokenStore;
     private final SalesforceCustomerServiceAttributesStore attributesStore;
     private final SalesforceTokenProviderFactory providerFactory;
@@ -98,7 +98,7 @@ public final class AuthenticationResource {
 
     @POST
     @Path("/casechanged")
-    public Response handleCaseChangedEvent(String xml) throws Exception {
+    public Response handleCaseChangedEvent(String xml) {
         JAXBElement<CaseNotifications> caseNotifications = XMlResponseParser.parseCaseXmlResponse(xml);
         if (caseNotifications != null) {
             FreeForm caseNotificationSObject = caseNotifications.getValue().getCaseNotification().getSalesforceXMLCase()

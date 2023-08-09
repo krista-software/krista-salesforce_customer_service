@@ -92,10 +92,10 @@ public class CaseManagementArea {
         } catch (IllegalArgumentException cause) {
             System.err.println("This error is for case change alert." + cause.getMessage());
         } catch (IOException | ExecutionException cause) {
-            throw new IllegalStateException(cause);
+            throw new IllegalStateException(cause.getMessage(),cause);
         } catch (InterruptedException cause) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException(cause);
+            throw new IllegalStateException(cause.getMessage(),cause);
         }
         return caseMap;
     }

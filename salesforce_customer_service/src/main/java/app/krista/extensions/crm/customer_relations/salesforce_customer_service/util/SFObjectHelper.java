@@ -7,6 +7,8 @@ import static app.krista.extensions.crm.customer_relations.salesforce_customer_s
 import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Validators.getStringOrEmpty;
 
 public class SFObjectHelper {
+    private SFObjectHelper() {
+    }
 
     /**
      * This method is used to put entity fields in map.
