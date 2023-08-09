@@ -35,7 +35,7 @@ public final class XMlResponseParser {
                 xsr.close();
             }
         } catch (XMLStreamException | JAXBException cause) {
-            cause.printStackTrace();
+            System.err.println("XML Parsing Failed for " + notificationClass.getSimpleName() + " with error " + cause.getMessage());
         }
         return null;
     }
