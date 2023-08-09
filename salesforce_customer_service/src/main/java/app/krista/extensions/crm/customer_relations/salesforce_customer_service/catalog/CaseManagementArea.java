@@ -26,12 +26,11 @@ import static app.krista.extensions.crm.customer_relations.salesforce_customer_s
         name = "Customer Relations",
         ecosystemId = "catEntryEcosystem_8a0e8ce7-6289-492f-9202-52284024280c",
         ecosystemName = "CRM",
-        ecosystemVersion = "0b565597-08f7-4ed8-b5d1-8a72322abdaa")
+        ecosystemVersion = "77982b01-4fdd-4818-b140-360c9a3fe957")
 public class CaseManagementArea {
     private final CaseDaoImpl caseDao;
 
-    app.krista.model.field.Field textField = new app.krista.model.field.Field("com.krista.fields.Text",
-            Map.of(), Map.of());
+    app.krista.model.field.Field textField = new app.krista.model.field.Field("com.krista.fields.Text", Map.of(), Map.of());
 
     @Inject
     private CaseManagementArea(CaseDaoImpl caseDao) {
@@ -104,9 +103,10 @@ public class CaseManagementArea {
         return caseMap;
     }
 
-    private void updateCaseDetails(FreeForm eventData, Map<String, Object> caseMap) throws IOException, ExecutionException, InterruptedException {
-        String query = "SELECT Fields(ALL) FROM CaseHistory WHERE CaseId = '" + eventData.get("Id")
-                + "' ORDER BY CreatedDate DESC LIMIT 20";
+    private void updateCaseDetails(FreeForm eventData, Map<String, Object> caseMap) throws IOException,
+            ExecutionException, InterruptedException {
+        String query = "SELECT Fields(ALL) FROM CaseHistory WHERE CaseId = '" + eventData.get("Id") +
+                "' ORDER BY CreatedDate DESC LIMIT 20";
 
         Map<String, Object> fetched = caseDao.getCaseUpdatedFields(query);
         if (fetched.size() != 1 || !fetched.containsKey(Constants.CREATED)) {
@@ -119,15 +119,13 @@ public class CaseManagementArea {
         caseMap.put("Case Account Id", getStringOrEmpty(caseData.get("AccountId")));
         caseMap.put("Case Subject", getStringOrEmpty(caseData.get("Subject")));
         caseMap.put("Case Is Closed", getStringOrEmpty(caseData.get("IsClosed")));
-        caseMap.put("Case Owner Id", getStringOrEmpty(caseData.get("OwnerId")));//
+        caseMap.put("Case Owner Id", getStringOrEmpty(caseData.get("OwnerId")));
         caseMap.put("Case Created Date", caseData.get("CreatedDate") != null
-                ? Objects.requireNonNull(
-                DatePlus.fromYYYYMMDD(caseData.get("CreatedDate").toString())).getTime()
-                : null);//
+                ? Objects.requireNonNull(DatePlus.fromYYYYMMDD(caseData.get("CreatedDate").toString())).getTime()
+                : null);
         caseMap.put("Case Last Modified Case", caseData.get("LastModifiedDate") != null
-                ? Objects.requireNonNull(
-                DatePlus.fromYYYYMMDD(caseData.get("LastModifiedDate").toString())).getTime()
-                : null);//
+                ? Objects.requireNonNull(DatePlus.fromYYYYMMDD(caseData.get("LastModifiedDate").toString())).getTime()
+                : null);
         caseMap.put("Case Number", getDoubleOrZero(caseData.get("CaseNumber")));
         caseMap.put("Case Status", getStringOrEmpty(caseData.get("Status")));
         caseMap.put("Case Reason", getStringOrEmpty(caseData.get("Reason")));
