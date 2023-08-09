@@ -13,6 +13,8 @@
 
 * [KC-1571](https://antbrains.atlassian.net/browse/KC-1571) Need crud request for Customer Object in Salesforce.
 * [KC-1586](https://antbrains.atlassian.net/browse/KC-1586) Add feed Updates to Salesforce Case.
+* [KC-1708](https://antbrains.atlassian.net/browse/KC-1708) Need Events for the Objects in Salesforce.
+
 
 ## Known Issues
 
