@@ -67,7 +67,7 @@ Krista Salesforce Customer Service Module Extension supports the following Catal
 
   - Enter **Endpoint URL**
     - Go to the Detail's page of the extension and copy the Routing id from there. After that, append **'
-      /rest/salesforcecustomerservice/caseChanged'** at the end of the routing id (This is your endpoint url).
+      /rest/salesforcecustomerservice/casechanged'** at the end of the routing id (This is your endpoint url).
 
       ![Routing Id Reference](../_media/routingId.png)
 
