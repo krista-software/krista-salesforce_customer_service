@@ -88,7 +88,7 @@ public class Constants {
     public static final String DOUBLE = "Double";
     public static final String ENTERPRISE_SOAP_SFORCE_COM = "urn:sobject.enterprise.soap.sforce.com";
     public static final String COM_2005_09_OUTBOUND = "http://soap.sforce.com/2005/09/outbound";
-
+    public static final String BOOLEAN = "Boolean";
 
 
     private Constants() {

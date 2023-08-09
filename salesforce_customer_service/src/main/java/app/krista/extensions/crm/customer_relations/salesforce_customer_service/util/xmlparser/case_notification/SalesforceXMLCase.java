@@ -43,7 +43,7 @@ public final class SalesforceXMLCase {
         freeForm.put("ContactId", TEXT, ContactId);
         freeForm.put("AccountId", TEXT, AccountId);
         freeForm.put("Subject", TEXT, Subject);
-        freeForm.put("IsClosed", "Switch", IsClosed);
+        freeForm.put("IsClosed", BOOLEAN, IsClosed);
         freeForm.put("OwnerId", TEXT, OwnerId);
         freeForm.put("CreatedDate", LONG, CreatedDate);
         freeForm.put("LastModifiedDate", LONG, LastModifiedDate);
