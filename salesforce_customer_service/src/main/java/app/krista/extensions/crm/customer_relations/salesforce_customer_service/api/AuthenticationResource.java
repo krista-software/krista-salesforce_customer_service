@@ -98,7 +98,7 @@ public final class AuthenticationResource {
 
     @POST
     @Path("/caseChanged")
-    public Response handleLeadChangedEvent(String xml) throws Exception {
+    public Response handleCaseChangedEvent(String xml) throws Exception {
         JAXBElement<CaseNotifications> caseNotifications = XMlResponseParser.parseCaseXmlResponse(xml);
         if (caseNotifications != null) {
             FreeForm caseNotificationSObject = caseNotifications.getValue().getCaseNotification().getSalesforceXMLCase()
