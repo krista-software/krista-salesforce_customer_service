@@ -8,34 +8,107 @@ Krista Salesforce Customer Service Module Extension supports the following Catal
 
 ### Case Management Area
 
-* Get Case Feed Items By Case Id
-    * Description: This request will fetch the list of post items for the given Case Id.
-    * Input Parameters:
+#### Get Case Feed Items By Case Id
+- **Description**: This request will fetch the list of post items for the given Case Id.
+- **Input Parameters**:
 
 | **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**        |
 |--------------------|--------------------|---------------|--------------------|
 | Case Id            | Text               | Yes           | 0065w00002AlDtDAAM |
 
-* Output:
+- **Output**:
 
 | **Parameter Name** | **Parameter Type**   |
 |--------------------|----------------------|
 | Feed Items         | List&lt;Multi Field> |
 
-* Share Update to Case
-    * Description: This request will add update to the Feed of the Case for the given Case Id.
-    * Input Parameters:
+#### Share Update to Case
+
+- **Description**: This request will add update to the Feed of the Case for the given Case Id. 
+- **Input Parameters**:
 
 | **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**          |
 |--------------------|--------------------|---------------|----------------------|
 | Case Id            | Text               | Yes           | 0065w00002AlDtDAAM   |
 | Update Message     | Paragraph          | Yes           | Message to be posted |
 
-* Output:
+- **Output**:
 
 | **Parameter Name** | **Parameter Type** |
 |--------------------|--------------------|
 | Is Updated         | Boolean            |
+
+#### Case Change Alert
+
+- **Description**: This request is for the changes(creation and update) in the case.
+- **Input Parameters**: No Parameters Required
+
+- **Output**:
+
+| **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
+| Response           | MultiField         |
+
+
+**Steps To Create Alert In Salesforce Customer Service**
+
+- Navigate to the Setup icon and then click **Setup**.
+  ![Setup](../_media/setup.png)
+
+- On the SETUP Home page, under the **Process Automation** menu on the left panel, under the **Workflow Actions**,
+  click **Outbound Messages**.
+  ![Outbound Messages](../_media/outboundMessages.png)
+
+- On the **Outbound Messages** page, click **New Outbound Message**.
+
+  - Select **Case** object and then click **Next**.
+
+  - On the next page enter **Name**.
+
+  - Enter **Endpoint URL**
+    - Go to the Detail's page of the extension and copy the Routing id from there. After that, append **'
+      /rest/salesforcecustomerservice/casechanged'** at the end of the routing id (This is your endpoint url).
+
+      ![Routing Id Reference](../_media/routingId.png)
+
+  - Select Case fields from case entity list to send and then click **Save**.
+
+    ![Create Outbound Message](../_media/createCaseOutboundMessage.png)
+
+  - Now create **Workflow Rule**.
+
+  - On the SETUP Home page, under the **Process Automation** menu on the left panel, click **Workflow Rules**.
+    ![Setup](../_media/workflowRules.png)
+
+  - On the **Workflow Rules**, click **New Rule** and select **Continue with Workflow Rules**.
+
+  - On the Workflow Rules page, From the Object drop-down list, select **Case** as an object then click **Next**.
+
+  - On the next page add **Rule Name**, **Evaluation Criteria**, and **Rule Criteria** and then click **Save & Next**.
+
+  - On the next page click **Add Workflow Action** and select **Select Existing Action**.
+
+  - On the next page select **Outbound Message** under the **Choose Action Type**.
+
+  - And select your created Outbound Message under **Available Actions** and click Add arrow, and then click **Save**.
+
+  - Now click **Done** button.
+
+* For the purpose of tracking history of attribute values, perform the following steps:
+  - Click Setup icon on the upper right of the salesforce page.
+  - Select object manager on the left upper navigation bar.
+  - Select Case if you are working with case change alert  as the LABEL.
+  - Select Fields and Relationships from the left menu.
+  - Click **Set History Tracking** on the upper right and enable Case History.
+  - Select the below given fields and save.
+    ![Setup](../pages/../_media/addCasesFields.png)
+
+  - Select Page Layouts from the left menu.
+  - Click on Case Layout if you are working with case change alert  from the given options.
+  - Click on Related Lists.
+  - Drag and drop the Case History icon for case change alert in the Related Fields below and save the changes.
+    ![Setup](../pages/../_media/addCaseTab.png)
+
 
 
 ## Entity Requests

@@ -1,6 +1,7 @@
 package app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl;
 
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.model.SFCase;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.model.SFCaseHistory;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.Case;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.CaseDao;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
@@ -18,6 +19,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+
+import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants.GSON;
 
 @Service
 public final class CaseDaoImpl implements CaseDao {
@@ -46,7 +49,7 @@ public final class CaseDaoImpl implements CaseDao {
         }
         String res = salesforceService.getRecordByQuery(query);
         SalesforceListResponse<SFCase> oppList =
-                Constants.GSON.fromJson(res, new TypeToken<SalesforceListResponse<SFCase>>() {
+                GSON.fromJson(res, new TypeToken<SalesforceListResponse<SFCase>>() {
                 }.getType());
         if (!oppList.records.isEmpty()) {
             return oppList.records.stream().map(CaseImpl::new).collect(Collectors.toList());
@@ -65,7 +68,7 @@ public final class CaseDaoImpl implements CaseDao {
         if (entityDefinition == null || entityDefinition.isEmpty()) {
             System.err.println("Failed create case request. " + Constants.ENTITY_MAP_IS_NULL_OR_EMPTY);
         }
-        var response = Constants.GSON.fromJson(salesforceService.createRecord(Constants.GSON.toJson(SFCase.from(entityDefinition)), CASE), Map.class);
+        var response = GSON.fromJson(salesforceService.createRecord(GSON.toJson(SFCase.from(entityDefinition)), CASE), Map.class);
         return String.valueOf(response.get("id"));
     }
 
@@ -76,7 +79,7 @@ public final class CaseDaoImpl implements CaseDao {
         SFCase updatedCase = SFCase.from(aCase);
         SFCase oldCase = SFCase.from(getCaseById(aCase.getId()));
         Map<String, String> diff = SalesforceService.getDifference(oldCase, updatedCase);
-        salesforceService.updateRecord(aCase.getId(), Constants.GSON.toJson(diff), CASE);
+        salesforceService.updateRecord(aCase.getId(), GSON.toJson(diff), CASE);
     }
 
     @Override
@@ -115,11 +118,17 @@ public final class CaseDaoImpl implements CaseDao {
     public Boolean addFeedUpdateToCaseById(String caseId, String updateMessage) throws ExecutionException, InterruptedException {
         String postData = StringHelper.createFeedPostBody(caseId, updateMessage);
         String response = salesforceService.createFeedPost(postData);
-        final JsonObject responseObject = Constants.GSON.fromJson(response, JsonObject.class);
+        final JsonObject responseObject = GSON.fromJson(response, JsonObject.class);
         if (responseObject.get("id") != null) {
             return Boolean.TRUE;
         } else {
             return Boolean.FALSE;
         }
+    }
+
+    public Map<String, Object> getCaseUpdatedFields(String query) throws IOException, ExecutionException, InterruptedException {
+        String response = salesforceService.getRecordByQuery(query);
+        SFCaseHistory sfCaseHistory = GSON.fromJson(response, SFCaseHistory.class);
+        return sfCaseHistory.toMap();
     }
 }

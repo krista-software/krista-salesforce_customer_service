@@ -6,43 +6,49 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.RefreshTokenStore;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.SalesforceCustomerServiceAttributesStore;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.xmlparser.XMlResponseParser;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.xmlparser.case_notification.CaseNotifications;
+import app.krista.extensions.util.EventHandler;
 import app.krista.ksdk.authentication.AuthorizationListener;
 import app.krista.ksdk.context.AuthorizationContext;
+import app.krista.model.base.FreeForm;
 import com.github.scribejava.core.model.OAuth2AccessToken;
 
 import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBElement;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants.INVALID_STATE_PARAMETERS;
+import static com.github.scribejava.core.model.OAuthConstants.CODE;
+import static com.github.scribejava.core.model.OAuthConstants.STATE;
 
 @Path("/salesforcecustomerservice")
 public final class AuthenticationResource {
     public static final String USER_AUTHENTICATED_SUCCESSFULLY = "User authenticated successfully.";
     public static final String SAVE_THE_CHANGES = " Save the changes.";
-    private static final String CODE = "code";
-    private static final String STATE = "state";
     private final RefreshTokenStore refreshTokenStore;
     private final SalesforceCustomerServiceAttributesStore attributesStore;
     private final SalesforceTokenProviderFactory providerFactory;
     private final AuthorizationContext context;
     private final AuthorizationListener authorizationListener;
+    private final EventHandler eventHandler;
+
 
     @Inject
     public AuthenticationResource(RefreshTokenStore refreshTokenStore, SalesforceCustomerServiceAttributesStore attributesStore,
                                   SalesforceTokenProviderFactory providerFactory, AuthorizationContext context,
-                                  AuthorizationListener authorizationListener) {
+                                  AuthorizationListener authorizationListener, EventHandler eventHandler) {
         this.refreshTokenStore = refreshTokenStore;
         this.attributesStore = attributesStore;
         this.providerFactory = providerFactory;
         this.authorizationListener = authorizationListener;
         this.context = context;
+        this.eventHandler = eventHandler;
     }
 
     @GET
@@ -88,5 +94,17 @@ public final class AuthenticationResource {
             }
         }
         return response;
+    }
+
+    @POST
+    @Path("/casechanged")
+    public Response handleCaseChangedEvent(String xml) {
+        JAXBElement<CaseNotifications> caseNotifications = XMlResponseParser.parseCaseXmlResponse(xml);
+        if (caseNotifications != null) {
+            FreeForm caseNotificationSObject = caseNotifications.getValue().getCaseNotification().getSalesforceXMLCase()
+                    .toCaseFreeForm();
+            eventHandler.handleEvent("Case Change Alert", caseNotificationSObject);
+        }
+        return Response.ok().build();
     }
 }

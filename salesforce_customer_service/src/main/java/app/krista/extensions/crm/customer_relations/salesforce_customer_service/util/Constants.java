@@ -16,7 +16,6 @@ public class Constants {
     public static final String FAILED_TO_GET_CUSTOMER = "Failed to get Customer. ";
     public static final String ORDER_BY = " ORDER BY ";
     public static final String LIMIT = " LIMIT ";
-    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     public static final String OFFSET = " OFFSET ";
     public static final String SPACE_AND = " AND";
     public static final String SPACE = " ";
@@ -81,9 +80,16 @@ public class Constants {
     public static final String LT = "lt";
     public static final String QUERY_IS_NULL_OR_EMPTY = "Query is null or empty.";
     public static final String CONDITIONS_NOT_FOUND = "Conditions not found.";
-    public static final String DOUBLE = "Double";
     public static final String ENTITY_MAP_IS_NULL_OR_EMPTY = "Entity map is null or empty. ";
     public static final String FAILED_TO_SEARCH = "Failed to Search. ";
+    public static final Gson GSON = new Gson();
+    public static final String CREATED = "created";
+    public static final String TEXT = "Text";
+    public static final String DOUBLE = "Double";
+    public static final String ENTERPRISE_SOAP_SFORCE_COM = "urn:sobject.enterprise.soap.sforce.com";
+    public static final String COM_2005_09_OUTBOUND = "http://soap.sforce.com/2005/09/outbound";
+    public static final String BOOLEAN = "Boolean";
+
 
     private Constants() {
     }
