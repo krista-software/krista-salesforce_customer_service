@@ -7,7 +7,6 @@ import app.krista.extension.impl.anno.Field;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.CaseDaoImpl;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import app.krista.model.base.FreeForm;
-import app.krista.model.field.util.FieldValues;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import javax.inject.Inject;
@@ -27,8 +26,6 @@ import static app.krista.extensions.crm.customer_relations.salesforce_customer_s
 public class CaseManagementArea {
     private final CaseDaoImpl caseDao;
 
-    app.krista.model.field.Field textField = new app.krista.model.field.Field("com.krista.fields.Text", Map.of(), Map.of());
-
     @Inject
     private CaseManagementArea(CaseDaoImpl caseDao) {
         this.caseDao = caseDao;
@@ -43,7 +40,6 @@ public class CaseManagementArea {
     @Field.Desc(name = "Feed Items", type = "[ { Actor Name: Text, Post Message: Text } ]", required = false)
     public List<Map<String, Object>> getCaseFeedItemsByCaseId(
             @Field.Text(name = "Case Id") String caseId) {
-        caseId = FieldValues.toString(textField, caseId);
         try {
             return caseDao.getFeedItemsForCaseId(caseId);
         } catch (ExecutionException | JsonProcessingException cause) {
@@ -64,9 +60,12 @@ public class CaseManagementArea {
     public Boolean shareUpdateToCase(
             @Field.Text(name = "Case Id") String caseId,
             @Field(name = "Update Message", type = "Paragraph") String updateMessage) throws InterruptedException {
-        caseId = FieldValues.toString(textField, caseId);
+
         try {
-            return caseDao.addFeedUpdateToCaseById(caseId, updateMessage);
+
+            String replaceUpdateMessage = updateMessage.replace("\"", "\\\"").replace("\n", "\\n");
+
+            return caseDao.addFeedUpdateToCaseById(caseId, replaceUpdateMessage);
         } catch (ExecutionException cause) {
             throw new RuntimeException(cause.getMessage(), cause);
         }
@@ -78,7 +77,7 @@ public class CaseManagementArea {
             description = "This request will alert the user whenever you create a case or update any case.",
             area = "Case management",
             type = CatalogRequest.Type.WAIT_FOR_EVENT)
-    @Field.Desc(name = "CaseResponse", type = "{ Case Id: Text, Case Contact Id: Text, Case Account Id: Text, Case Subject: Text, Case Is Closed: Boolean, Case Owner Id: Text, Case Created Date: Date, Case Last Modified Case: Date, Case Number: Number, Case Status: Text, Case Reason: Text, Case Origin: Text, Case Description: Paragraph, Case Priority: Text }",required = false)
+    @Field.Desc(name = "CaseResponse", type = "{ Case Id: Text, Case Contact Id: Text, Case Account Id: Text, Case Subject: Text, Case Is Closed: Boolean, Case Owner Id: Text, Case Created Date: Date, Case Last Modified Case: Date, Case Number: Number, Case Status: Text, Case Reason: Text, Case Origin: Text, Case Description: Paragraph, Case Priority: Text }", required = false)
     public Map<String, Object> caseChangeAlert(
             @Field(name = "eventName", type = "Text") String eventName,
             @Field(name = "eventData", type = "FreeForm") FreeForm eventData) {
@@ -92,10 +91,10 @@ public class CaseManagementArea {
         } catch (IllegalArgumentException cause) {
             System.err.println("This error is for case change alert." + cause.getMessage());
         } catch (IOException | ExecutionException cause) {
-            throw new IllegalStateException(cause.getMessage(),cause);
+            throw new IllegalStateException(cause.getMessage(), cause);
         } catch (InterruptedException cause) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException(cause.getMessage(),cause);
+            throw new IllegalStateException(cause.getMessage(), cause);
         }
         return caseMap;
     }
