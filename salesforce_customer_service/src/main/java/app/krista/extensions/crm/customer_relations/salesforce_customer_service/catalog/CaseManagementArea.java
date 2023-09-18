@@ -61,44 +61,45 @@ public class CaseManagementArea {
             @Field.Text(name = "Case Id") String caseId,
             @Field(name = "Update Message", type = "Paragraph") String updateMessage) throws InterruptedException {
         try {
-
-            StringBuilder escapedMessage = new StringBuilder();
-
-            for (int i = 0; i < updateMessage.length(); i++) {
-                char ch = updateMessage.charAt(i);
-                switch (ch) {
-                    case '\"':
-                        escapedMessage.append("\\\"");
-                        break;
-                    case '\n':
-                        escapedMessage.append("\\n");
-                        break;
-                    case '\\':
-                        escapedMessage.append("\\\\");
-                        break;
-                    case '\f':
-                        escapedMessage.append("\\f");
-                        break;
-                    case '\t':
-                        escapedMessage.append("\\t");
-                        break;
-                    case '\b':
-                        escapedMessage.append("\\b");
-                        break;
-                    case '\r':
-                        escapedMessage.append("\\r");
-                        break;
-                    default:
-                        escapedMessage.append(ch);
-                        break;
-                }
-            }
-
-            return caseDao.addFeedUpdateToCaseById(caseId, escapedMessage.toString());
-
+            return caseDao.addFeedUpdateToCaseById(caseId, getStringBuilder(updateMessage));
         } catch (ExecutionException cause) {
             throw new RuntimeException(cause.getMessage(), cause);
         }
+    }
+
+    private static String getStringBuilder(String updateMessage) {
+        StringBuilder escapedMessage = new StringBuilder();
+
+        for (int i = 0; i < updateMessage.length(); i++) {
+            char ch = updateMessage.charAt(i);
+            switch (ch) {
+                case '\"':
+                    escapedMessage.append("\\\"");
+                    break;
+                case '\n':
+                    escapedMessage.append("\\n");
+                    break;
+                case '\\':
+                    escapedMessage.append("\\\\");
+                    break;
+                case '\f':
+                    escapedMessage.append("\\f");
+                    break;
+                case '\t':
+                    escapedMessage.append("\\t");
+                    break;
+                case '\b':
+                    escapedMessage.append("\\b");
+                    break;
+                case '\r':
+                    escapedMessage.append("\\r");
+                    break;
+                default:
+                    escapedMessage.append(ch);
+                    break;
+            }
+        }
+        return escapedMessage.toString();
     }
 
     @CatalogRequest(

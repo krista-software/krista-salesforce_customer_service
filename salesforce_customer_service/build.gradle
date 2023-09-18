@@ -45,8 +45,8 @@ configurations {
 dependencies {
 
     annotationProcessor 'app.krista:extension-impl-anno-processors:1.0.87'
-    compileOnly 'app.krista:krista-apis:1.0.87'
-    compileOnly 'org.glassfish.hk2:hk2-api:3.0.3'
+    implementation 'app.krista:krista-apis:1.0.87'
+    implementation 'org.glassfish.hk2:hk2-api:3.0.3'
     implementation 'com.github.scribejava:scribejava-apis:8.3.3'
 
     testImplementation 'com.kristasoft.common:common-test:1.0.37'
