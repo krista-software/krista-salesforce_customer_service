@@ -61,13 +61,13 @@ public class CaseManagementArea {
             @Field.Text(name = "Case Id") String caseId,
             @Field(name = "Update Message", type = "Paragraph") String updateMessage) throws InterruptedException {
         try {
-            return caseDao.addFeedUpdateToCaseById(caseId, getStringBuilder(updateMessage));
+            return caseDao.addFeedUpdateToCaseById(caseId, getEscapeCharacterMessage(updateMessage));
         } catch (ExecutionException cause) {
             throw new RuntimeException(cause.getMessage(), cause);
         }
     }
 
-    private static String getStringBuilder(String updateMessage) {
+    private static String getEscapeCharacterMessage(String updateMessage) {
         StringBuilder escapedMessage = new StringBuilder();
 
         for (int i = 0; i < updateMessage.length(); i++) {
