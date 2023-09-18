@@ -60,13 +60,13 @@ public class CaseManagementArea {
     public Boolean shareUpdateToCase(
             @Field.Text(name = "Case Id") String caseId,
             @Field(name = "Update Message", type = "Paragraph") String updateMessage) throws InterruptedException {
-
         try {
 
             StringBuilder escapedMessage = new StringBuilder();
 
-            for (char c : updateMessage.toCharArray()) {
-                switch (c) {
+            for (int i = 0; i < updateMessage.length(); i++) {
+                char ch = updateMessage.charAt(i);
+                switch (ch) {
                     case '\"':
                         escapedMessage.append("\\\"");
                         break;
@@ -89,7 +89,7 @@ public class CaseManagementArea {
                         escapedMessage.append("\\r");
                         break;
                     default:
-                        escapedMessage.append(c);
+                        escapedMessage.append(ch);
                         break;
                 }
             }
