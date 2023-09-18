@@ -63,9 +63,39 @@ public class CaseManagementArea {
 
         try {
 
-            String replaceUpdateMessage = updateMessage.replace("\"", "\\\"").replace("\n", "\\n");
+            StringBuilder stringBuilder = new StringBuilder();
 
-            return caseDao.addFeedUpdateToCaseById(caseId, replaceUpdateMessage);
+            for (char c : updateMessage.toCharArray()) {
+                switch (c) {
+                    case '\"':
+                        stringBuilder.append("\\\"");
+                        break;
+                    case '\n':
+                        stringBuilder.append("\\n");
+                        break;
+                    case '\\':
+                        stringBuilder.append("\\\\");
+                        break;
+                    case '\f':
+                        stringBuilder.append("\\f");
+                        break;
+                    case '\t':
+                        stringBuilder.append("\\t");
+                        break;
+                    case '\b':
+                        stringBuilder.append("\\b");
+                        break;
+                    case '\r':
+                        stringBuilder.append("\\r");
+                        break;
+                    default:
+                        stringBuilder.append(c);
+                        break;
+                }
+            }
+
+            return caseDao.addFeedUpdateToCaseById(caseId, stringBuilder.toString());
+
         } catch (ExecutionException cause) {
             throw new RuntimeException(cause.getMessage(), cause);
         }
