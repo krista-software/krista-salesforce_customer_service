@@ -48,13 +48,18 @@ public class SalesforceTokenProvider {
         return getSalesforceToken(requestContext.invokeAsUser());
     }
 
-    public void getSalesforceTokenForAdmin() throws IOException {
+   /* public void getSalesforceTokenForAdmin() throws IOException {
         getSalesforceToken(!requestContext.invokeAsUser());
+        //getSalesforceToken(false);
+    }*/
+    public SalesforceToken getSalesforceTokenForAdmin() throws IOException {
+        //return getSalesforceToken(!requestContext.invokeAsUser());
+        return getSalesforceToken(false);
     }
 
     private SalesforceToken getSalesforceToken(boolean isAdmin) throws IOException {
+        System.out.println("admin"+isAdmin);
         if (isAdmin) {
-            System.out.println("admin"+isAdmin);
             String refreshToken = refreshTokenStore.get(authorizationContext.getAuthorizedAccount().getAccountId());
             if (refreshToken == null || refreshToken.isBlank()) {
                 throw createMustAuthorizationException(false);
