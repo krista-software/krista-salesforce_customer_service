@@ -54,6 +54,7 @@ public class SalesforceTokenProvider {
 
     private SalesforceToken getSalesforceToken(boolean isAdmin) throws IOException {
         if (isAdmin) {
+            System.out.println("admin"+isAdmin);
             String refreshToken = refreshTokenStore.get(authorizationContext.getAuthorizedAccount().getAccountId());
             if (refreshToken == null || refreshToken.isBlank()) {
                 throw createMustAuthorizationException(false);
