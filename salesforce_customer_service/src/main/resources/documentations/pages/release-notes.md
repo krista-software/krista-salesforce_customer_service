@@ -11,7 +11,7 @@
 
 ## Resolved Bugs
 
-* [KS-664](https://antbrains.atlassian.net/browse/KS-664) Issue in Salesforce Customer Service extension: “{"error":"invalid_grant","error_description":"expired access/refresh token"}”
+* [KS-664](https://antbrains.atlassian.net/browse/KS-664) Issue in Salesforce Customer Service extension.
 * [KS-666](https://antbrains.atlassian.net/browse/KS-666) Issue is Salesforce Customer service.
 
 ## Known Issues

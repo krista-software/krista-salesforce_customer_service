@@ -67,8 +67,8 @@ public class SalesforceTokenProvider {
                     throw createMustAuthorizationException(true);
                 }
                 throw new RuntimeException("Something went wrong, please try again later");
-            } catch (Exception errorResponse) {
-                throw new RuntimeException("Refresh Token not found. Please re authorize yourself" + errorResponse.getMessage());
+            } catch (Exception cause) {
+                throw new RuntimeException("Refresh Token not found. Please re authorize yourself" + cause.getMessage());
             }
         } else {
             Object username = salesforceCustomerServiceAttributes.getUserName();
@@ -79,8 +79,8 @@ public class SalesforceTokenProvider {
                 return getSalesforceToken(
                         salesforceCustomerServiceAttributes.getOauthService().getAccessTokenPasswordGrant(String.valueOf(username),
                                 password + String.valueOf(securityToken)));
-            } catch (Exception e) {
-                throw new MustAuthorizeException(e.getMessage());
+            } catch (Exception cause) {
+                throw new MustAuthorizeException(cause.getMessage());
             }
         }
     }
