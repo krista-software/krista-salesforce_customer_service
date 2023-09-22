@@ -9,6 +9,7 @@ import app.krista.ksdk.context.RequestContext;
 import app.krista.model.field.NamedValuedField;
 import com.github.scribejava.apis.salesforce.SalesforceToken;
 import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +58,7 @@ public class SalesforceTokenProvider {
         return getSalesforceToken(false);
     }
 
-    private SalesforceToken getSalesforceToken(boolean isAdmin) throws IOException {
+    /*private SalesforceToken getSalesforceToken(boolean isAdmin) throws IOException {
         System.out.println("admin"+isAdmin);
         if (isAdmin) {
             String refreshToken = refreshTokenStore.get(authorizationContext.getAuthorizedAccount().getAccountId());
@@ -85,6 +86,39 @@ public class SalesforceTokenProvider {
                 throw new MustAuthorizeException(cause.getMessage());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                throw new MustAuthorizeException(e.getMessage());
+            }
+        }
+    }*/
+    private SalesforceToken getSalesforceToken(boolean isAdmin) throws IOException {
+        System.out.println(isAdmin+"admin");
+        if (isAdmin) {
+            String refreshToken = refreshTokenStore.get(authorizationContext.getAuthorizedAccount().getAccountId());
+            if (refreshToken == null || refreshToken.isBlank()) {
+                throw createMustAuthorizationException(false);
+            }
+            try {
+                return getSalesforceToken(salesforceCustomerServiceAttributes.getOauthService().refreshAccessToken(refreshToken));
+            } catch (MustAuthorizeException cause) {
+                throw createMustAuthorizationException(true);
+            } catch (OAuth2AccessTokenErrorResponse cause) {
+                if (cause.getErrorDescription() != null && cause.getErrorDescription().equals("expired access/refresh token")) {
+                    throw createMustAuthorizationException(true);
+                }
+                throw new RuntimeException("Something went wrong, please try again later");
+            } catch (Exception errorResponse) {
+                throw new RuntimeException("Refresh Token not found. Please re authorize yourself" + errorResponse.getMessage());
+            }
+        } else {
+            Object username = salesforceCustomerServiceAttributes.getUserName();
+            Object password = salesforceCustomerServiceAttributes.getPassword();
+            Object securityToken = salesforceCustomerServiceAttributes.getSecurityToken();
+
+            try {
+                return getSalesforceToken(
+                        salesforceCustomerServiceAttributes.getOauthService().getAccessTokenPasswordGrant(String.valueOf(username),
+                                password + String.valueOf(securityToken)));
+            } catch (Exception e) {
                 throw new MustAuthorizeException(e.getMessage());
             }
         }
