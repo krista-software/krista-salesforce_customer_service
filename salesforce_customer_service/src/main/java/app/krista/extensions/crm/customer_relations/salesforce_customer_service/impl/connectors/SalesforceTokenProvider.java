@@ -63,7 +63,7 @@ public class SalesforceTokenProvider {
             } catch (MustAuthorizeException cause) {
                 throw createMustAuthorizationException(true);
             } catch (OAuth2AccessTokenErrorResponse cause) {
-                if (cause.getErrorDescription() != null && cause.getErrorDescription().equals("expired access/refresh token")) {
+                if (cause.getErrorDescription().equals("expired access/refresh token") && cause.getErrorDescription() != null) {
                     throw createMustAuthorizationException(true);
                 }
                 throw new RuntimeException("Something went wrong, please try again later");
