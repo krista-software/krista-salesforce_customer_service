@@ -12,6 +12,7 @@
 ## Resolved Bugs
 
 * [KS-666](https://antbrains.atlassian.net/browse/KS-666) Issue is Salesforce Customer service.
+* [KS-664](https://antbrains.atlassian.net/browse/KS-664)Issue in Salesforce Customer Service extension.(After the upgrade, I am not able to use the salesforce customer service extension in POC environment.)
 
 
 ## Known Issues

@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 public class SalesforceTokenProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(SalesforceTokenProvider.class);
@@ -49,49 +48,11 @@ public class SalesforceTokenProvider {
         return getSalesforceToken(requestContext.invokeAsUser());
     }
 
-   /* public void getSalesforceTokenForAdmin() throws IOException {
-        getSalesforceToken(!requestContext.invokeAsUser());
-        //getSalesforceToken(false);
-    }*/
     public SalesforceToken getSalesforceTokenForAdmin() throws IOException {
-        //return getSalesforceToken(!requestContext.invokeAsUser());
         return getSalesforceToken(false);
     }
 
-    /*private SalesforceToken getSalesforceToken(boolean isAdmin) throws IOException {
-        System.out.println("admin"+isAdmin);
-        if (isAdmin) {
-            String refreshToken = refreshTokenStore.get(authorizationContext.getAuthorizedAccount().getAccountId());
-            if (refreshToken == null || refreshToken.isBlank()) {
-                throw createMustAuthorizationException(false);
-            }
-            try {
-                return getSalesforceToken(salesforceCustomerServiceAttributes.getOauthService().refreshAccessToken(refreshToken));
-            } catch (IOException | ExecutionException errorResponse) {
-                throw new RuntimeException("Refresh Token not found. Please re authorize yourself" + errorResponse.getMessage());
-            } catch (InterruptedException errorResponse) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException("Refresh Token not found. Please re authorize yourself" + errorResponse.getMessage());
-            }
-        } else {
-            Object username = salesforceCustomerServiceAttributes.getUserName();
-            Object password = salesforceCustomerServiceAttributes.getPassword();
-            Object securityToken = salesforceCustomerServiceAttributes.getSecurityToken();
-
-            try {
-                return getSalesforceToken(
-                        salesforceCustomerServiceAttributes.getOauthService().getAccessTokenPasswordGrant(String.valueOf(username),
-                                password + String.valueOf(securityToken)));
-            } catch (IOException | ExecutionException cause) {
-                throw new MustAuthorizeException(cause.getMessage());
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new MustAuthorizeException(e.getMessage());
-            }
-        }
-    }*/
     private SalesforceToken getSalesforceToken(boolean isAdmin) throws IOException {
-        System.out.println(isAdmin+"admin");
         if (isAdmin) {
             String refreshToken = refreshTokenStore.get(authorizationContext.getAuthorizedAccount().getAccountId());
             if (refreshToken == null || refreshToken.isBlank()) {

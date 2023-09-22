@@ -68,7 +68,7 @@ public final class SalesforceCustomerServiceExtension {
     }
 
     private void attributesValidator(SalesforceCustomerServiceAttributes serviceAttributes) throws IOException {
-        if (serviceAttributes.getUserName() == null || !serviceAttributes.getUserName().isBlank() ||
+        if (serviceAttributes.getUserName() == null || serviceAttributes.getUserName().isBlank() ||
                 serviceAttributes.getPassword() == null || serviceAttributes.getPassword().isBlank() ||
                 serviceAttributes.getSecurityToken() == null || serviceAttributes.getSecurityToken().isBlank()) {
             providerFactory.create(serviceAttributes).getSalesforceToken();
@@ -76,21 +76,6 @@ public final class SalesforceCustomerServiceExtension {
             providerFactory.create(serviceAttributes).getSalesforceTokenForAdmin();
         }
     }
-   /* @InvokerRequest(InvokerRequest.Type.VALIDATE_ATTRIBUTES)
-    public void validateConnection(Map<String, Object> connectionAttributes) throws IOException {
-        SalesforceSalesAttributes salesAttributes = SalesforceSalesAttributes.create(invoker, connectionAttributes);
-        validateSalesAttributes(salesAttributes);
-    }
-
-    private void validateSalesAttributes(SalesforceSalesAttributes salesforceSalesAttributes) throws IOException {
-        if (salesforceSalesAttributes.getUserName() == null || salesforceSalesAttributes.getUserName().isBlank() ||
-                salesforceSalesAttributes.getPassword() == null || salesforceSalesAttributes.getPassword().isBlank() ||
-                salesforceSalesAttributes.getSecurityToken() == null || salesforceSalesAttributes.getSecurityToken().isBlank()) {
-            providerFactory.create(salesforceSalesAttributes).getSalesforceTokenForUser();
-        } else {
-            providerFactory.create(salesforceSalesAttributes).getSalesforceTokenForAdmin();
-        }
-    }*/
 
     @InvokerRequest(InvokerRequest.Type.INVOKER_UPDATED)
     public void attributesUpdated(Map<String, Object> oldAttributes, Map<String, Object> newAttributes) {
