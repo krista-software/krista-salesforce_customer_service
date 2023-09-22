@@ -68,7 +68,7 @@ public final class SalesforceCustomerServiceExtension {
     }
 
     private void attributesValidator(SalesforceCustomerServiceAttributes serviceAttributes) throws IOException {
-        if (serviceAttributes.getUserName() == null || !serviceAttributes.getUserName().isBlank() ||
+        if (serviceAttributes.getUserName() == null || serviceAttributes.getUserName().isBlank() ||
                 serviceAttributes.getPassword() == null || serviceAttributes.getPassword().isBlank() ||
                 serviceAttributes.getSecurityToken() == null || serviceAttributes.getSecurityToken().isBlank()) {
             providerFactory.create(serviceAttributes).getSalesforceToken();

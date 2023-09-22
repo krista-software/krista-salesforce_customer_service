@@ -9,6 +9,7 @@ import app.krista.ksdk.context.RequestContext;
 import app.krista.model.field.NamedValuedField;
 import com.github.scribejava.apis.salesforce.SalesforceToken;
 import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +18,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 public class SalesforceTokenProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(SalesforceTokenProvider.class);
@@ -48,8 +48,8 @@ public class SalesforceTokenProvider {
         return getSalesforceToken(requestContext.invokeAsUser());
     }
 
-    public void getSalesforceTokenForAdmin() throws IOException {
-        getSalesforceToken(!requestContext.invokeAsUser());
+    public SalesforceToken getSalesforceTokenForAdmin() throws IOException {
+        return getSalesforceToken(false);
     }
 
     private SalesforceToken getSalesforceToken(boolean isAdmin) throws IOException {
@@ -60,11 +60,15 @@ public class SalesforceTokenProvider {
             }
             try {
                 return getSalesforceToken(salesforceCustomerServiceAttributes.getOauthService().refreshAccessToken(refreshToken));
-            } catch (IOException | ExecutionException errorResponse) {
-                throw new RuntimeException("Refresh Token not found. Please re authorize yourself" + errorResponse.getMessage());
-            } catch (InterruptedException errorResponse) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException("Refresh Token not found. Please re authorize yourself" + errorResponse.getMessage());
+            } catch (MustAuthorizeException cause) {
+                throw createMustAuthorizationException(true);
+            } catch (OAuth2AccessTokenErrorResponse cause) {
+                if (cause.getErrorDescription().equals("expired access/refresh token") && cause.getErrorDescription() != null) {
+                    throw createMustAuthorizationException(true);
+                }
+                throw new RuntimeException("Something went wrong, please try again later");
+            } catch (Exception cause) {
+                throw new RuntimeException("Refresh Token not found. Please re authorize yourself" + cause.getMessage());
             }
         } else {
             Object username = salesforceCustomerServiceAttributes.getUserName();
@@ -75,11 +79,8 @@ public class SalesforceTokenProvider {
                 return getSalesforceToken(
                         salesforceCustomerServiceAttributes.getOauthService().getAccessTokenPasswordGrant(String.valueOf(username),
                                 password + String.valueOf(securityToken)));
-            } catch (IOException | ExecutionException cause) {
+            } catch (Exception cause) {
                 throw new MustAuthorizeException(cause.getMessage());
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new MustAuthorizeException(e.getMessage());
             }
         }
     }
