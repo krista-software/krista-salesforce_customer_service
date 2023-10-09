@@ -15,5 +15,6 @@
 * [KS-666](https://antbrains.atlassian.net/browse/KS-666) Issue is Salesforce Customer service.
 
 ## Known Issues
+* [KE-1258](https://antbrains.atlassian.net/browse/KE-1258) When a storage limit has been exceeded, entities do not provide a user-friendly message.
 
 * **Not Available**
