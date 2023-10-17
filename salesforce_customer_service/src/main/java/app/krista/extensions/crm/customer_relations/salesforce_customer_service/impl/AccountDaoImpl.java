@@ -47,6 +47,9 @@ public final class AccountDaoImpl implements AccountDao {
             System.err.println("Failed fetch account by query request. " + Constants.QUERY_IS_NULL_OR_EMPTY);
         }
         String res = salesforceService.getRecordByQuery(query.trim());
+        if(res == null||res.isEmpty()){
+            return new ArrayList<>();
+        }
         SalesforceListResponse<SFAccount> oppList =
                 Constants.GSON.fromJson(res, new TypeToken<SalesforceListResponse<SFAccount>>() {
                 }.getType());
