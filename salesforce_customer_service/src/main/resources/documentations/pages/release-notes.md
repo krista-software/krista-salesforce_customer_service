@@ -2,19 +2,17 @@
 
 # Release Notes - Krista Salesforce Customer Service Extension
 
-## Version 2.0.8
+## Version 2.0.9
 
 - **Developer Name** : Srushti Ekmode
 - **Krista Service APIs Java** : 1.0.87
-- **Global Catalog Version** : 1.0.36
-- **Appliance Release Version** : 3.2.0
+- **Global Catalog Version** : 1.0.38
+- **Appliance Release Version** : 3.2.2
 
 ## Resolved Bugs
 
-* [KS-664](https://antbrains.atlassian.net/browse/KS-664) Issue in Salesforce Customer Service extension.
-* [KS-666](https://antbrains.atlassian.net/browse/KS-666) Issue is Salesforce Customer service.
+* [KE-1258](https://antbrains.atlassian.net/browse/KE-1258) When a storage limit has been exceeded, entities do not provide a user-friendly message.
 
 ## Known Issues
-* [KE-1258](https://antbrains.atlassian.net/browse/KE-1258) When a storage limit has been exceeded, entities do not provide a user-friendly message.
 
 * **Not Available**
