@@ -160,8 +160,6 @@ public class SalesforceService {
                 System.err.println("Bad Request, Incorrect input is provided. The error is" + response.getBody());
             }
             if (response.getBody().contains("\"errorCode\":\"STORAGE_LIMIT_EXCEEDED\"")) {
-//                System.out.println("Storage limit exceeded");
-//                return "";
                 throw new IllegalArgumentException("Storage limit exceeded.");
             }
             return response.getBody();
