@@ -101,3 +101,13 @@
 * Click **Save**.
 
 * Provide the values of Client ID and Client Secret in your Salesforce Customer Service Extension setup page and proceed with the Extension request.
+
+* If you want to use the Basic Authentication Flow for authentication then follow the following steps:
+
+* Navigate to the Setup icon and then click **Setup**.
+  ![Setup](../_media/setup.png)
+
+* From the left navigation panel under **SETTINGS** section click on **Identity** drop down.
+  * Click **OAuth and OpenID Connect Settings**.
+  * To enable the Basic Authentication Flow, use the **Allow OAuth Username-Password Flows** toggle switch.
+    ![](../_media/UsernamePasswordFlow.png)
