@@ -12,7 +12,8 @@
 ## Resolved Bugs
 
 * [KE-1258](https://antbrains.atlassian.net/browse/KE-1258) When a storage limit has been exceeded, entities do not provide a user-friendly message.
-
+* [KS-706](https://antbrains.atlassian.net/browse/KS-706) Issue with Salesforce extension- Not able to validate the extension.
+  
 ## Known Issues
 
 * **Not Available**
