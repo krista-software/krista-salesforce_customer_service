@@ -104,7 +104,7 @@ public class SalesforceTokenProvider {
             NamedValuedField contextIdField = new NamedValuedField("authContextId", "Text", authContextId, new HashMap<>(), new HashMap<>());
             details.add(contextIdField);
         }
-        return new MustAuthorizeException(reAuthentication ? "The refresh token is no longer valid. Please reauthorize yourself." : "You are not authorized. Please authorize yourself", details);
+        return new MustAuthorizeException(reAuthentication ? "The refresh token is no longer valid. Please reauthorize yourself." : "Authorize yourself and click 'Validate Attributes' before saving changes to proceed further", details);
     }
 
 }
