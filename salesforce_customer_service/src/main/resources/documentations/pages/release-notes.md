@@ -5,14 +5,13 @@
 ## Version 2.0.9
 
 - **Developer Name** : Srushti Ekmode
-- **Krista Service APIs Java** : 1.0.87
-- **Global Catalog Version** : 1.0.38
-- **Appliance Release Version** : 3.2.2
+- **Krista Service APIs Java** : 1.0.94
+- **Global Catalog Version** : 1.0.42
+- **Appliance Release Version** : 3.2.6
 
 ## Resolved Bugs
 
-* [KE-1258](https://antbrains.atlassian.net/browse/KE-1258) When a storage limit has been exceeded, entities do not provide a user-friendly message.
-* [KS-706](https://antbrains.atlassian.net/browse/KS-706) Issue with Salesforce extension- Not able to validate the extension.
+* [KC-1864](https://antbrains.atlassian.net/browse/KC-1864) Salesforce Customer Service Better error Message to User In configure Extension Screen.
   
 ## Known Issues
 
