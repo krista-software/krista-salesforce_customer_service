@@ -2,7 +2,7 @@
 
 # Release Notes - Krista Salesforce Customer Service Extension
 
-## Version 2.0.9
+## Version 2.0.10
 
 - **Developer Name** : Srushti Ekmode
 - **Krista Service APIs Java** : 1.0.94
