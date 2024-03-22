@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants.GSON;
 import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper.createFeedPostBodyForFile;
+import static javax.swing.MultiUIDefaults.MultiUIDefaultsEnumerator.Type.ELEMENTS;
 
 @Service
 public final class CaseDaoImpl implements CaseDao {
@@ -94,33 +95,78 @@ public final class CaseDaoImpl implements CaseDao {
     }
 
     @Override
-    public List<Map<String, Object>> getFeedItemsForCaseId(String caseId) throws ExecutionException, InterruptedException, JsonProcessingException {
-        String response = salesforceService.getFeedsByCaseId(caseId);
+//    public List<Map<String, Object>> getFeedItemsForCaseId(String caseId) throws ExecutionException, InterruptedException, JsonProcessingException {
+//        String response = salesforceService.getFeedsByCaseId(caseId);
+//
+//        ObjectMapper mapper = new ObjectMapper();
+//        JsonNode rootNode = mapper.readTree(response);
+//        JsonNode elementsNode = rootNode.get("elements");
+//
+//        List<Map<String, Object>> feedPosts = new ArrayList<>();
+//        Map<String, Object> post = new LinkedHashMap<>(2);
+//        for (JsonNode elementNode : elementsNode) {
+//            String feedElementType = elementNode.get("feedElementType").asText();
+//            if (feedElementType.equalsIgnoreCase("FeedItem")) {
+//                JsonNode actorNode = elementNode.get("actor");
+//                if (actorNode != null) {
+//                    post.put("Actor Name", actorNode.get("name").asText());
+//                }
+//                JsonNode bodyNode = elementNode.get("body");
+//                if (bodyNode != null) {
+//                    post.put("Post Message", bodyNode.get("text").asText());
+//                }
+//                feedPosts.add(post);
+//            }
+//            post = new HashMap<>();
+//        }
+//        return feedPosts;
+//    }
+    public List<Map<String, Object>> getFeedItemsForCaseId(String caseId,int numberOfPosts) throws ExecutionException, InterruptedException, JsonProcessingException {
+        String response = salesforceService.getFeedsByCaseId(caseId, numberOfPosts);
 
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(response);
-        JsonNode elementsNode = rootNode.get("elements");
+        JsonNode elementsNode = rootNode.get(ELEMENTS);
 
         List<Map<String, Object>> feedPosts = new ArrayList<>();
-        Map<String, Object> post = new LinkedHashMap<>(2);
         for (JsonNode elementNode : elementsNode) {
-            String feedElementType = elementNode.get("feedElementType").asText();
-            if (feedElementType.equalsIgnoreCase("FeedItem")) {
-                JsonNode actorNode = elementNode.get("actor");
-                if (actorNode != null) {
-                    post.put("Actor Name", actorNode.get("name").asText());
-                }
-                JsonNode bodyNode = elementNode.get("body");
-                if (bodyNode != null) {
-                    post.put("Post Message", bodyNode.get("text").asText());
-                }
+            LatestPosts post = parseElementToPost(elementNode);
+            if (post != null) {
                 feedPosts.add(post);
             }
-            post = new HashMap<>();
         }
         return feedPosts;
     }
+    private LatestPosts parseElementToPost(JsonNode elementNode) throws IOException {
+        String feedElementType = elementNode.get(FEED_ELEMENT_TYPE).asText();
+        if (!feedElementType.equalsIgnoreCase("FeedItem")) {
+            return null;
+        }
 
+        LatestPosts post = new LatestPosts();
+        post.actorName = getActorName(elementNode);
+        post.postMessage = getPostMessage(elementNode);
+        post.files = getFiles(elementNode);
+        return post;
+    }
+    private String getActorName(JsonNode elementNode) {
+        JsonNode actorNode = elementNode.get(ACTOR);
+        return actorNode != null ? actorNode.get(NAME).asText() : null;
+    }
+
+    private String getPostMessage(JsonNode elementNode) {
+        JsonNode bodyNode = elementNode.get(BODY);
+        if (bodyNode != null && bodyNode.has(MESSAGE_SEGMENTS)) {
+            StringBuilder textBuilder = new StringBuilder();
+            for (JsonNode segmentNode : bodyNode.get(MESSAGE_SEGMENTS)) {
+                if ("Text".equals(segmentNode.get(TYPE).asText())) {
+                    textBuilder.append(segmentNode.get("text").asText());
+                }
+            }
+            return textBuilder.toString();
+        }
+        return null;
+    }
     public Boolean addFeedUpdateToCaseById(String caseId, String updateMessage, String base64EncodedString, String fileName) throws ExecutionException, InterruptedException {
         String postData = StringHelper.createFeedPostBody(caseId, updateMessage);
         String response = salesforceService.createFeedPost(postData);

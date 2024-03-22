@@ -44,15 +44,33 @@ public class CaseManagementArea {
     public List<Map<String, Object>> getCaseFeedItemsByCaseId(
             @Field.Text(name = "Case Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String caseId,
             @Field(name = "Number Of Posts", type = "Number", required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) Double numberOfPosts) {
+//        try {
+//            return caseDao.getFeedItemsForCaseId(caseId);
+//        } catch (ExecutionException | JsonProcessingException cause) {
+//            throw new RuntimeException(cause);
+//        } catch (InterruptedException interruptedException) {
+//            Thread.currentThread().interrupt();
+//            throw new RuntimeException(interruptedException);
+//        }
         try {
-            return caseDao.getFeedItemsForCaseId(caseId);
-        } catch (ExecutionException | JsonProcessingException cause) {
-            throw new RuntimeException(cause);
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(interruptedException);
+            int maxNumberOfPosts = 100;
+            if (numberOfPosts != null && Double.isFinite(numberOfPosts)) {
+                maxNumberOfPosts = Math.min(numberOfPosts.intValue(), maxNumberOfPosts);
+                if (maxNumberOfPosts <= 0) {
+                    throw new IllegalArgumentException("Bad Request. Number of posts must be greater than 0.");
+                }
+            }
+            return caseDao.getFeedItemsForCaseId(caseId, maxNumberOfPosts);
+        } catch (IllegalArgumentException | IOException cause) {
+            //LOGGER.error("Failed to get Latest Posts" + cause.getMessage(), cause);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
+        return List.of();
     }
+
 
     @CatalogRequest(
             id = "localDomainRequest_b3f52b0d-f4af-462b-a600-62d8afd83836",

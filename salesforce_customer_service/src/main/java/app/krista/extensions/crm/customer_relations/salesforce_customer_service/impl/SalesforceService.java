@@ -120,17 +120,33 @@ public class SalesforceService {
         return getResponse(salesforceToken, request);
     }
 
-    public String getFeedsByCaseId(String caseId) throws ExecutionException, InterruptedException {
-        try {
-            SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
-            String url = salesforceToken.getInstanceUrl() + "/services/data/v48.0/chatter/feeds/record/" +
-                    caseId + "/feed-elements";
-            final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
-            return getResponse(salesforceToken, request);
-        } catch (IOException cause) {
-            throw new IllegalArgumentException("Failed to get case feed posts. " + cause.getMessage(), cause);
-        }
+//    public String getFeedsByCaseId(String caseId) throws ExecutionException, InterruptedException {
+//        try {
+//            SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+//            String url = salesforceToken.getInstanceUrl() + "/services/data/v48.0/chatter/feeds/record/" +
+//                    caseId + "/feed-elements";
+//            final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
+//            return getResponse(salesforceToken, request);
+//        } catch (IOException cause) {
+//            throw new IllegalArgumentException("Failed to get case feed posts. " + cause.getMessage(), cause);
+//        }
+//    }
+public String getFeedsByCaseId(String caseId, int numberOfPosts) {
+    try {
+        SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+        String url = salesforceToken.getInstanceUrl() + "/services/data/v48.0/chatter/feeds/record/" + caseId +
+                "/feed-elements?sortOrder=ASC&sortField=CreatedDate&pageSize=" + numberOfPosts;
+        final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
+        return getResponse(salesforceToken, request);
+    } catch (IOException cause) {
+       // LOGGER.error("Failed to get opportunity feed posts. " + cause.getMessage(), cause);
+    } catch (ExecutionException e) {
+        throw new RuntimeException(e);
+    } catch (InterruptedException e) {
+        throw new RuntimeException(e);
     }
+    return "";
+}
 
     public String createFeedPost(String postData) throws ExecutionException, InterruptedException {
         try {
