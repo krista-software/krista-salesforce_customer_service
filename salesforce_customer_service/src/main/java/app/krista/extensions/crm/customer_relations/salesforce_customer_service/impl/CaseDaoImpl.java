@@ -146,25 +146,39 @@ public final class CaseDaoImpl implements CaseDao {
 
         List<Map<String, Object>> feedPosts = new ArrayList<>();
         for (JsonNode elementNode : elementsNode) {
-            LatestPosts post = parseElementToPost(elementNode);
-            if (post != null) {
-                feedPosts.add(post);
-            }
+            //LatestPosts post = parseElementToPost(elementNode);
+            parseElementToPost(elementNode);
+
+//            if (post != null) {
+//                feedPosts.add(post);
+//            }
         }
         return feedPosts;
     }
-    private LatestPosts parseElementToPost(JsonNode elementNode) throws IOException {
+    private void parseElementToPost(JsonNode elementNode) throws IOException {
         String feedElementType = elementNode.get(FEED_ELEMENT_TYPE).asText();
         if (!feedElementType.equalsIgnoreCase("FeedItem")) {
-            return null;
+            //return null;
         }
 
-        LatestPosts post = new LatestPosts();
-        post.actorName = getActorName(elementNode);
-        post.postMessage = getPostMessage(elementNode);
-        post.files = getFiles(elementNode);
-        return post;
+//        LatestPosts post = new LatestPosts();
+//        post.actorName = getActorName(elementNode);
+//        post.postMessage = getPostMessage(elementNode);
+//        post.files = getFiles(elementNode);
+       // return post;
     }
+//    private LatestPosts parseElementToPost(JsonNode elementNode) throws IOException {
+//        String feedElementType = elementNode.get(FEED_ELEMENT_TYPE).asText();
+//        if (!feedElementType.equalsIgnoreCase("FeedItem")) {
+//            return null;
+//        }
+//
+////        LatestPosts post = new LatestPosts();
+////        post.actorName = getActorName(elementNode);
+////        post.postMessage = getPostMessage(elementNode);
+////        post.files = getFiles(elementNode);
+//        return post;
+//    }
     private String getActorName(JsonNode elementNode) {
         JsonNode actorNode = elementNode.get(ACTOR);
         return actorNode != null ? actorNode.get(NAME).asText() : null;
