@@ -212,7 +212,6 @@ public final class CaseDaoImpl implements CaseDao {
     private app.krista.model.base.File downloadFile(String downloadUrl) throws IOException {
 
         Response fileResponse = salesforceService.getFileResponse(downloadUrl);
-        //MediaClient mediaClient = MediaClient.getInstance();
 
         String contentDisposition = fileResponse.getHeader("Content-Disposition");
         Pattern pattern = Pattern.compile("filename=\"(.*)\"");
@@ -220,9 +219,7 @@ public final class CaseDaoImpl implements CaseDao {
         String fileName = matcher.find() ? matcher.group(1) : "unknown";
 
         File localFile = saveToLocalTempDir(fileResponse.getStream(), fileName);
-        FileHandle newFileByName = fileRepository.createNewFileByName(localFile.getName());
-        newFileByName.setContent();
-        app.krista.model.base.File returningFile = newFileByName.getFile();
+
         return convertJavaFileToKristaFile(localFile);
 //        String fileExtension = getFileExtension(localFile.getName());
 //        String mediaId = mediaClient.getMediaID(fileExtension);

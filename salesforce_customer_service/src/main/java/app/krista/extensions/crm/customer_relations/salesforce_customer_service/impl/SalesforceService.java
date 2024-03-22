@@ -125,7 +125,7 @@ public class SalesforceService {
             SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
             String url = salesforceToken.getInstanceUrl() + downloadUrl;
             final OAuthRequest request = getOauthRequest(Verb.GET, null,url, salesforceToken);
-            return getResponse(salesforceToken, request);
+            return getResponse1(salesforceToken, request);
         } catch (IOException | ExecutionException | InterruptedException cause) {
             //LOGGER.error("Failed to get file response" + cause.getMessage(), cause);
         }
@@ -201,5 +201,29 @@ public String getFeedsByCaseId(String caseId, int numberOfPosts) {
             }
             return response.getBody();
         }
+    }
+//    public Response getFileResponse(String downloadUrl) {
+//        try {
+//            SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+//            String url = salesforceToken.getInstanceUrl() + downloadUrl;
+//            final OAuthRequest request = getOauthRequest(Verb.GET, null, url,salesforceToken);
+//            return getResponse1(salesforceToken, request);
+//        } catch (IOException | ExecutionException | InterruptedException cause) {
+//           // LOGGER.error("Failed to get file response" + cause.getMessage(), cause);
+//        }
+//        return null;
+//    }
+//
+    private Response getResponse1(SalesforceToken salesforceToken, OAuthRequest request) throws IOException, ExecutionException, InterruptedException {
+        customerServiceAttributes.getOauthService().signRequest(salesforceToken, request);
+        try (com.github.scribejava.core.model.Response response = customerServiceAttributes.getOauthService().execute(request)) {
+            if (response.getCode() >= 400) {
+                throw new IllegalArgumentException("Bad Request, Please enter correct required data. The error is " + response.getBody());
+            }
+            return response;
+        } catch (IOException | InterruptedException | ExecutionException cause) {
+           // LOGGER.error("Failed to get record " + cause.getMessage(), cause);
+        }
+        return null;
     }
 }
