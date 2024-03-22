@@ -210,7 +210,7 @@ public final class CaseDaoImpl implements CaseDao {
     }
     private app.krista.model.base.File downloadFile(String downloadUrl) throws IOException {
 
-        Response fileResponse = salesforceManager.getFileResponse(downloadUrl);
+        Response fileResponse = salesforceService.getFileResponse(downloadUrl);
         //MediaClient mediaClient = MediaClient.getInstance();
 
         String contentDisposition = fileResponse.getHeader("Content-Disposition");
