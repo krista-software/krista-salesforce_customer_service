@@ -13,8 +13,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,9 +39,9 @@ public class CaseManagementArea {
             description = "This request will fetch the list of post items for the given case Id",
             area = "Case management",
             type = CatalogRequest.Type.QUERY_SYSTEM)
-    @Field.Desc(name = "Feed Items", type = "[ { Actor Name: Text, Post Message: Text } ]", required = false)
+    @Field.Desc(name = "Feed Items", type = "[ { Actor Name: Text, Post Message: Text, File: File } ]", required = false)
     public List<Map<String, Object>> getCaseFeedItemsByCaseId(
-            @Field.Text(name = "Case Id") String caseId) {
+            @Field.Text(name = "Case Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String caseId) {
         try {
             return caseDao.getFeedItemsForCaseId(caseId);
         } catch (ExecutionException | JsonProcessingException cause) {
@@ -64,19 +62,21 @@ public class CaseManagementArea {
     public Boolean shareUpdateToCase(
             @Field.Text(name = "Case Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String caseId,
             @Field(name = "Update Message", type = "Paragraph", required = true, attributes = {@Attribute(name = "visualWidth", value = "L")}, options = {}) String updateMessage,
-            @Field.File(name = "File" , multipleFileUpload = false, required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) File file) {
+            @Field.File(name = "File", multipleFileUpload = false, required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) File file) {
         try {
-            java.io.File file1 = caseDao.convertKristaFileToJavaFile(file);
-            byte[] fileContent = Files.readAllBytes(file1.toPath());
-
-            // Encode the byte array to Base64
-            String base64EncodedString = Base64.getEncoder().encodeToString(fileContent);
-            //File file2 = caseDao.convertJavaFileToKristaFile(file1);
-            return caseDao.addFeedUpdateToCaseById(caseId, getEscapeCharacterMessage(updateMessage),base64EncodedString,file1.getName());
+            if (file != null) {
+                java.io.File javaFile = caseDao.convertKristaFileToJavaFile(file);
+                String base64EncodedString = caseDao.getBase64EncodedString(javaFile);
+                //File file2 = caseDao.convertJavaFileToKristaFile(file1);
+                return caseDao.addFeedUpdateToCaseById(caseId, getEscapeCharacterMessage(updateMessage), base64EncodedString, javaFile.getName());
+            } else {
+                return caseDao.addFeedUpdateToCaseById(caseId, getEscapeCharacterMessage(updateMessage), null, null);
+            }
         } catch (ExecutionException | InterruptedException | IOException cause) {
             throw new RuntimeException(cause.getMessage(), cause);
         }
     }
+
 
     private static String getEscapeCharacterMessage(String updateMessage) {
         StringBuilder escapedMessage = new StringBuilder();

@@ -18,11 +18,13 @@ import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants.GSON;
+import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper.createFeedPostBodyForFile;
 
 @Service
 public final class CaseDaoImpl implements CaseDao {
@@ -119,14 +121,22 @@ public final class CaseDaoImpl implements CaseDao {
         return feedPosts;
     }
 
-    public Boolean addFeedUpdateToCaseById(String caseId, String updateMessage,String base64EncodedString,String fileName) throws ExecutionException, InterruptedException {
+    public Boolean addFeedUpdateToCaseById(String caseId, String updateMessage, String base64EncodedString, String fileName) throws ExecutionException, InterruptedException {
         String postData = StringHelper.createFeedPostBody(caseId, updateMessage);
-        String requestBody = String.format("{\"Name\":\"%s\",\"ParentId\":\"%s\",\"Body\":\"%s\",\"ContentType\":\"multipart/form-data\"}", fileName, caseId, base64EncodedString);
-        System.out.println(requestBody);
-        String response1 = salesforceService.createFeedPost1(requestBody);
-        System.out.println(response1);
         String response = salesforceService.createFeedPost(postData);
         final JsonObject responseObject = GSON.fromJson(response, JsonObject.class);
+
+        if (base64EncodedString != null && fileName != null) {
+            String requestBody = createFeedPostBodyForFile(caseId, base64EncodedString, fileName);
+            String responseForFile = salesforceService.createFeedPostForFile(requestBody);
+            final JsonObject responseObjectForFile = GSON.fromJson(responseForFile, JsonObject.class);
+            if (responseObject.get("id") != null && responseObjectForFile.get("id") != null) {
+                return Boolean.TRUE;
+            } else {
+                return Boolean.FALSE;
+            }
+        }
+
         if (responseObject.get("id") != null) {
             return Boolean.TRUE;
         } else {
@@ -134,13 +144,12 @@ public final class CaseDaoImpl implements CaseDao {
         }
     }
 
+
     public Map<String, Object> getCaseUpdatedFields(String query) throws IOException, ExecutionException, InterruptedException {
         String response = salesforceService.getRecordByQuery(query);
         SFCaseHistory sfCaseHistory = GSON.fromJson(response, SFCaseHistory.class);
         return sfCaseHistory.toMap();
     }
-
-
 
 
     public app.krista.model.base.File convertJavaFileToKristaFile(java.io.File file) throws IOException {
@@ -164,7 +173,7 @@ public final class CaseDaoImpl implements CaseDao {
         //System.out.println("Using tmp dir:{}", tmpDir.getAbsolutePath());
 
         if (tmpDir.exists() && !tmpDir.canWrite()) {
-           // LOGGER.error("Unable to write to tmpDir: {}", tmpDir.getAbsolutePath());
+            // LOGGER.error("Unable to write to tmpDir: {}", tmpDir.getAbsolutePath());
             throw new IllegalArgumentException("Unable write to temporary file.");
         }
 
@@ -185,4 +194,10 @@ public final class CaseDaoImpl implements CaseDao {
 
         return input;
     }
+
+    public String getBase64EncodedString(java.io.File file1) throws IOException {
+        byte[] fileContent = Files.readAllBytes(file1.toPath());
+        return Base64.getEncoder().encodeToString(fileContent);
+    }
 }
+

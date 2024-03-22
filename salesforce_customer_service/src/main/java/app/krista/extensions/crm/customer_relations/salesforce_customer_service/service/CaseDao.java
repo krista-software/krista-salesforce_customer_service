@@ -87,6 +87,8 @@ public interface CaseDao {
      *
      * @param caseId        case entity id.
      * @param updateMessage message to be added to the post
+     * @param base64EncodedString base64EncodedString of file to be added.
+     * @param fileName filename to be added to the post
      * @return {@link Boolean} value of updated or not
      */
     Boolean addFeedUpdateToCaseById(String caseId, String updateMessage,String base64EncodedString,String fileName) throws ExecutionException, InterruptedException;

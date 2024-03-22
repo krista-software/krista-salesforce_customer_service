@@ -53,4 +53,8 @@ public final class StringHelper {
                 "\"subjectId\": \"" + caseId + "\"" +
                 "}";
     }
+
+    public static String createFeedPostBodyForFile(String caseId, String base64EncodedString, String fileName) {
+        return String.format("{\"Name\":\"%s\",\"ParentId\":\"%s\",\"Body\":\"%s\",\"ContentType\":\"multipart/form-data\"}", fileName, caseId, base64EncodedString);
+    }
 }
