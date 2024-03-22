@@ -19,8 +19,11 @@ import org.jvnet.hk2.annotations.Service;
 import javax.inject.Inject;
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants.GSON;
@@ -34,6 +37,18 @@ public final class CaseDaoImpl implements CaseDao {
     private static final String QUERY_FIELDS = " Contact.Name, ContactId, ContactEmail, ContactPhone, Account.Name,AccountId,Subject,Priority,Description,IsClosed,ClosedDate,OwnerId,CreatedById, CaseNumber,status,Origin,Type,CreatedDate,LastModifiedDate,Id ";
     private final SalesforceService salesforceService;
     private final FileRepository fileRepository;
+    private static final String ELEMENTS = "elements";
+    private static final String FEED_ELEMENT_TYPE = "feedElementType";
+    private static final String ACTOR = "actor";
+    private static final String NAME = "name";
+    private static final String BODY = "body";
+    private static final String MESSAGE_SEGMENTS = "messageSegments";
+    private static final String TYPE = "type";
+    private static final String INLINE_IMAGE = "InlineImage";
+    private static final String DOWNLOAD_URL = "downloadUrl";
+    private static final String ITEMS = "items";
+    private static final String CAPABILITIES = "capabilities";
+    private static final String FILES = "files";
 
     @Inject
     public CaseDaoImpl(SalesforceService salesforceService, FileRepository fileRepository) {
@@ -121,7 +136,7 @@ public final class CaseDaoImpl implements CaseDao {
 //        }
 //        return feedPosts;
 //    }
-    public List<Map<String, Object>> getFeedItemsForCaseId(String caseId,int numberOfPosts) throws ExecutionException, InterruptedException, JsonProcessingException {
+    public List<Map<String, Object>> getFeedItemsForCaseId(String caseId,int numberOfPosts) throws ExecutionException, InterruptedException, IOException {
         String response = salesforceService.getFeedsByCaseId(caseId, numberOfPosts);
 
         ObjectMapper mapper = new ObjectMapper();
@@ -167,6 +182,55 @@ public final class CaseDaoImpl implements CaseDao {
         }
         return null;
     }
+    private List<app.krista.model.base.File> getFiles(JsonNode elementNode) throws IOException {
+        List<app.krista.model.base.File> files = new ArrayList<>();
+
+        // Add inline images
+        JsonNode bodyNode = elementNode.get(BODY);
+        if (bodyNode != null && bodyNode.has(MESSAGE_SEGMENTS)) {
+            for (JsonNode segmentNode : bodyNode.get(MESSAGE_SEGMENTS)) {
+                if (isInlineImage(segmentNode)) {
+                    files.add(downloadFile(segmentNode.get("url").asText()));
+                }
+            }
+        }
+
+        // Add attached files
+        JsonNode filesNode = elementNode.get(CAPABILITIES).get(FILES);
+        if (filesNode != null) {
+            for (JsonNode fileNode : filesNode.get(ITEMS)) {
+                files.add(downloadFile(fileNode.get(DOWNLOAD_URL).asText()));
+            }
+        }
+
+        return files;
+    }
+    private app.krista.model.base.File downloadFile(String downloadUrl) throws IOException {
+
+        Response fileResponse = salesforceManager.getFileResponse(downloadUrl);
+        //MediaClient mediaClient = MediaClient.getInstance();
+
+        String contentDisposition = fileResponse.getHeader("Content-Disposition");
+        Pattern pattern = Pattern.compile("filename=\"(.*)\"");
+        Matcher matcher = pattern.matcher(contentDisposition);
+        String fileName = matcher.find() ? matcher.group(1) : "unknown";
+
+        File localFile = saveToLocalTempDir(fileResponse.getStream(), fileName);
+        return convertJavaFileToKristaFile(localFile);
+//        String fileExtension = getFileExtension(localFile.getName());
+//        String mediaId = mediaClient.getMediaID(fileExtension);
+//
+//        uploadFileToMediaClient(localFile, mediaId);
+//
+//        return new app.krista.model.base.File(localFile.length(), localFile.getName(),
+//                fileExtension, mediaId);
+    }
+    private File saveToLocalTempDir(InputStream inputStream, String filePath) throws IOException {
+        File localFile = new File(filePath);
+        Files.copy(inputStream, localFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        return localFile;
+    }
+
     public Boolean addFeedUpdateToCaseById(String caseId, String updateMessage, String base64EncodedString, String fileName) throws ExecutionException, InterruptedException {
         String postData = StringHelper.createFeedPostBody(caseId, updateMessage);
         String response = salesforceService.createFeedPost(postData);
