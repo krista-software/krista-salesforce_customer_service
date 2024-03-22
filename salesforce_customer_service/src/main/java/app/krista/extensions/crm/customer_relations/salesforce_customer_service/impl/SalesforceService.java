@@ -142,7 +142,16 @@ public class SalesforceService {
             throw new IllegalArgumentException("Failed to add update to case. " + cause.getMessage(), cause);
         }
     }
-
+    public String createFeedPost1(String postData) throws ExecutionException, InterruptedException {
+        try {
+            SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+            String url = salesforceToken.getInstanceUrl() + "/services/data/v58.0/sobjects/Attachment";
+            final OAuthRequest request = getOauthRequest(Verb.POST, postData, url, salesforceToken);
+            return getResponse(salesforceToken, request);
+        } catch (IOException cause) {
+            throw new IllegalArgumentException("Failed to add update to case. " + cause.getMessage(), cause);
+        }
+    }
     private OAuthRequest getOauthRequest(Verb verb, String body, String url, SalesforceToken salesforceToken) {
         final OAuthRequest request = new OAuthRequest(verb, url);
         if (body != null) {

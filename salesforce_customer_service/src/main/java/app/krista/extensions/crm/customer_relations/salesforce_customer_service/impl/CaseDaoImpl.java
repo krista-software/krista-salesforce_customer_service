@@ -7,6 +7,8 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.SalesforceListResponse;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper;
+import app.krista.ksdk.files.FileHandle;
+import app.krista.ksdk.files.FileRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,7 +17,7 @@ import com.google.gson.reflect.TypeToken;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -28,10 +30,12 @@ public final class CaseDaoImpl implements CaseDao {
     private static final String CASE = "Case";
     private static final String QUERY_FIELDS = " Contact.Name, ContactId, ContactEmail, ContactPhone, Account.Name,AccountId,Subject,Priority,Description,IsClosed,ClosedDate,OwnerId,CreatedById, CaseNumber,status,Origin,Type,CreatedDate,LastModifiedDate,Id ";
     private final SalesforceService salesforceService;
+    private final FileRepository fileRepository;
 
     @Inject
-    public CaseDaoImpl(SalesforceService salesforceService) {
+    public CaseDaoImpl(SalesforceService salesforceService, FileRepository fileRepository) {
         this.salesforceService = salesforceService;
+        this.fileRepository = fileRepository;
     }
 
     @Override
@@ -115,8 +119,12 @@ public final class CaseDaoImpl implements CaseDao {
         return feedPosts;
     }
 
-    public Boolean addFeedUpdateToCaseById(String caseId, String updateMessage) throws ExecutionException, InterruptedException {
+    public Boolean addFeedUpdateToCaseById(String caseId, String updateMessage,String base64EncodedString,String fileName) throws ExecutionException, InterruptedException {
         String postData = StringHelper.createFeedPostBody(caseId, updateMessage);
+        String requestBody = String.format("{\"Name\":\"%s\",\"ParentId\":\"%s\",\"Body\":\"%s\",\"ContentType\":\"multipart/form-data\"}", fileName, caseId, base64EncodedString);
+        System.out.println(requestBody);
+        String response1 = salesforceService.createFeedPost1(requestBody);
+        System.out.println(response1);
         String response = salesforceService.createFeedPost(postData);
         final JsonObject responseObject = GSON.fromJson(response, JsonObject.class);
         if (responseObject.get("id") != null) {
@@ -130,5 +138,51 @@ public final class CaseDaoImpl implements CaseDao {
         String response = salesforceService.getRecordByQuery(query);
         SFCaseHistory sfCaseHistory = GSON.fromJson(response, SFCaseHistory.class);
         return sfCaseHistory.toMap();
+    }
+
+
+
+
+    public app.krista.model.base.File convertJavaFileToKristaFile(java.io.File file) throws IOException {
+
+        try (final FileHandle outputFileHandle = this.fileRepository.createNewFileByName(file.getName())) {
+            try {
+                outputFileHandle.setContent(new FileInputStream(file));
+            } catch (IOException cause) {
+                throw new RuntimeException("Failed to store content to file handle", cause);
+            }
+            return outputFileHandle.getFile();
+        }
+    }
+
+    public java.io.File convertKristaFileToJavaFile(app.krista.model.base.File file) throws IOException {
+
+        final FileHandle inputFileHandle = this.fileRepository.getFile(file);
+
+        final File tmpDir = new File(System.getProperty("java.io.tmpDir", "/tmp"));
+
+        //System.out.println("Using tmp dir:{}", tmpDir.getAbsolutePath());
+
+        if (tmpDir.exists() && !tmpDir.canWrite()) {
+           // LOGGER.error("Unable to write to tmpDir: {}", tmpDir.getAbsolutePath());
+            throw new IllegalArgumentException("Unable write to temporary file.");
+        }
+
+        final File input = new File(file.getFileName());
+        return convertInputStreamToFile(inputFileHandle.getContent(), input);
+
+    }
+
+    public File convertInputStreamToFile(InputStream inputStream, File input) throws IOException {
+
+        try (OutputStream outputStream = new FileOutputStream(input)) {
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+        }
+
+        return input;
     }
 }
