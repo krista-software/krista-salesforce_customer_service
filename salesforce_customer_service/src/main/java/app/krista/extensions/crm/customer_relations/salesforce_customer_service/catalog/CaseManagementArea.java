@@ -1,11 +1,13 @@
 package app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog;
 
 
+import app.krista.extension.impl.anno.Attribute;
 import app.krista.extension.impl.anno.CatalogRequest;
 import app.krista.extension.impl.anno.Domain;
 import app.krista.extension.impl.anno.Field;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.CaseDaoImpl;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
+import app.krista.model.base.File;
 import app.krista.model.base.FreeForm;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -56,13 +58,14 @@ public class CaseManagementArea {
             description = "This request will add update to the Feed of the Case.",
             area = "Case management",
             type = CatalogRequest.Type.CHANGE_SYSTEM)
-    @Field.Boolean(name = "Is Updated", required = false)
+    @Field.Boolean(name = "Is Updated", required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {})
     public Boolean shareUpdateToCase(
-            @Field.Text(name = "Case Id") String caseId,
-            @Field(name = "Update Message", type = "Paragraph") String updateMessage) throws InterruptedException {
+            @Field.Text(name = "Case Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String caseId,
+            @Field(name = "Update Message", type = "Paragraph", required = true, attributes = {@Attribute(name = "visualWidth", value = "L")}, options = {}) String updateMessage,
+            @Field.File(name = "File" , multipleFileUpload = false, required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) File file) {
         try {
             return caseDao.addFeedUpdateToCaseById(caseId, getEscapeCharacterMessage(updateMessage));
-        } catch (ExecutionException cause) {
+        } catch (ExecutionException | InterruptedException cause) {
             throw new RuntimeException(cause.getMessage(), cause);
         }
     }
