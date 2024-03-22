@@ -216,6 +216,9 @@ public final class CaseDaoImpl implements CaseDao {
         String fileName = matcher.find() ? matcher.group(1) : "unknown";
 
         File localFile = saveToLocalTempDir(fileResponse.getStream(), fileName);
+        FileHandle newFileByName = fileRepository.createNewFileByName(localFile.getName());
+        newFileByName.setContent();
+        app.krista.model.base.File returningFile = newFileByName.getFile();
         return convertJavaFileToKristaFile(localFile);
 //        String fileExtension = getFileExtension(localFile.getName());
 //        String mediaId = mediaClient.getMediaID(fileExtension);
