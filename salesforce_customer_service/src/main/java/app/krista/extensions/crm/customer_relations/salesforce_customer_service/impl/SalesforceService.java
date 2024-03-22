@@ -6,6 +6,7 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import com.github.scribejava.apis.salesforce.SalesforceToken;
 import com.github.scribejava.core.model.OAuthRequest;
+import com.github.scribejava.core.model.Response;
 import com.github.scribejava.core.model.Verb;
 import org.jvnet.hk2.annotations.Service;
 
@@ -118,6 +119,17 @@ public class SalesforceService {
         String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + sobject;
         final OAuthRequest request = getOauthRequest(Verb.POST, body, url, salesforceToken);
         return getResponse(salesforceToken, request);
+    }
+    public Response getFileResponse(String downloadUrl) {
+        try {
+            SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+            String url = salesforceToken.getInstanceUrl() + downloadUrl;
+            final OAuthRequest request = getOauthRequest(Verb.GET, null,url, salesforceToken);
+            return getResponse(salesforceToken, request);
+        } catch (IOException | ExecutionException | InterruptedException cause) {
+            //LOGGER.error("Failed to get file response" + cause.getMessage(), cause);
+        }
+        return null;
     }
 
 //    public String getFeedsByCaseId(String caseId) throws ExecutionException, InterruptedException {
