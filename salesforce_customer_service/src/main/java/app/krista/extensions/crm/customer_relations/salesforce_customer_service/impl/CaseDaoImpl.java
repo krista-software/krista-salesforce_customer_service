@@ -205,6 +205,9 @@ public final class CaseDaoImpl implements CaseDao {
 
         return files;
     }
+    private boolean isInlineImage(JsonNode segmentNode) {
+        return segmentNode.has(TYPE) && segmentNode.get(TYPE).asText().equals(INLINE_IMAGE);
+    }
     private app.krista.model.base.File downloadFile(String downloadUrl) throws IOException {
 
         Response fileResponse = salesforceManager.getFileResponse(downloadUrl);
