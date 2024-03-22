@@ -61,11 +61,13 @@ public class CaseManagementArea {
                 }
             }
             return caseDao.getFeedItemsForCaseId(caseId, maxNumberOfPosts);
-        } catch (IllegalArgumentException | IOException cause) {
+        } catch (IllegalArgumentException cause) {
             //LOGGER.error("Failed to get Latest Posts" + cause.getMessage(), cause);
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return List.of();

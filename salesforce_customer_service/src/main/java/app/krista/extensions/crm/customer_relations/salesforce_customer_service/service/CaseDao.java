@@ -80,7 +80,7 @@ public interface CaseDao {
      * @param caseId case entity id
      * @return list of Feed items.
      */
-    List<Map<String, Object>> getFeedItemsForCaseId(String caseId) throws ExecutionException, InterruptedException, JsonProcessingException;
+    List<Map<String, Object>> getFeedItemsForCaseId(String caseId,int numberOfPosts) throws ExecutionException, InterruptedException, IOException;
 
     /**
      * This function will add update to the feed posts.

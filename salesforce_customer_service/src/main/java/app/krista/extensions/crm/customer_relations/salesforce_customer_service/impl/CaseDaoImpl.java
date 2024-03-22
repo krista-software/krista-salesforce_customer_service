@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants.GSON;
 import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper.createFeedPostBodyForFile;
-import static javax.swing.MultiUIDefaults.MultiUIDefaultsEnumerator.Type.ELEMENTS;
+import org.apache.commons.io.FileUtils;
 
 @Service
 public final class CaseDaoImpl implements CaseDao {
@@ -309,9 +309,13 @@ public final class CaseDaoImpl implements CaseDao {
         return input;
     }
 
-    public String getBase64EncodedString(java.io.File file1) throws IOException {
-        byte[] fileContent = Files.readAllBytes(file1.toPath());
-        return Base64.getEncoder().encodeToString(fileContent);
-    }
+//    public String getBase64EncodedString(java.io.File file) throws IOException {
+//        byte[] fileContent = Files.readAllBytes(file.toPath());
+//        return Base64.getEncoder().encodeToString(fileContent);
+//    }
+public String getBase64EncodedString(File file) throws IOException {
+    byte[] fileContent = FileUtils.readFileToByteArray(file);
+    return Base64.getEncoder().encodeToString(fileContent);
+}
 }
 
