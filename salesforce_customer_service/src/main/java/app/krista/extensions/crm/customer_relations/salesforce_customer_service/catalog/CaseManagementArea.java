@@ -33,15 +33,17 @@ public class CaseManagementArea {
         this.caseDao = caseDao;
     }
 
+
     @CatalogRequest(
             id = "localDomainRequest_4adceae0-923e-4163-bcc0-1c0fd9cf8b19",
             name = "Get Case Feed Items By Case Id",
             description = "This request will fetch the list of post items for the given case Id",
             area = "Case management",
             type = CatalogRequest.Type.QUERY_SYSTEM)
-    @Field.Desc(name = "Feed Items", type = "[ { Actor Name: Text, Post Message: Text, File: File } ]", required = false)
+    @Field.Desc(name = "Feed Items", type = "[ { Actor Name: Text, Post Message: Text, File: File } ]",required = false)
     public List<Map<String, Object>> getCaseFeedItemsByCaseId(
-            @Field.Text(name = "Case Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String caseId) {
+            @Field.Text(name = "Case Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String caseId,
+            @Field(name = "Number Of Posts", type = "Number", required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) Double numberOfPosts) {
         try {
             return caseDao.getFeedItemsForCaseId(caseId);
         } catch (ExecutionException | JsonProcessingException cause) {
