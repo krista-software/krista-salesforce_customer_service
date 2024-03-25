@@ -147,27 +147,44 @@ public final class CaseDaoImpl implements CaseDao {
         List<Map<String, Object>> feedPosts = new ArrayList<>();
         for (JsonNode elementNode : elementsNode) {
             //LatestPosts post = parseElementToPost(elementNode);
-            parseElementToPost(elementNode);
+            Map<String, Object> post = parseElementToPost(elementNode);
 
-//            if (post != null) {
-//                feedPosts.add(post);
-//            }
+            if (post != null) {
+                feedPosts.add(post);
+            }
+
         }
         return feedPosts;
     }
-    private void parseElementToPost(JsonNode elementNode) throws IOException {
+//    private void parseElementToPost(JsonNode elementNode) throws IOException {
+//        String feedElementType = elementNode.get(FEED_ELEMENT_TYPE).asText();
+//        if (!feedElementType.equalsIgnoreCase("FeedItem")) {
+//            //return null;
+//        }
+//
+////        LatestPosts post = new LatestPosts();
+////        post.actorName = getActorName(elementNode);
+////        post.postMessage = getPostMessage(elementNode);
+////        post.files = getFiles(elementNode);
+//       // return post;
+//    }
+
+
+
+    private Map<String, Object> parseElementToPost(JsonNode elementNode) throws IOException {
         String feedElementType = elementNode.get(FEED_ELEMENT_TYPE).asText();
         if (!feedElementType.equalsIgnoreCase("FeedItem")) {
-            //return null;
+            return null;
         }
 
-//        LatestPosts post = new LatestPosts();
-//        post.actorName = getActorName(elementNode);
-//        post.postMessage = getPostMessage(elementNode);
-//        post.files = getFiles(elementNode);
-       // return post;
+        Map<String, Object> post = new HashMap<>();
+        post.put("Actor Name", getActorName(elementNode));
+        post.put("Post Message", getPostMessage(elementNode));
+        post.put("File", getFiles(elementNode));
+        return post;
     }
-//    private LatestPosts parseElementToPost(JsonNode elementNode) throws IOException {
+
+    //    private LatestPosts parseElementToPost(JsonNode elementNode) throws IOException {
 //        String feedElementType = elementNode.get(FEED_ELEMENT_TYPE).asText();
 //        if (!feedElementType.equalsIgnoreCase("FeedItem")) {
 //            return null;
