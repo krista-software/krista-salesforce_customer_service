@@ -46,13 +46,14 @@ public class CaseManagementArea {
 
         try {
             int maxNumberOfPosts = 100;
-            if (numberOfPosts > 100) {
-                throw new IllegalArgumentException("Bad Request. Number of posts must be less than 100.");
-            }
+
             if (numberOfPosts != null && Double.isFinite(numberOfPosts)) {
                 maxNumberOfPosts = Math.min(numberOfPosts.intValue(), maxNumberOfPosts);
                 if (maxNumberOfPosts <= 0) {
                     throw new IllegalArgumentException("Bad Request. Number of posts must be greater than 0.");
+                }
+                if (numberOfPosts > 100) {
+                    throw new IllegalArgumentException("Bad Request. Number of posts must be less than 100.");
                 }
             }
             return caseDao.getFeedItemsForCaseId(caseId, maxNumberOfPosts);
