@@ -5,22 +5,12 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.connectors.SalesforceTokenProviderFactory;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import com.github.scribejava.apis.salesforce.SalesforceToken;
-import com.github.scribejava.core.httpclient.multipart.MultipartPayload;
 import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.model.Response;
 import com.github.scribejava.core.model.Verb;
-import org.apache.http.HttpEntity;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URLEncoder;
@@ -130,45 +120,33 @@ public class SalesforceService {
         final OAuthRequest request = getOauthRequest(Verb.POST, body, url, salesforceToken);
         return getResponse(salesforceToken, request);
     }
+
     public Response getFileResponse(String downloadUrl) {
         try {
             SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
             String url = salesforceToken.getInstanceUrl() + downloadUrl;
-            final OAuthRequest request = getOauthRequest(Verb.GET, null,url, salesforceToken);
-            return getResponse1(salesforceToken, request);
+            final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
+            return getResponseForFile(salesforceToken, request);
         } catch (IOException | ExecutionException | InterruptedException cause) {
-            //LOGGER.error("Failed to get file response" + cause.getMessage(), cause);
+            System.out.println("Failed to get file response" + cause);
         }
         return null;
     }
 
-//    public String getFeedsByCaseId(String caseId) throws ExecutionException, InterruptedException {
-//        try {
-//            SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
-//            String url = salesforceToken.getInstanceUrl() + "/services/data/v48.0/chatter/feeds/record/" +
-//                    caseId + "/feed-elements";
-//            final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
-//            return getResponse(salesforceToken, request);
-//        } catch (IOException cause) {
-//            throw new IllegalArgumentException("Failed to get case feed posts. " + cause.getMessage(), cause);
-//        }
-//    }
-public String getFeedsByCaseId(String caseId, int numberOfPosts) {
-    try {
-        SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
-        String url = salesforceToken.getInstanceUrl() + "/services/data/v48.0/chatter/feeds/record/" + caseId +
-                "/feed-elements?sortOrder=ASC&sortField=CreatedDate&pageSize=" + numberOfPosts;
-        final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
-        return getResponse(salesforceToken, request);
-    } catch (IOException cause) {
-       // LOGGER.error("Failed to get opportunity feed posts. " + cause.getMessage(), cause);
-    } catch (ExecutionException e) {
-        throw new RuntimeException(e);
-    } catch (InterruptedException e) {
-        throw new RuntimeException(e);
+    public String getFeedsByCaseId(String caseId, int numberOfPosts) {
+        try {
+            SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+            String url = salesforceToken.getInstanceUrl() + "/services/data/v48.0/chatter/feeds/record/" + caseId +
+                    "/feed-elements?sortOrder=ASC&sortField=CreatedDate&pageSize=" + numberOfPosts;
+            final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
+            return getResponse(salesforceToken, request);
+        } catch (IOException cause) {
+            System.out.println("Failed to get case feed posts. " + cause);
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return "";
     }
-    return "";
-}
 
 
     public String createFeedPost(String postData) throws ExecutionException, InterruptedException {
@@ -181,27 +159,40 @@ public String getFeedsByCaseId(String caseId, int numberOfPosts) {
             throw new IllegalArgumentException("Failed to add update to case. " + cause.getMessage(), cause);
         }
     }
+
     public String createFeedPostForFile(String postData) throws ExecutionException, InterruptedException {
         try {
             SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
-            String url = salesforceToken.getInstanceUrl() + "/services/data/v58.0/sobjects/Attachment";
+            String url = salesforceToken.getInstanceUrl() + "/services/data/v58.0/sobjects/ContentVersion";
             final OAuthRequest request = getOauthRequest(Verb.POST, postData, url, salesforceToken);
             return getResponse(salesforceToken, request);
         } catch (IOException cause) {
             throw new IllegalArgumentException("Failed to add update to case. " + cause.getMessage(), cause);
         }
     }
-    public String createFeedPost1(File javaFile) throws ExecutionException, InterruptedException {
+
+    public String createFeedPostForFeedItem(String postData) throws ExecutionException, InterruptedException {
         try {
             SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
-            String url = salesforceToken.getInstanceUrl() + "/services/data/v60.0/connect/files/users/me";
-
-            final OAuthRequest request = getOauthRequest1(Verb.POST, url, salesforceToken,javaFile);
+            String url = salesforceToken.getInstanceUrl() + "/services/data/v58.0/sobjects/FeedItem";
+            final OAuthRequest request = getOauthRequest(Verb.POST, postData, url, salesforceToken);
             return getResponse(salesforceToken, request);
         } catch (IOException cause) {
             throw new IllegalArgumentException("Failed to add update to case. " + cause.getMessage(), cause);
         }
     }
+
+    public String createFeedPostForFeedAttachment(String postData) throws ExecutionException, InterruptedException {
+        try {
+            SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+            String url = salesforceToken.getInstanceUrl() + "/services/data/v58.0/sobjects/FeedAttachment";
+            final OAuthRequest request = getOauthRequest(Verb.POST, postData, url, salesforceToken);
+            return getResponse(salesforceToken, request);
+        } catch (IOException cause) {
+            throw new IllegalArgumentException("Failed to add update to case. " + cause.getMessage(), cause);
+        }
+    }
+
     private OAuthRequest getOauthRequest(Verb verb, String body, String url, SalesforceToken salesforceToken) {
         final OAuthRequest request = new OAuthRequest(verb, url);
         if (body != null) {
@@ -210,61 +201,6 @@ public String getFeedsByCaseId(String caseId, int numberOfPosts) {
         request.addHeader("Content-Type", "application/json");
         request.addHeader("Authorization", "Bearer " + salesforceToken.getAccessToken());
         return request;
-    }
-    private OAuthRequest getOauthRequest1(Verb verb, String url, SalesforceToken salesforceToken, File javaFile) throws FileNotFoundException {
-        final OAuthRequest request = new OAuthRequest(verb, url);
-
-        //1
-//        request.addHeader("Authorization", "Bearer " + salesforceToken.getAccessToken());
-//        request.addHeader("User-Agent", "Jakarta Commons-HttpClient/3.0.1");
-//        FileInputStream fileInputStream = new FileInputStream(javaFile);
-//        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-//        builder.addBinaryBody("fileData", fileInputStream, ContentType.APPLICATION_OCTET_STREAM, javaFile.getName());
-//        HttpEntity multipartEntity = builder.build();
-//        request.setEntity(multipartEntity);
-
-        //2
-//        request.target(url)
-//                .request(MediaType.MULTIPART_FORM_DATA)
-//                .header("Authorization", "Bearer " + salesforceToken.getAccessToken())
-//                .post(Entity.entity(javaFile, MediaType.APPLICATION_OCTET_STREAM));
-//        request.addHeader("Authorization", "Bearer " + salesforceToken.getAccessToken());
-//        request.addHeader("Content-Type", MediaType.MULTIPART_FORM_DATA);
-
-        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-        builder.addBinaryBody("fileData", javaFile, ContentType.APPLICATION_OCTET_STREAM, javaFile.getName());
-
-        request.setPayload(builder.build().toString());
-
-        return request;
-//3
-//        request.setHeader("Authorization", accessToken);
-//
-//        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-//        builder.addBinaryBody("fileData", file, ContentType.APPLICATION_OCTET_STREAM, file.getName());
-//        HttpEntity multipartEntity = builder.build();
-//        httpPost.setEntity(multipartEntity);
-
-//        request.addHeader("Authorization", salesforceToken.getAccessToken());
-//        MultipartPayload multipartPayload = new MultipartPayload();
-//        multipartPayload.addFilePart("fileData", javaFile);
-//
-//        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-//        builder.addBinaryBody("fileData", javaFile, ContentType.APPLICATION_OCTET_STREAM, javaFile.getName());
-//        HttpEntity multipartEntity = builder.build();
-//        request.setMultipartPayload((MultipartPayload) multipartEntity);
-
-//        request.setPayload(String.valueOf((Entity.entity(javaFile, MediaType.APPLICATION_OCTET_STREAM))));
-//
-//        request.addHeader("Content-Type", MediaType.MULTIPART_FORM_DATA);
-//        //MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-//        request.addHeader("Authorization", "Bearer " + salesforceToken.getAccessToken());
-//        request1.request(MediaType.MULTIPART_FORM_DATA)
-//                .header("Authorization", salesforceToken.getAccessToken())
-//                .post(Entity.entity(javaFile, MediaType.APPLICATION_OCTET_STREAM));
-
-
-        //return request;
     }
 
     private String getResponse(SalesforceToken salesforceToken, OAuthRequest request) throws IOException, ExecutionException, InterruptedException {
@@ -279,19 +215,8 @@ public String getFeedsByCaseId(String caseId, int numberOfPosts) {
             return response.getBody();
         }
     }
-//    public Response getFileResponse(String downloadUrl) {
-//        try {
-//            SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
-//            String url = salesforceToken.getInstanceUrl() + downloadUrl;
-//            final OAuthRequest request = getOauthRequest(Verb.GET, null, url,salesforceToken);
-//            return getResponse1(salesforceToken, request);
-//        } catch (IOException | ExecutionException | InterruptedException cause) {
-//           // LOGGER.error("Failed to get file response" + cause.getMessage(), cause);
-//        }
-//        return null;
-//    }
-//
-    private Response getResponse1(SalesforceToken salesforceToken, OAuthRequest request) throws IOException, ExecutionException, InterruptedException {
+
+    private Response getResponseForFile(SalesforceToken salesforceToken, OAuthRequest request) throws IOException, ExecutionException, InterruptedException {
         customerServiceAttributes.getOauthService().signRequest(salesforceToken, request);
         try (com.github.scribejava.core.model.Response response = customerServiceAttributes.getOauthService().execute(request)) {
             if (response.getCode() >= 400) {
@@ -299,7 +224,7 @@ public String getFeedsByCaseId(String caseId, int numberOfPosts) {
             }
             return response;
         } catch (IOException | InterruptedException | ExecutionException cause) {
-           // LOGGER.error("Failed to get record " + cause.getMessage(), cause);
+            System.out.println("Failed to get response " + cause);
         }
         return null;
     }

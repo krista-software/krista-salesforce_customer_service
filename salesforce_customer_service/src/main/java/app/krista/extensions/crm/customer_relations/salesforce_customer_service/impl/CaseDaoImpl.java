@@ -12,13 +12,13 @@ import app.krista.ksdk.files.FileRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.scribejava.core.model.Response;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import org.apache.commons.io.FileUtils;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -29,8 +29,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants.GSON;
-import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper.createFeedPostBodyForFile;
-import org.apache.commons.io.FileUtils;
+import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper.*;
 
 @Service
 public final class CaseDaoImpl implements CaseDao {
@@ -112,33 +111,7 @@ public final class CaseDaoImpl implements CaseDao {
     }
 
     @Override
-//    public List<Map<String, Object>> getFeedItemsForCaseId(String caseId) throws ExecutionException, InterruptedException, JsonProcessingException {
-//        String response = salesforceService.getFeedsByCaseId(caseId);
-//
-//        ObjectMapper mapper = new ObjectMapper();
-//        JsonNode rootNode = mapper.readTree(response);
-//        JsonNode elementsNode = rootNode.get("elements");
-//
-//        List<Map<String, Object>> feedPosts = new ArrayList<>();
-//        Map<String, Object> post = new LinkedHashMap<>(2);
-//        for (JsonNode elementNode : elementsNode) {
-//            String feedElementType = elementNode.get("feedElementType").asText();
-//            if (feedElementType.equalsIgnoreCase("FeedItem")) {
-//                JsonNode actorNode = elementNode.get("actor");
-//                if (actorNode != null) {
-//                    post.put("Actor Name", actorNode.get("name").asText());
-//                }
-//                JsonNode bodyNode = elementNode.get("body");
-//                if (bodyNode != null) {
-//                    post.put("Post Message", bodyNode.get("text").asText());
-//                }
-//                feedPosts.add(post);
-//            }
-//            post = new HashMap<>();
-//        }
-//        return feedPosts;
-//    }
-    public List<Map<String, Object>> getFeedItemsForCaseId(String caseId,int numberOfPosts) throws ExecutionException, InterruptedException, IOException {
+    public List<Map<String, Object>> getFeedItemsForCaseId(String caseId, int numberOfPosts) throws ExecutionException, InterruptedException, IOException {
         String response = salesforceService.getFeedsByCaseId(caseId, numberOfPosts);
 
         ObjectMapper mapper = new ObjectMapper();
@@ -147,30 +120,14 @@ public final class CaseDaoImpl implements CaseDao {
 
         List<Map<String, Object>> feedPosts = new ArrayList<>();
         for (JsonNode elementNode : elementsNode) {
-            //LatestPosts post = parseElementToPost(elementNode);
             Map<String, Object> post = parseElementToPost(elementNode);
 
             if (post != null) {
                 feedPosts.add(post);
             }
-
         }
         return feedPosts;
     }
-//    private void parseElementToPost(JsonNode elementNode) throws IOException {
-//        String feedElementType = elementNode.get(FEED_ELEMENT_TYPE).asText();
-//        if (!feedElementType.equalsIgnoreCase("FeedItem")) {
-//            //return null;
-//        }
-//
-////        LatestPosts post = new LatestPosts();
-////        post.actorName = getActorName(elementNode);
-////        post.postMessage = getPostMessage(elementNode);
-////        post.files = getFiles(elementNode);
-//       // return post;
-//    }
-
-
 
     private Map<String, Object> parseElementToPost(JsonNode elementNode) throws IOException {
         String feedElementType = elementNode.get(FEED_ELEMENT_TYPE).asText();
@@ -185,18 +142,6 @@ public final class CaseDaoImpl implements CaseDao {
         return post;
     }
 
-    //    private LatestPosts parseElementToPost(JsonNode elementNode) throws IOException {
-//        String feedElementType = elementNode.get(FEED_ELEMENT_TYPE).asText();
-//        if (!feedElementType.equalsIgnoreCase("FeedItem")) {
-//            return null;
-//        }
-//
-////        LatestPosts post = new LatestPosts();
-////        post.actorName = getActorName(elementNode);
-////        post.postMessage = getPostMessage(elementNode);
-////        post.files = getFiles(elementNode);
-//        return post;
-//    }
     private String getActorName(JsonNode elementNode) {
         JsonNode actorNode = elementNode.get(ACTOR);
         return actorNode != null ? actorNode.get(NAME).asText() : null;
@@ -215,10 +160,10 @@ public final class CaseDaoImpl implements CaseDao {
         }
         return null;
     }
+
     private List<app.krista.model.base.File> getFiles(JsonNode elementNode) throws IOException {
         List<app.krista.model.base.File> files = new ArrayList<>();
 
-        // Add inline images
         JsonNode bodyNode = elementNode.get(BODY);
         if (bodyNode != null && bodyNode.has(MESSAGE_SEGMENTS)) {
             for (JsonNode segmentNode : bodyNode.get(MESSAGE_SEGMENTS)) {
@@ -228,26 +173,21 @@ public final class CaseDaoImpl implements CaseDao {
             }
         }
 
-        // Add attached files
         JsonNode filesNode = elementNode.get(CAPABILITIES).get(FILES);
         if (filesNode != null) {
             for (JsonNode fileNode : filesNode.get(ITEMS)) {
                 files.add(downloadFile(fileNode.get(DOWNLOAD_URL).asText()));
             }
         }
-        JsonNode filesNode1 = elementNode.get(CAPABILITIES).get("enhancedLink");
-        if (filesNode1 != null) {
-//            for (JsonNode fileNode : filesNode.get(ITEMS)) {
-//                files.add(downloadFile(fileNode.get(DOWNLOAD_URL).asText()));
-//            }
-            files.add(downloadFile(filesNode1.get("linkUrl").asText()));
-        }
+
 
         return files;
     }
+
     private boolean isInlineImage(JsonNode segmentNode) {
         return segmentNode.has(TYPE) && segmentNode.get(TYPE).asText().equals(INLINE_IMAGE);
     }
+
     private app.krista.model.base.File downloadFile(String downloadUrl) throws IOException {
 
         Response fileResponse = salesforceService.getFileResponse(downloadUrl);
@@ -260,49 +200,51 @@ public final class CaseDaoImpl implements CaseDao {
         File localFile = saveToLocalTempDir(fileResponse.getStream(), fileName);
 
         return convertJavaFileToKristaFile(localFile);
-//        String fileExtension = getFileExtension(localFile.getName());
-//        String mediaId = mediaClient.getMediaID(fileExtension);
-//
-//        uploadFileToMediaClient(localFile, mediaId);
-//
-//        return new app.krista.model.base.File(localFile.length(), localFile.getName(),
-//                fileExtension, mediaId);
+
     }
+
     private File saveToLocalTempDir(InputStream inputStream, String filePath) throws IOException {
         File localFile = new File(filePath);
         Files.copy(inputStream, localFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         return localFile;
     }
-    public Boolean newMethod(File javaFile) throws ExecutionException, InterruptedException {
-        String response = salesforceService.createFeedPost1(javaFile);
-        File file = new File(javaFile.getPath());
-
-        return null;
-    }
 
     public Boolean addFeedUpdateToCaseById(String caseId, String updateMessage, String base64EncodedString, String fileName) throws ExecutionException, InterruptedException {
-        String postData = StringHelper.createFeedPostBody(caseId, updateMessage);
-        String response = salesforceService.createFeedPost(postData);
-        final JsonObject responseObject = GSON.fromJson(response, JsonObject.class);
-
-        if (base64EncodedString != null && fileName != null) {
-            String requestBody = createFeedPostBodyForFile(caseId, base64EncodedString, fileName);
+        if (base64EncodedString == null && fileName == null) {
+            String postData = StringHelper.createFeedPostBody(caseId, updateMessage);
+            String response = salesforceService.createFeedPost(postData);
+            final JsonObject responseObject = GSON.fromJson(response, JsonObject.class);
+            if (responseObject.get("id") != null) {
+                return Boolean.TRUE;
+            } else {
+                return Boolean.FALSE;
+            }
+        }
+        {
+            String requestBody = createFeedPostBodyForFile(base64EncodedString, fileName);
             String responseForFile = salesforceService.createFeedPostForFile(requestBody);
+
+            String bodyForFeedItem = createFeedPostBodyForFeedItem(updateMessage, caseId);
+            String responseForFeedItem = salesforceService.createFeedPostForFeedItem(bodyForFeedItem);
+
             final JsonObject responseObjectForFile = GSON.fromJson(responseForFile, JsonObject.class);
-            if (responseObject.get("id") != null && responseObjectForFile.get("id") != null) {
+            JsonElement id = responseObjectForFile.get("id");
+
+            final JsonObject responseObjectForFeedItem = GSON.fromJson(responseForFeedItem, JsonObject.class);
+            String feedItemId = String.valueOf(responseObjectForFeedItem.get("id"));
+
+            String bodyForFeedAttachment = createFeedPostBodyForFeedAttachment(feedItemId, String.valueOf(id), fileName);
+            String responseForFeedAttachment = salesforceService.createFeedPostForFeedAttachment(bodyForFeedAttachment);
+            final JsonObject responseObjectForFeedAttachment = GSON.fromJson(responseForFeedAttachment, JsonObject.class);
+
+            if (responseObjectForFeedAttachment.get("id") != null) {
                 return Boolean.TRUE;
             } else {
                 return Boolean.FALSE;
             }
         }
 
-        if (responseObject.get("id") != null) {
-            return Boolean.TRUE;
-        } else {
-            return Boolean.FALSE;
-        }
     }
-
 
     public Map<String, Object> getCaseUpdatedFields(String query) throws IOException, ExecutionException, InterruptedException {
         String response = salesforceService.getRecordByQuery(query);
@@ -326,19 +268,14 @@ public final class CaseDaoImpl implements CaseDao {
     public java.io.File convertKristaFileToJavaFile(app.krista.model.base.File file) throws IOException {
 
         final FileHandle inputFileHandle = this.fileRepository.getFile(file);
-
         final File tmpDir = new File(System.getProperty("java.io.tmpDir", "/tmp"));
 
-        //System.out.println("Using tmp dir:{}", tmpDir.getAbsolutePath());
-
         if (tmpDir.exists() && !tmpDir.canWrite()) {
-            // LOGGER.error("Unable to write to tmpDir: {}", tmpDir.getAbsolutePath());
             throw new IllegalArgumentException("Unable write to temporary file.");
         }
 
         final File input = new File(file.getFileName());
         return convertInputStreamToFile(inputFileHandle.getContent(), input);
-
     }
 
     public File convertInputStreamToFile(InputStream inputStream, File input) throws IOException {
@@ -354,13 +291,9 @@ public final class CaseDaoImpl implements CaseDao {
         return input;
     }
 
-//    public String getBase64EncodedString(java.io.File file) throws IOException {
-//        byte[] fileContent = Files.readAllBytes(file.toPath());
-//        return Base64.getEncoder().encodeToString(fileContent);
-//    }
-public String getBase64EncodedString(File file) throws IOException {
-    byte[] fileContent = FileUtils.readFileToByteArray(file);
-    return Base64.getEncoder().encodeToString(fileContent);
-}
+    public String getBase64EncodedString(File file) throws IOException {
+        byte[] fileContent = FileUtils.readFileToByteArray(file);
+        return Base64.getEncoder().encodeToString(fileContent);
+    }
 }
 

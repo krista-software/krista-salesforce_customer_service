@@ -54,7 +54,20 @@ public final class StringHelper {
                 "}";
     }
 
-    public static String createFeedPostBodyForFile(String caseId, String base64EncodedString, String fileName) {
-        return String.format("{\"Name\":\"%s\",\"ParentId\":\"%s\",\"Body\":\"%s\",\"ContentType\":\"multipart/form-data\"}", fileName, caseId, base64EncodedString);
+    public static String createFeedPostBodyForFile(String base64EncodedString, String fileName) {
+        return String.format("{\"Title\":\"%s\",\"VersionData\":\"%s\",\"PathOnClient\":\"%s\"}", fileName, base64EncodedString, fileName);
+    }
+
+    public static String createFeedPostBodyForFeedItem(String body, String caseId) {
+        return String.format("{\"Body\":\"%s\",\"ParentId\":\"%s\"}", body, caseId);
+    }
+
+    public static String createFeedPostBodyForFeedAttachment(String feedId, String recordId, String fileName) {
+        return String.format(
+                "{\"FeedEntityId\":\"%s\",\"RecordId\":\"%s\",\"Title\":\"%s\",\"Type\":\"CONTENT\"}",
+                feedId.replace("\"", ""),
+                recordId.replace("\"", ""),
+                fileName
+        );
     }
 }

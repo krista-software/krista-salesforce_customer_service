@@ -9,7 +9,6 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import app.krista.model.base.File;
 import app.krista.model.base.FreeForm;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -40,20 +39,16 @@ public class CaseManagementArea {
             description = "This request will fetch the list of post items for the given case Id",
             area = "Case management",
             type = CatalogRequest.Type.QUERY_SYSTEM)
-    @Field.Desc(name = "Feed Items", type = "[ { Actor Name: Text, Post Message: Text, File: File } ]",required = false)
+    @Field.Desc(name = "Feed Items", type = "[ { Actor Name: Text, Post Message: Text, File: File } ]", required = false)
     public List<Map<String, Object>> getCaseFeedItemsByCaseId(
             @Field.Text(name = "Case Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String caseId,
             @Field(name = "Number Of Posts", type = "Number", required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) Double numberOfPosts) {
-//        try {
-//            return caseDao.getFeedItemsForCaseId(caseId);
-//        } catch (ExecutionException | JsonProcessingException cause) {
-//            throw new RuntimeException(cause);
-//        } catch (InterruptedException interruptedException) {
-//            Thread.currentThread().interrupt();
-//            throw new RuntimeException(interruptedException);
-//        }
+
         try {
             int maxNumberOfPosts = 100;
+            if (numberOfPosts > 100) {
+                throw new IllegalArgumentException("Bad Request. Number of posts must be less than 100.");
+            }
             if (numberOfPosts != null && Double.isFinite(numberOfPosts)) {
                 maxNumberOfPosts = Math.min(numberOfPosts.intValue(), maxNumberOfPosts);
                 if (maxNumberOfPosts <= 0) {
@@ -62,12 +57,10 @@ public class CaseManagementArea {
             }
             return caseDao.getFeedItemsForCaseId(caseId, maxNumberOfPosts);
         } catch (IllegalArgumentException cause) {
-            //LOGGER.error("Failed to get Latest Posts" + cause.getMessage(), cause);
-        } catch (ExecutionException e) {
+            System.out.println("Failed to get Latest Posts" + cause);
+        } catch (ExecutionException | IOException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return List.of();
@@ -89,9 +82,7 @@ public class CaseManagementArea {
             if (file != null) {
                 java.io.File javaFile = caseDao.convertKristaFileToJavaFile(file);
                 String base64EncodedString = caseDao.getBase64EncodedString(javaFile);
-                //File file2 = caseDao.convertJavaFileToKristaFile(file1);
-                return caseDao.newMethod(javaFile);
-                //return caseDao.addFeedUpdateToCaseById(caseId, getEscapeCharacterMessage(updateMessage), base64EncodedString, javaFile.getName());
+                return caseDao.addFeedUpdateToCaseById(caseId, getEscapeCharacterMessage(updateMessage), base64EncodedString, javaFile.getName());
             } else {
                 return caseDao.addFeedUpdateToCaseById(caseId, getEscapeCharacterMessage(updateMessage), null, null);
             }
