@@ -9,7 +9,6 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper;
 import app.krista.ksdk.files.FileHandle;
 import app.krista.ksdk.files.FileRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.scribejava.core.model.Response;
@@ -18,6 +17,8 @@ import com.google.gson.reflect.TypeToken;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -234,6 +235,13 @@ public final class CaseDaoImpl implements CaseDao {
                 files.add(downloadFile(fileNode.get(DOWNLOAD_URL).asText()));
             }
         }
+        JsonNode filesNode1 = elementNode.get(CAPABILITIES).get("enhancedLink");
+        if (filesNode1 != null) {
+//            for (JsonNode fileNode : filesNode.get(ITEMS)) {
+//                files.add(downloadFile(fileNode.get(DOWNLOAD_URL).asText()));
+//            }
+            files.add(downloadFile(filesNode1.get("linkUrl").asText()));
+        }
 
         return files;
     }
@@ -264,6 +272,12 @@ public final class CaseDaoImpl implements CaseDao {
         File localFile = new File(filePath);
         Files.copy(inputStream, localFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         return localFile;
+    }
+    public Boolean newMethod(File javaFile) throws ExecutionException, InterruptedException {
+        String response = salesforceService.createFeedPost1(javaFile);
+        File file = new File(javaFile.getPath());
+
+        return null;
     }
 
     public Boolean addFeedUpdateToCaseById(String caseId, String updateMessage, String base64EncodedString, String fileName) throws ExecutionException, InterruptedException {

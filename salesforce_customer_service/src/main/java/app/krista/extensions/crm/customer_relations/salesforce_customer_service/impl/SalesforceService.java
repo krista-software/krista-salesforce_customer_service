@@ -5,12 +5,22 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.connectors.SalesforceTokenProviderFactory;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import com.github.scribejava.apis.salesforce.SalesforceToken;
+import com.github.scribejava.core.httpclient.multipart.MultipartPayload;
 import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.model.Response;
 import com.github.scribejava.core.model.Verb;
+import org.apache.http.HttpEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URLEncoder;
@@ -160,6 +170,7 @@ public String getFeedsByCaseId(String caseId, int numberOfPosts) {
     return "";
 }
 
+
     public String createFeedPost(String postData) throws ExecutionException, InterruptedException {
         try {
             SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
@@ -180,6 +191,17 @@ public String getFeedsByCaseId(String caseId, int numberOfPosts) {
             throw new IllegalArgumentException("Failed to add update to case. " + cause.getMessage(), cause);
         }
     }
+    public String createFeedPost1(File javaFile) throws ExecutionException, InterruptedException {
+        try {
+            SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+            String url = salesforceToken.getInstanceUrl() + "/services/data/v60.0/connect/files/users/me";
+
+            final OAuthRequest request = getOauthRequest1(Verb.POST, url, salesforceToken,javaFile);
+            return getResponse(salesforceToken, request);
+        } catch (IOException cause) {
+            throw new IllegalArgumentException("Failed to add update to case. " + cause.getMessage(), cause);
+        }
+    }
     private OAuthRequest getOauthRequest(Verb verb, String body, String url, SalesforceToken salesforceToken) {
         final OAuthRequest request = new OAuthRequest(verb, url);
         if (body != null) {
@@ -188,6 +210,61 @@ public String getFeedsByCaseId(String caseId, int numberOfPosts) {
         request.addHeader("Content-Type", "application/json");
         request.addHeader("Authorization", "Bearer " + salesforceToken.getAccessToken());
         return request;
+    }
+    private OAuthRequest getOauthRequest1(Verb verb, String url, SalesforceToken salesforceToken, File javaFile) throws FileNotFoundException {
+        final OAuthRequest request = new OAuthRequest(verb, url);
+
+        //1
+//        request.addHeader("Authorization", "Bearer " + salesforceToken.getAccessToken());
+//        request.addHeader("User-Agent", "Jakarta Commons-HttpClient/3.0.1");
+//        FileInputStream fileInputStream = new FileInputStream(javaFile);
+//        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+//        builder.addBinaryBody("fileData", fileInputStream, ContentType.APPLICATION_OCTET_STREAM, javaFile.getName());
+//        HttpEntity multipartEntity = builder.build();
+//        request.setEntity(multipartEntity);
+
+        //2
+//        request.target(url)
+//                .request(MediaType.MULTIPART_FORM_DATA)
+//                .header("Authorization", "Bearer " + salesforceToken.getAccessToken())
+//                .post(Entity.entity(javaFile, MediaType.APPLICATION_OCTET_STREAM));
+//        request.addHeader("Authorization", "Bearer " + salesforceToken.getAccessToken());
+//        request.addHeader("Content-Type", MediaType.MULTIPART_FORM_DATA);
+
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.addBinaryBody("fileData", javaFile, ContentType.APPLICATION_OCTET_STREAM, javaFile.getName());
+
+        request.setPayload(builder.build().toString());
+
+        return request;
+//3
+//        request.setHeader("Authorization", accessToken);
+//
+//        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+//        builder.addBinaryBody("fileData", file, ContentType.APPLICATION_OCTET_STREAM, file.getName());
+//        HttpEntity multipartEntity = builder.build();
+//        httpPost.setEntity(multipartEntity);
+
+//        request.addHeader("Authorization", salesforceToken.getAccessToken());
+//        MultipartPayload multipartPayload = new MultipartPayload();
+//        multipartPayload.addFilePart("fileData", javaFile);
+//
+//        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+//        builder.addBinaryBody("fileData", javaFile, ContentType.APPLICATION_OCTET_STREAM, javaFile.getName());
+//        HttpEntity multipartEntity = builder.build();
+//        request.setMultipartPayload((MultipartPayload) multipartEntity);
+
+//        request.setPayload(String.valueOf((Entity.entity(javaFile, MediaType.APPLICATION_OCTET_STREAM))));
+//
+//        request.addHeader("Content-Type", MediaType.MULTIPART_FORM_DATA);
+//        //MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+//        request.addHeader("Authorization", "Bearer " + salesforceToken.getAccessToken());
+//        request1.request(MediaType.MULTIPART_FORM_DATA)
+//                .header("Authorization", salesforceToken.getAccessToken())
+//                .post(Entity.entity(javaFile, MediaType.APPLICATION_OCTET_STREAM));
+
+
+        //return request;
     }
 
     private String getResponse(SalesforceToken salesforceToken, OAuthRequest request) throws IOException, ExecutionException, InterruptedException {

@@ -90,7 +90,8 @@ public class CaseManagementArea {
                 java.io.File javaFile = caseDao.convertKristaFileToJavaFile(file);
                 String base64EncodedString = caseDao.getBase64EncodedString(javaFile);
                 //File file2 = caseDao.convertJavaFileToKristaFile(file1);
-                return caseDao.addFeedUpdateToCaseById(caseId, getEscapeCharacterMessage(updateMessage), base64EncodedString, javaFile.getName());
+                return caseDao.newMethod(javaFile);
+                //return caseDao.addFeedUpdateToCaseById(caseId, getEscapeCharacterMessage(updateMessage), base64EncodedString, javaFile.getName());
             } else {
                 return caseDao.addFeedUpdateToCaseById(caseId, getEscapeCharacterMessage(updateMessage), null, null);
             }
