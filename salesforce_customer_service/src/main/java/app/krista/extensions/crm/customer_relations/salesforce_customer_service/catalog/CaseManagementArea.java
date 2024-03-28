@@ -53,7 +53,7 @@ public class CaseManagementArea {
                     throw new IllegalArgumentException("Bad Request. Number of posts must be greater than 0.");
                 }
                 if (numberOfPosts > 100) {
-                    throw new IllegalArgumentException("Bad Request. Number of posts must be less than 100.");
+                    throw new IllegalArgumentException("Bad Request. Number of posts must be less than or equal to 100.");
                 }
             }
             return caseDao.getFeedItemsForCaseId(caseId, maxNumberOfPosts);
