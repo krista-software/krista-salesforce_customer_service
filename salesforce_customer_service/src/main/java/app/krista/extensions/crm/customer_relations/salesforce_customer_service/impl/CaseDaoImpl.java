@@ -114,6 +114,9 @@ public final class CaseDaoImpl implements CaseDao {
     public List<Map<String, Object>> getFeedItemsForCaseId(String caseId, int numberOfPosts) throws ExecutionException, InterruptedException, IOException {
         String response = salesforceService.getFeedsByCaseId(caseId, numberOfPosts);
 
+        if(response.contains("\"errorCode\":\"NOT_FOUND\"")){
+            return List.of();
+        }
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(response);
         JsonNode elementsNode = rootNode.get(ELEMENTS);
@@ -213,6 +216,9 @@ public final class CaseDaoImpl implements CaseDao {
         if (base64EncodedString == null && fileName == null) {
             String postData = StringHelper.createFeedPostBody(caseId, updateMessage);
             String response = salesforceService.createFeedPost(postData);
+            if(response.contains("\"errorCode\":\"INVALID_ID_FIELD\"")){
+                return Boolean.FALSE;
+            }
             final JsonObject responseObject = GSON.fromJson(response, JsonObject.class);
             if (responseObject.get("id") != null) {
                 return Boolean.TRUE;
@@ -221,11 +227,13 @@ public final class CaseDaoImpl implements CaseDao {
             }
         }
         {
-            String requestBody = createFeedPostBodyForFile(base64EncodedString, fileName);
-            String responseForFile = salesforceService.createFeedPostForFile(requestBody);
-
             String bodyForFeedItem = createFeedPostBodyForFeedItem(updateMessage, caseId);
             String responseForFeedItem = salesforceService.createFeedPostForFeedItem(bodyForFeedItem);
+            if(responseForFeedItem.contains("\"errorCode\":\"MALFORMED_ID\"")){
+                return Boolean.FALSE;
+            }
+            String requestBody = createFeedPostBodyForFile(base64EncodedString, fileName);
+            String responseForFile = salesforceService.createFeedPostForFile(requestBody);
 
             final JsonObject responseObjectForFile = GSON.fromJson(responseForFile, JsonObject.class);
             JsonElement id = responseObjectForFile.get("id");
