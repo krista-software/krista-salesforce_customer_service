@@ -59,9 +59,7 @@ public class CaseManagementArea {
             return caseDao.getFeedItemsForCaseId(caseId, maxNumberOfPosts);
         } catch (IllegalArgumentException cause) {
             System.out.println("Failed to get Latest Posts" + cause);
-        } catch (ExecutionException | IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
+        } catch (ExecutionException | IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
         return List.of();
