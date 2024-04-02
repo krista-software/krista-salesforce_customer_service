@@ -12,6 +12,7 @@
 ## Resolved Bugs
 
 * [KC-1852](https://antbrains.atlassian.net/browse/KC-1852) Salesforce | Attachment of documents in Case Object.
+* [KC-1896](https://antbrains.atlassian.net/browse/KC-1896) Salesforce Customer service | retrieve custom fields from the Objects.
   
 ## Known Issues
 

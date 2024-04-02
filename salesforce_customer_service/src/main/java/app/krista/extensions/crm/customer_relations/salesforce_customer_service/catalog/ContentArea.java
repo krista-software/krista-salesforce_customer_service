@@ -1,18 +1,19 @@
 package app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-
+import app.krista.extension.impl.anno.Attribute;
 import app.krista.extension.impl.anno.CatalogRequest;
-import app.krista.extension.impl.anno.*;
+import app.krista.extension.impl.anno.Domain;
+import app.krista.extension.impl.anno.Field;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.SalesforceService;
-import app.krista.model.base.*;
+import app.krista.model.base.FreeForm;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.inject.Inject;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @Domain(id = "catEntryDomain_a66f83b1-fa58-427f-b8b9-0c83a401bf53",
         name = "Customer Relations",
@@ -21,7 +22,8 @@ import javax.inject.Inject;
         ecosystemVersion = "b7a2dadc-2b0c-4f59-a4f9-befbae5897e9")
 public class ContentArea {
     private final SalesforceService salesforceService;
-@Inject
+
+    @Inject
     public ContentArea(SalesforceService salesforceService) {
         this.salesforceService = salesforceService;
     }
@@ -35,11 +37,11 @@ public class ContentArea {
     @Field(name = "Field Details", type = "FreeForm", required = false, attributes = {}, options = {})
     public FreeForm retrieveCustomFieldsForGivenObject(
             @Field.Text(name = "Object Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String objectId,
-            @Field.PickOne(name = "Object Type", values = {"Account","Case","Contact","Customer","Individual"}, required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String objectType,
-            @Field.Desc(name = "Custom Fields", type = "[ Text ]",required = true) List<String> customFields) throws IOException, ExecutionException, InterruptedException {
+            @Field.PickOne(name = "Object Type", values = {"Account", "Case", "Contact", "Customer", "Individual"}, required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String objectType,
+            @Field.Desc(name = "Custom Fields", type = "[ Text ]", required = true) List<String> customFields) throws IOException, ExecutionException, InterruptedException {
         StringBuilder stringBuilder = new StringBuilder();
         for (String str : customFields) {
-            if (!str.endsWith("__c")){
+            if (!str.endsWith("__c")) {
                 System.out.println(str + " is not custom field");
                 return new FreeForm();
             }
@@ -54,7 +56,9 @@ public class ContentArea {
         if (recordByQuery != null) {
             return parseJSONToMap(recordByQuery, customFields);
         }
-        return new FreeForm();    }
+        return new FreeForm();
+    }
+
     public static FreeForm parseJSONToMap(String jsonResponse, List<String> customFields) {
         FreeForm resultMap = new FreeForm();
         try {
