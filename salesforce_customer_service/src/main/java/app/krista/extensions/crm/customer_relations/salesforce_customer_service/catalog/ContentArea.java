@@ -9,6 +9,8 @@ import app.krista.model.base.FreeForm;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -22,6 +24,7 @@ import java.util.concurrent.ExecutionException;
         ecosystemVersion = "b7a2dadc-2b0c-4f59-a4f9-befbae5897e9")
 public class ContentArea {
     private final SalesforceService salesforceService;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ContentArea.class);
 
     @Inject
     public ContentArea(SalesforceService salesforceService) {
@@ -39,18 +42,18 @@ public class ContentArea {
             @Field.Text(name = "Object Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String objectId,
             @Field.PickOne(name = "Object Type", values = {"Account", "Case", "Contact", "Customer", "Individual"}, required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String objectType,
             @Field.Desc(name = "Custom Fields", type = "[ Text ]", required = true) List<String> customFields) throws IOException, ExecutionException, InterruptedException {
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder stringBuilderForCustomFields = new StringBuilder();
         for (String str : customFields) {
-            if (!str.endsWith("__c")) {
-                System.out.println(str + " is not custom field");
+            if (!str.endsWith("__c")) { // custom fields ends with __c
+                LOGGER.info("{} is not a custom field", str);
                 return new FreeForm();
             }
-            stringBuilder.append(str).append(",");
+            stringBuilderForCustomFields.append(str).append(",");
         }
         if (!customFields.isEmpty()) {
-            stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+            stringBuilderForCustomFields.deleteCharAt(stringBuilderForCustomFields.length() - 1);
         }
-        String queryFields = stringBuilder.toString();
+        String queryFields = stringBuilderForCustomFields.toString();
         String query = "Select " + queryFields + " from " + objectType + " where id = '" + objectId + "'";
         String recordByQuery = salesforceService.getRecordByQuery(query);
         if (recordByQuery != null) {
@@ -59,29 +62,53 @@ public class ContentArea {
         return new FreeForm();
     }
 
-    public static FreeForm parseJSONToMap(String jsonResponse, List<String> customFields) {
+    private static FreeForm parseJSONToMap(String jsonResponse, List<String> customFields) {
         FreeForm resultMap = new FreeForm();
         try {
-            JSONObject jsonObject = new JSONObject(jsonResponse);
-            JSONArray records = jsonObject.getJSONArray("records");
-            JSONObject record = records.getJSONObject(0);
-
-            for (String key : customFields) {
-                if (record.has(key)) {
-                    Object value = record.get(key);
-                    if (value.equals(null)) {
-                        resultMap.put(key, "Text", "");
-                    } else {
-                        resultMap.put(key, "Text", value);
-                    }
-
-                }
-            }
-
+            processJSONResponse(jsonResponse, customFields, resultMap);
         } catch (JSONException exception) {
-            System.out.println("Exception:" + exception.getMessage());
+            LOGGER.info("Exception occurred due to :" + exception.getMessage(), exception);
         }
         return resultMap;
     }
 
+    private static void processJSONResponse(String jsonResponse, List<String> customFields, FreeForm resultMap) {
+        if (jsonResponse != null) {
+            JSONObject jsonObject = new JSONObject(jsonResponse);
+
+            if (jsonObject.has("records")) {
+                JSONArray records = jsonObject.getJSONArray("records");
+
+                if (records.length() > 0) {
+                    JSONObject record = records.getJSONObject(0);
+
+                    processRecordFields(customFields, resultMap, record);
+                } else {
+                    LOGGER.info("No records found in the JSON response.");
+                }
+            } else {
+                LOGGER.info("No 'records' array found in the JSON response.");
+            }
+        } else {
+            LOGGER.info("JSON response is null.");
+        }
+    }
+
+    private static void processRecordFields(List<String> customFields, FreeForm resultMap, JSONObject record) {
+        if (record != null) {
+            for (String key : customFields) {
+                if (record.has(key)) {
+                    Object value = record.get(key);
+
+                    if (value.equals(null)) {
+                        resultMap.put(key, "Text", "");
+                    } else {
+                        resultMap.put(key, "Text", value.toString());
+                    }
+                }
+            }
+        } else {
+            LOGGER.info("First record is null.");
+        }
+    }
 }
