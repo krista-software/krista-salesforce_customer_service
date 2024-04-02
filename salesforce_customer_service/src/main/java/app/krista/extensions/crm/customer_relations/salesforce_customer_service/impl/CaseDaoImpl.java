@@ -36,6 +36,9 @@ public final class CaseDaoImpl implements CaseDao {
 
     private static final String CASE = "Case";
     private static final String QUERY_FIELDS = " Contact.Name, ContactId, ContactEmail, ContactPhone, Account.Name,AccountId,Subject,Priority,Description,IsClosed,ClosedDate,OwnerId,CreatedById, CaseNumber,status,Origin,Type,CreatedDate,LastModifiedDate,Id ";
+    private static final String ACTOR_NAME = "Actor Name";
+    private static final String POST_MESSAGE = "Post Message";
+    private static final String FILE = "File";
     private final SalesforceService salesforceService;
     private final FileRepository fileRepository;
     private static final String ELEMENTS = "elements";
@@ -134,14 +137,14 @@ public final class CaseDaoImpl implements CaseDao {
 
     private Map<String, Object> parseElementToPost(JsonNode elementNode) throws IOException {
         String feedElementType = elementNode.get(FEED_ELEMENT_TYPE).asText();
-        if (!feedElementType.equalsIgnoreCase("FeedItem")) {
-            return null;
+        if (!"FeedItem".equalsIgnoreCase(feedElementType)) {
+            return Collections.emptyMap();
         }
 
         Map<String, Object> post = new HashMap<>();
-        post.put("Actor Name", getActorName(elementNode));
-        post.put("Post Message", getPostMessage(elementNode));
-        post.put("File", getFiles(elementNode));
+        post.put(ACTOR_NAME, getActorName(elementNode));
+        post.put(POST_MESSAGE, getPostMessage(elementNode));
+        post.put(FILE, getFiles(elementNode));
         return post;
     }
 
@@ -226,32 +229,34 @@ public final class CaseDaoImpl implements CaseDao {
                 return Boolean.FALSE;
             }
         }
-        {
-            String bodyForFeedItem = createFeedPostBodyForFeedItem(updateMessage, caseId);
-            String responseForFeedItem = salesforceService.createFeedPostForFeedItem(bodyForFeedItem);
-            if(responseForFeedItem.contains("\"errorCode\":\"MALFORMED_ID\"")){
-                return Boolean.FALSE;
-            }
-            String requestBody = createFeedPostBodyForFile(base64EncodedString, fileName);
-            String responseForFile = salesforceService.createFeedPostForFile(requestBody);
+        return processFeedAndFileOperations(caseId, updateMessage, base64EncodedString, fileName);
 
-            final JsonObject responseObjectForFile = GSON.fromJson(responseForFile, JsonObject.class);
-            JsonElement id = responseObjectForFile.get("id");
+    }
 
-            final JsonObject responseObjectForFeedItem = GSON.fromJson(responseForFeedItem, JsonObject.class);
-            String feedItemId = String.valueOf(responseObjectForFeedItem.get("id"));
-
-            String bodyForFeedAttachment = createFeedPostBodyForFeedAttachment(feedItemId, String.valueOf(id), fileName);
-            String responseForFeedAttachment = salesforceService.createFeedPostForFeedAttachment(bodyForFeedAttachment);
-            final JsonObject responseObjectForFeedAttachment = GSON.fromJson(responseForFeedAttachment, JsonObject.class);
-
-            if (responseObjectForFeedAttachment.get("id") != null) {
-                return Boolean.TRUE;
-            } else {
-                return Boolean.FALSE;
-            }
+    private Boolean processFeedAndFileOperations(String caseId, String updateMessage, String base64EncodedString, String fileName) throws ExecutionException, InterruptedException {
+        String bodyForFeedItem = createFeedPostBodyForFeedItem(updateMessage, caseId);
+        String responseForFeedItem = salesforceService.createFeedPostForFeedItem(bodyForFeedItem);
+        if(responseForFeedItem.contains("\"errorCode\":\"MALFORMED_ID\"")){
+            return Boolean.FALSE;
         }
+        String requestBody = createFeedPostBodyForFile(base64EncodedString, fileName);
+        String responseForFile = salesforceService.createFeedPostForFile(requestBody);
 
+        final JsonObject responseObjectForFile = GSON.fromJson(responseForFile, JsonObject.class);
+        JsonElement id = responseObjectForFile.get("id");
+
+        final JsonObject responseObjectForFeedItem = GSON.fromJson(responseForFeedItem, JsonObject.class);
+        String feedItemId = String.valueOf(responseObjectForFeedItem.get("id"));
+
+        String bodyForFeedAttachment = createFeedPostBodyForFeedAttachment(feedItemId, String.valueOf(id), fileName);
+        String responseForFeedAttachment = salesforceService.createFeedPostForFeedAttachment(bodyForFeedAttachment);
+        final JsonObject responseObjectForFeedAttachment = GSON.fromJson(responseForFeedAttachment, JsonObject.class);
+
+        if (responseObjectForFeedAttachment.get("id") != null) {
+            return Boolean.TRUE;
+        } else {
+            return Boolean.FALSE;
+        }
     }
 
     public Map<String, Object> getCaseUpdatedFields(String query) throws IOException, ExecutionException, InterruptedException {
@@ -259,7 +264,6 @@ public final class CaseDaoImpl implements CaseDao {
         SFCaseHistory sfCaseHistory = GSON.fromJson(response, SFCaseHistory.class);
         return sfCaseHistory.toMap();
     }
-
 
     public app.krista.model.base.File convertJavaFileToKristaFile(java.io.File file) throws IOException {
 

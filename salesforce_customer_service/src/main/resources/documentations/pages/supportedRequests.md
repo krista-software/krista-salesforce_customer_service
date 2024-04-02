@@ -122,7 +122,7 @@ Krista Salesforce Customer Service Module Extension supports the following Catal
 |--------------------|--------------------|---------------|----------------|
 | Object Id          | Text               | Yes           | 123456         |
 | Object Type        | Pick List          | Yes           | Case           |
-| Custom Fields      | List<String>       | Yes           | Competition__c |
+| Custom Fields      | List<Text>         | Yes           | Competition__c |
 
 - **Output Parameters**:
 
