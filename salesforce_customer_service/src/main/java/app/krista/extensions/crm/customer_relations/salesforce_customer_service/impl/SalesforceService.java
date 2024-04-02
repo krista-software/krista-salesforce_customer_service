@@ -28,6 +28,7 @@ public class SalesforceService {
     public static final String DATE = "date";
     public static final String SALESFORCE_SOBJECTS_PATH = "/services/data/v53.0/sobjects/";
     public static final String FAILED_TO_ADD_UPDATE_TO_CASE = "Failed to add update to case. ";
+    private static final int Bad_Request = 400;
     private final SalesforceTokenProvider tokenProvider;
     private final SalesforceCustomerServiceAttributes customerServiceAttributes;
     private static final Logger LOGGER = LoggerFactory.getLogger(SalesforceService.class);
@@ -223,7 +224,7 @@ public class SalesforceService {
     private Response getResponseForFile(SalesforceToken salesforceToken, OAuthRequest request) throws IOException, ExecutionException, InterruptedException {
         customerServiceAttributes.getOauthService().signRequest(salesforceToken, request);
         try (com.github.scribejava.core.model.Response response = customerServiceAttributes.getOauthService().execute(request)) {
-            if (response.getCode() >= 400) {
+            if (response.getCode() >= Bad_Request) {
                 throw new IllegalArgumentException("Bad Request, Please enter correct required data. The error is " + response.getBody());
             }
             return response;
