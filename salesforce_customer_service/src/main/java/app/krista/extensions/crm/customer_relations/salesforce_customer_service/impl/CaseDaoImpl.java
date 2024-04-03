@@ -2,12 +2,12 @@ package app.krista.extensions.crm.customer_relations.salesforce_customer_service
 
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.model.SFCase;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.model.SFCaseHistory;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.KristaMediaClient;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.Case;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.CaseDao;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.SalesforceListResponse;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper;
-import app.krista.ksdk.files.FileHandle;
 import app.krista.ksdk.files.FileRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,7 +19,9 @@ import org.apache.commons.io.FileUtils;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
@@ -53,11 +55,13 @@ public final class CaseDaoImpl implements CaseDao {
     private static final String ITEMS = "items";
     private static final String CAPABILITIES = "capabilities";
     private static final String FILES = "files";
+    private final KristaMediaClient kristaMediaClient;
 
     @Inject
-    public CaseDaoImpl(SalesforceService salesforceService, FileRepository fileRepository) {
+    public CaseDaoImpl(SalesforceService salesforceService, FileRepository fileRepository, KristaMediaClient kristaMediaClient) {
         this.salesforceService = salesforceService;
         this.fileRepository = fileRepository;
+        this.kristaMediaClient = kristaMediaClient;
     }
 
     @Override
@@ -117,7 +121,7 @@ public final class CaseDaoImpl implements CaseDao {
     public List<Map<String, Object>> getFeedItemsForCaseId(String caseId, int numberOfPosts) throws ExecutionException, InterruptedException, IOException {
         String response = salesforceService.getFeedsByCaseId(caseId, numberOfPosts);
 
-        if(response.contains("\"errorCode\":\"NOT_FOUND\"")){
+        if (response.contains("\"errorCode\":\"NOT_FOUND\"")) {
             return List.of();
         }
         ObjectMapper mapper = new ObjectMapper();
@@ -205,7 +209,7 @@ public final class CaseDaoImpl implements CaseDao {
 
         File localFile = saveToLocalTempDir(fileResponse.getStream(), fileName);
 
-        return convertJavaFileToKristaFile(localFile);
+        return kristaMediaClient.toKristaFile(localFile);
 
     }
 
@@ -219,7 +223,7 @@ public final class CaseDaoImpl implements CaseDao {
         if (base64EncodedString == null && fileName == null) {
             String postData = StringHelper.createFeedPostBody(caseId, updateMessage);
             String response = salesforceService.createFeedPost(postData);
-            if(response.contains("\"errorCode\":\"INVALID_ID_FIELD\"")){
+            if (response.contains("\"errorCode\":\"INVALID_ID_FIELD\"")) {
                 return Boolean.FALSE;
             }
             final JsonObject responseObject = GSON.fromJson(response, JsonObject.class);
@@ -236,7 +240,7 @@ public final class CaseDaoImpl implements CaseDao {
     private Boolean processFeedAndFileOperations(String caseId, String updateMessage, String base64EncodedString, String fileName) throws ExecutionException, InterruptedException {
         String bodyForFeedItem = createFeedPostBodyForFeedItem(updateMessage, caseId);
         String responseForFeedItem = salesforceService.createFeedPostForFeedItem(bodyForFeedItem);
-        if(responseForFeedItem.contains("\"errorCode\":\"MALFORMED_ID\"")){
+        if (responseForFeedItem.contains("\"errorCode\":\"MALFORMED_ID\"")) {
             return Boolean.FALSE;
         }
         String requestBody = createFeedPostBodyForFile(base64EncodedString, fileName);
@@ -263,44 +267,6 @@ public final class CaseDaoImpl implements CaseDao {
         String response = salesforceService.getRecordByQuery(query);
         SFCaseHistory sfCaseHistory = GSON.fromJson(response, SFCaseHistory.class);
         return sfCaseHistory.toMap();
-    }
-
-    public app.krista.model.base.File convertJavaFileToKristaFile(java.io.File file) throws IOException {
-
-        try (final FileHandle outputFileHandle = this.fileRepository.createNewFileByName(file.getName())) {
-            try {
-                outputFileHandle.setContent(new FileInputStream(file));
-            } catch (IOException cause) {
-                throw new RuntimeException("Failed to store content to file handle", cause);
-            }
-            return outputFileHandle.getFile();
-        }
-    }
-
-    public java.io.File convertKristaFileToJavaFile(app.krista.model.base.File file) throws IOException {
-
-        final FileHandle inputFileHandle = this.fileRepository.getFile(file);
-        final File tmpDir = new File(System.getProperty("java.io.tmpDir", "/tmp"));
-
-        if (tmpDir.exists() && !tmpDir.canWrite()) {
-            throw new IllegalArgumentException("Unable write to temporary file.");
-        }
-
-        final File input = new File(file.getFileName());
-        return convertInputStreamToFile(inputFileHandle.getContent(), input);
-    }
-
-    public File convertInputStreamToFile(InputStream inputStream, File input) throws IOException {
-
-        try (OutputStream outputStream = new FileOutputStream(input)) {
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
-        }
-
-        return input;
     }
 
     public String getBase64EncodedString(File file) throws IOException {

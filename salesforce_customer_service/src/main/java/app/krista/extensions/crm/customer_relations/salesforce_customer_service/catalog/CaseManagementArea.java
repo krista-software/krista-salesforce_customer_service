@@ -6,6 +6,7 @@ import app.krista.extension.impl.anno.CatalogRequest;
 import app.krista.extension.impl.anno.Domain;
 import app.krista.extension.impl.anno.Field;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.CaseDaoImpl;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.KristaMediaClient;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import app.krista.model.base.File;
 import app.krista.model.base.FreeForm;
@@ -29,11 +30,13 @@ import static app.krista.extensions.crm.customer_relations.salesforce_customer_s
 public class CaseManagementArea {
     private final CaseDaoImpl caseDao;
     private static final Logger LOGGER = LoggerFactory.getLogger(CaseManagementArea.class);
+    private final KristaMediaClient kristaMediaClient;
 
 
     @Inject
-    private CaseManagementArea(CaseDaoImpl caseDao) {
+    private CaseManagementArea(CaseDaoImpl caseDao, KristaMediaClient kristaMediaClient) {
         this.caseDao = caseDao;
+        this.kristaMediaClient = kristaMediaClient;
     }
 
 
@@ -83,7 +86,7 @@ public class CaseManagementArea {
             @Field.File(name = "File", multipleFileUpload = false, required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) File file) {
         try {
             if (file != null) {
-                java.io.File javaFile = caseDao.convertKristaFileToJavaFile(file);
+                java.io.File javaFile = kristaMediaClient.toJavaFile(file);
                 String base64EncodedString = caseDao.getBase64EncodedString(javaFile);
                 return caseDao.addFeedUpdateToCaseById(caseId, getEscapeCharacterMessage(updateMessage), base64EncodedString, javaFile.getName());
             } else {
