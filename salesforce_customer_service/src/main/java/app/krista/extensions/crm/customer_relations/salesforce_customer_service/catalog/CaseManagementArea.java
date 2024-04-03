@@ -9,6 +9,8 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import app.krista.model.base.File;
 import app.krista.model.base.FreeForm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -26,6 +28,8 @@ import static app.krista.extensions.crm.customer_relations.salesforce_customer_s
         ecosystemVersion = "abc90187-31a8-460e-b19b-99ae146e6ee8")
 public class CaseManagementArea {
     private final CaseDaoImpl caseDao;
+    private static final Logger LOGGER = LoggerFactory.getLogger(CaseManagementArea.class);
+
 
     @Inject
     private CaseManagementArea(CaseDaoImpl caseDao) {
@@ -58,9 +62,9 @@ public class CaseManagementArea {
             }
             return caseDao.getFeedItemsForCaseId(caseId, maxNumberOfPosts);
         } catch (IllegalArgumentException cause) {
-            System.out.println("Failed to get Latest Posts" + cause);
-        } catch (ExecutionException | IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+            LOGGER.error("Failed to get Latest Posts" + cause.getMessage(), cause);
+        } catch (ExecutionException | IOException | InterruptedException cause) {
+            throw new RuntimeException(cause);
         }
         return List.of();
     }
@@ -144,7 +148,7 @@ public class CaseManagementArea {
                 updateCaseDetails(eventData, caseMap);
             }
         } catch (IllegalArgumentException cause) {
-            System.err.println("This error is for case change alert." + cause.getMessage());
+            LOGGER.error("This error is for case change alert." + cause.getMessage(), cause);
         } catch (IOException | ExecutionException cause) {
             throw new IllegalStateException(cause.getMessage(), cause);
         } catch (InterruptedException cause) {
