@@ -13,6 +13,7 @@
 
 * [KC-1852](https://antbrains.atlassian.net/browse/KC-1852) Salesforce | Attachment of documents in Case Object.
 * [KC-1896](https://antbrains.atlassian.net/browse/KC-1896) Salesforce Customer service | retrieve custom fields from the Objects.
+* [KE-1568](https://antbrains.atlassian.net/browse/KE-1568) Salesforce Customer service | Adding support of New Media Server.
   
 ## Known Issues
 
