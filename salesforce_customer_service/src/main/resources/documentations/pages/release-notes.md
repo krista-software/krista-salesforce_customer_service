@@ -2,16 +2,18 @@
 
 # Release Notes - Krista Salesforce Customer Service Extension
 
-## Version 2.0.10
+## Version 2.0.11
 
 - **Developer Name** : Srushti Ekmode
 - **Krista Service APIs Java** : 1.0.94
-- **Global Catalog Version** : 1.0.42
-- **Appliance Release Version** : 3.2.6
+- **Global Catalog Version** : 1.0.44
+- **Appliance Release Version** : 3.3.1
 
 ## Resolved Bugs
 
-* [KC-1864](https://antbrains.atlassian.net/browse/KC-1864) Salesforce Customer Service Better error Message to User In configure Extension Screen.
+* [KC-1852](https://antbrains.atlassian.net/browse/KC-1852) Salesforce | Attachment of documents in Case Object.
+* [KC-1896](https://antbrains.atlassian.net/browse/KC-1896) Salesforce Customer service | retrieve custom fields from the Objects.
+* [KE-1568](https://antbrains.atlassian.net/browse/KE-1568) Salesforce Customer service | Adding support of New Media Server.
   
 ## Known Issues
 

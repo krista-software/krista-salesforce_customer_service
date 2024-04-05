@@ -2,36 +2,64 @@ package app.krista.extensions.crm.customer_relations.salesforce_customer_service
 
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.model.SFCase;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.model.SFCaseHistory;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.KristaMediaClient;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.Case;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.CaseDao;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.SalesforceListResponse;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import app.krista.ksdk.files.FileRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.scribejava.core.model.Response;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import org.apache.commons.io.FileUtils;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants.GSON;
+import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper.*;
 
 @Service
 public final class CaseDaoImpl implements CaseDao {
 
     private static final String CASE = "Case";
     private static final String QUERY_FIELDS = " Contact.Name, ContactId, ContactEmail, ContactPhone, Account.Name,AccountId,Subject,Priority,Description,IsClosed,ClosedDate,OwnerId,CreatedById, CaseNumber,status,Origin,Type,CreatedDate,LastModifiedDate,Id ";
+    private static final String ACTOR_NAME = "Actor Name";
+    private static final String POST_MESSAGE = "Post Message";
+    private static final String FILE = "File";
     private final SalesforceService salesforceService;
+    private static final String ELEMENTS = "elements";
+    private static final String FEED_ELEMENT_TYPE = "feedElementType";
+    private static final String ACTOR = "actor";
+    private static final String NAME = "name";
+    private static final String BODY = "body";
+    private static final String MESSAGE_SEGMENTS = "messageSegments";
+    private static final String TYPE = "type";
+    private static final String INLINE_IMAGE = "InlineImage";
+    private static final String DOWNLOAD_URL = "downloadUrl";
+    private static final String ITEMS = "items";
+    private static final String CAPABILITIES = "capabilities";
+    private static final String FILES = "files";
+    private final KristaMediaClient kristaMediaClient;
 
     @Inject
-    public CaseDaoImpl(SalesforceService salesforceService) {
+    public CaseDaoImpl(SalesforceService salesforceService, KristaMediaClient kristaMediaClient) {
         this.salesforceService = salesforceService;
+        this.kristaMediaClient = kristaMediaClient;
     }
 
     @Override
@@ -88,38 +116,145 @@ public final class CaseDaoImpl implements CaseDao {
     }
 
     @Override
-    public List<Map<String, Object>> getFeedItemsForCaseId(String caseId) throws ExecutionException, InterruptedException, JsonProcessingException {
-        String response = salesforceService.getFeedsByCaseId(caseId);
+    public List<Map<String, Object>> getFeedItemsForCaseId(String caseId, int numberOfPosts) throws ExecutionException, InterruptedException, IOException {
+        String response = salesforceService.getFeedsByCaseId(caseId, numberOfPosts);
 
+        if (response.contains("\"errorCode\":\"NOT_FOUND\"")) {
+            return List.of();
+        }
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(response);
-        JsonNode elementsNode = rootNode.get("elements");
+        JsonNode elementsNode = rootNode.get(ELEMENTS);
 
         List<Map<String, Object>> feedPosts = new ArrayList<>();
-        Map<String, Object> post = new LinkedHashMap<>(2);
         for (JsonNode elementNode : elementsNode) {
-            String feedElementType = elementNode.get("feedElementType").asText();
-            if (feedElementType.equalsIgnoreCase("FeedItem")) {
-                JsonNode actorNode = elementNode.get("actor");
-                if (actorNode != null) {
-                    post.put("Actor Name", actorNode.get("name").asText());
-                }
-                JsonNode bodyNode = elementNode.get("body");
-                if (bodyNode != null) {
-                    post.put("Post Message", bodyNode.get("text").asText());
-                }
+            Map<String, Object> post = parseElementToPost(elementNode);
+
+            if (post != null) {
                 feedPosts.add(post);
             }
-            post = new HashMap<>();
         }
         return feedPosts;
     }
 
-    public Boolean addFeedUpdateToCaseById(String caseId, String updateMessage) throws ExecutionException, InterruptedException {
-        String postData = StringHelper.createFeedPostBody(caseId, updateMessage);
-        String response = salesforceService.createFeedPost(postData);
-        final JsonObject responseObject = GSON.fromJson(response, JsonObject.class);
-        if (responseObject.get("id") != null) {
+    private Map<String, Object> parseElementToPost(JsonNode elementNode) throws IOException {
+        String feedElementType = elementNode.get(FEED_ELEMENT_TYPE).asText();
+        if (!"FeedItem".equalsIgnoreCase(feedElementType)) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, Object> post = new HashMap<>();
+        post.put(ACTOR_NAME, getActorName(elementNode));
+        post.put(POST_MESSAGE, getPostMessage(elementNode));
+        post.put(FILE, getFiles(elementNode));
+        return post;
+    }
+
+    private String getActorName(JsonNode elementNode) {
+        JsonNode actorNode = elementNode.get(ACTOR);
+        return actorNode != null ? actorNode.get(NAME).asText() : null;
+    }
+
+    private String getPostMessage(JsonNode elementNode) {
+        JsonNode bodyNode = elementNode.get(BODY);
+        if (bodyNode != null && bodyNode.has(MESSAGE_SEGMENTS)) {
+            StringBuilder textBuilder = new StringBuilder();
+            for (JsonNode segmentNode : bodyNode.get(MESSAGE_SEGMENTS)) {
+                if ("Text".equals(segmentNode.get(TYPE).asText())) {
+                    textBuilder.append(segmentNode.get("text").asText());
+                }
+            }
+            return textBuilder.toString();
+        }
+        return null;
+    }
+
+    private List<app.krista.model.base.File> getFiles(JsonNode elementNode) throws IOException {
+        List<app.krista.model.base.File> files = new ArrayList<>();
+
+        JsonNode bodyNode = elementNode.get(BODY);
+        if (bodyNode != null && bodyNode.has(MESSAGE_SEGMENTS)) {
+            for (JsonNode segmentNode : bodyNode.get(MESSAGE_SEGMENTS)) {
+                if (isInlineImage(segmentNode)) {
+                    files.add(downloadFile(segmentNode.get("url").asText()));
+                }
+            }
+        }
+
+        JsonNode filesNode = elementNode.get(CAPABILITIES).get(FILES);
+        if (filesNode != null) {
+            for (JsonNode fileNode : filesNode.get(ITEMS)) {
+                files.add(downloadFile(fileNode.get(DOWNLOAD_URL).asText()));
+            }
+        }
+
+
+        return files;
+    }
+
+    private boolean isInlineImage(JsonNode segmentNode) {
+        return segmentNode.has(TYPE) && segmentNode.get(TYPE).asText().equals(INLINE_IMAGE);
+    }
+
+    private app.krista.model.base.File downloadFile(String downloadUrl) throws IOException {
+
+        Response fileResponse = salesforceService.getFileResponse(downloadUrl);
+
+        String contentDisposition = fileResponse.getHeader("Content-Disposition");
+        Pattern pattern = Pattern.compile("filename=\"(.*)\"");
+        Matcher matcher = pattern.matcher(contentDisposition);
+        String fileName = matcher.find() ? matcher.group(1) : "unknown";
+
+        File localFile = saveToLocalTempDir(fileResponse.getStream(), fileName);
+
+        return kristaMediaClient.toKristaFile(localFile);
+
+    }
+
+    private File saveToLocalTempDir(InputStream inputStream, String filePath) throws IOException {
+        File localFile = new File(filePath);
+        Files.copy(inputStream, localFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        return localFile;
+    }
+
+    public Boolean addFeedUpdateToCaseById(String caseId, String updateMessage, String base64EncodedString, String fileName) throws ExecutionException, InterruptedException {
+        if (base64EncodedString == null && fileName == null) {
+            String postData = StringHelper.createFeedPostBody(caseId, updateMessage);
+            String response = salesforceService.createFeedPost(postData);
+            if (response.contains("\"errorCode\":\"INVALID_ID_FIELD\"")) {
+                return Boolean.FALSE;
+            }
+            final JsonObject responseObject = GSON.fromJson(response, JsonObject.class);
+            if (responseObject.get("id") != null) {
+                return Boolean.TRUE;
+            } else {
+                return Boolean.FALSE;
+            }
+        }
+        return processFeedAndFileOperations(caseId, updateMessage, base64EncodedString, fileName);
+
+    }
+
+    private Boolean processFeedAndFileOperations(String caseId, String updateMessage, String base64EncodedString, String fileName) throws ExecutionException, InterruptedException {
+        String bodyForFeedItem = createFeedPostBodyForFeedItem(updateMessage, caseId);
+        String responseForFeedItem = salesforceService.createFeedPostForFeedItem(bodyForFeedItem);
+        if (responseForFeedItem.contains("\"errorCode\":\"MALFORMED_ID\"")) {
+            return Boolean.FALSE;
+        }
+        String requestBody = createFeedPostBodyForFile(base64EncodedString, fileName);
+        String responseForFile = salesforceService.createFeedPostForFile(requestBody);
+
+        final JsonObject responseObjectForFile = GSON.fromJson(responseForFile, JsonObject.class);
+        JsonElement id = responseObjectForFile.get("id");
+
+        final JsonObject responseObjectForFeedItem = GSON.fromJson(responseForFeedItem, JsonObject.class);
+        String feedItemId = String.valueOf(responseObjectForFeedItem.get("id"));
+
+        String bodyForFeedAttachment = createFeedPostBodyForFeedAttachment(feedItemId, String.valueOf(id), fileName);
+        String responseForFeedAttachment = salesforceService.createFeedPostForFeedAttachment(bodyForFeedAttachment);
+        final JsonObject responseObjectForFeedAttachment = GSON.fromJson(responseForFeedAttachment, JsonObject.class);
+
+        if (responseObjectForFeedAttachment.get("id") != null) {
             return Boolean.TRUE;
         } else {
             return Boolean.FALSE;
@@ -131,4 +266,10 @@ public final class CaseDaoImpl implements CaseDao {
         SFCaseHistory sfCaseHistory = GSON.fromJson(response, SFCaseHistory.class);
         return sfCaseHistory.toMap();
     }
+
+    public String getBase64EncodedString(File file) throws IOException {
+        byte[] fileContent = FileUtils.readFileToByteArray(file);
+        return Base64.getEncoder().encodeToString(fileContent);
+    }
 }
+

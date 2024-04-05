@@ -15,6 +15,7 @@ Krista Salesforce Customer Service Module Extension supports the following Catal
 | **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**        |
 |--------------------|--------------------|---------------|--------------------|
 | Case Id            | Text               | Yes           | 0065w00002AlDtDAAM |
+| Number Of Posts    | Number             | No            | 1                  |
 
 - **Output**:
 
@@ -31,6 +32,7 @@ Krista Salesforce Customer Service Module Extension supports the following Catal
 |--------------------|--------------------|---------------|----------------------|
 | Case Id            | Text               | Yes           | 0065w00002AlDtDAAM   |
 | Update Message     | Paragraph          | Yes           | Message to be posted |
+| File               | File               | No            | File to be posted    |
 
 - **Output**:
 
@@ -108,7 +110,25 @@ Krista Salesforce Customer Service Module Extension supports the following Catal
   - Click on Related Lists.
   - Drag and drop the Case History icon for case change alert in the Related Fields below and save the changes.
     ![Setup](../pages/../_media/addCaseTab.png)
+  
+### Content Area
 
+#### Retrieve Custom Fields For Given Object
+
+- **Description**: Retrieve Custom Fields For Given Object
+- **Input Parameters**:
+
+| **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**    |
+|--------------------|--------------------|---------------|----------------|
+| Object Id          | Text               | Yes           | 123456         |
+| Object Type        | Pick List          | Yes           | Case           |
+| Custom Fields      | List<Text>         | Yes           | Competition__c |
+
+- **Output Parameters**:
+
+| **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
+| Field Details      | FreeForm           |
 
 
 ## Entity Requests

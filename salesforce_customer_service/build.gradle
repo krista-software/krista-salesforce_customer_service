@@ -1,26 +1,11 @@
 apply plugin: 'java-library'
-jar.archiveBaseName = "salessforce_customer_service-extension"
+apply plugin: 'maven-publish'
+jar.archiveBaseName = "salesforce_customer_service-extension"
 group 'app.krista.extensions.crm.customer_relations'
-version '2.0.10'
 
+version(System.getenv('BRANCH') == null ? "local" : System.getenv('BRANCH').replace("/", "_").replace("sfcs-", ""))
 
-if (rootProject.file('builder.txt').canRead()) {
-    ext.builder = rootProject.file('builder.txt').text.trim()
-} else {
-    ext.builder = "0"
-}
-
-task updateVersion {
-    doFirst {
-        project.ext.newbuilder = Integer.parseInt(project.ext.builder) + 1
-        print "Building extension version: " + version.toString() + "-" + project.ext.newbuilder
-        rootProject.file('builder.txt').text = project.ext.newbuilder
-        System.clearProperty("extensionVersion")
-        System.setProperty("extensionVersion", version.toString() + "-" + project.ext.newbuilder)
-    }
-}
 compileJava.dependsOn clean
-compileJava.dependsOn updateVersion
 
 System.setProperty("extensionVersion", version.toString())
 
@@ -35,6 +20,42 @@ repositories {
     mavenCentral()
 }
 
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-Xlint:all,-serial'
+}
+
+task compile() {
+    dependsOn compileJava
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            afterEvaluate {
+                artifactId = jar.archiveBaseName.get()
+                groupId = rootProject.group
+            }
+        }
+    }
+    repositories {
+        mavenLocal()
+        maven {
+            credentials {
+                username = rootProject.properties['MAVEN_USERNAME']
+                password = rootProject.properties['MAVEN_PASSWORD']
+            }
+            authentication {
+                basic(BasicAuthentication)
+            }
+            url rootProject.properties['MAVEN_UPLOAD_URL']
+        }
+    }
+}
+
+
 configurations {
     implementation {
         canBeConsumed = false
@@ -48,6 +69,9 @@ dependencies {
     implementation 'app.krista:krista-apis:1.0.87'
     implementation 'org.glassfish.hk2:hk2-api:3.0.3'
     implementation 'com.github.scribejava:scribejava-apis:8.3.3'
+    implementation 'commons-io:commons-io:2.11.0'
+    implementation group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.13'
+    implementation group: 'org.json', name: 'json', version: '20210307'
 
     testImplementation 'com.kristasoft.common:common-test:1.0.37'
     testImplementation 'app.krista:krista-apis:1.0.87'
@@ -69,6 +93,34 @@ task includeSources(type: Exec) {
     commandLine "cp", "-r", "$projectDir/src", "$projectDir/build/classes/java/main/META-INF/project/src"
 }
 
+task candidate(type: Exec) {
+    commandLine "env",
+            "DOCKER_UPLOAD_REPO=" + rootProject.properties['DOCKER_UPLOAD_REPO'],
+            "MAVEN_URL=" + System.properties['MAVEN_URL'],
+            "MAVEN_UPLOAD_URL=" + rootProject.properties['MAVEN_UPLOAD_URL'],
+            "MAVEN_USERNAME=" + rootProject.properties['MAVEN_USERNAME'],
+            "MAVEN_PASSWORD=" + rootProject.properties['MAVEN_PASSWORD'],
+            "bash", "candidate.sh"
+    standardOutput = new ByteArrayOutputStream()
+    ext.output = {
+        return standardOutput.toString()
+    }
+}
+
+task release(type: Exec) {
+    commandLine "env",
+            "DOCKER_UPLOAD_REPO=" + rootProject.properties['DOCKER_UPLOAD_REPO'],
+            "MAVEN_URL=" + System.properties['MAVEN_URL'],
+            "MAVEN_UPLOAD_URL=" + rootProject.properties['MAVEN_UPLOAD_URL'],
+            "MAVEN_USERNAME=" + rootProject.properties['MAVEN_USERNAME'],
+            "MAVEN_PASSWORD=" + rootProject.properties['MAVEN_PASSWORD'],
+            "bash", "release.sh"
+    standardOutput = new ByteArrayOutputStream()
+    ext.output = {
+        return standardOutput.toString()
+    }
+}
+
 jar {
     manifest {
     }
@@ -80,3 +132,14 @@ jar {
     exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
     duplicatesStrategy = "exclude"
 }
+task upgradeJarToKrista(type: Exec) {
+    upgradeJarToKrista.dependsOn(build)
+    String jar_file_name = jar.archiveBaseName.get()+"-"+version.toString()+ ".jar"
+    def file_name = "$projectDir/build/libs/$jar_file_name"
+    workingDir '/usr/bin'
+    commandLine 'python3', "$projectDir/upgrade_extension_jar_to_krista.py", "-config_file=$projectDir/extension_workspace_config.json", "-jar_file=${file_name}"
+}
+
+
+
+

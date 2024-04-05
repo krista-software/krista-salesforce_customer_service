@@ -80,14 +80,16 @@ public interface CaseDao {
      * @param caseId case entity id
      * @return list of Feed items.
      */
-    List<Map<String, Object>> getFeedItemsForCaseId(String caseId) throws ExecutionException, InterruptedException, JsonProcessingException;
+    List<Map<String, Object>> getFeedItemsForCaseId(String caseId,int numberOfPosts) throws ExecutionException, InterruptedException, IOException;
 
     /**
      * This function will add update to the feed posts.
      *
      * @param caseId        case entity id.
      * @param updateMessage message to be added to the post
+     * @param base64EncodedString base64EncodedString of file to be added.
+     * @param fileName filename to be added to the post
      * @return {@link Boolean} value of updated or not
      */
-    Boolean addFeedUpdateToCaseById(String caseId, String updateMessage) throws ExecutionException, InterruptedException;
+    Boolean addFeedUpdateToCaseById(String caseId, String updateMessage,String base64EncodedString,String fileName) throws ExecutionException, InterruptedException;
 }

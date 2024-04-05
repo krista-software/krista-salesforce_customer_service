@@ -1,13 +1,17 @@
 package app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog;
 
 
+import app.krista.extension.impl.anno.Attribute;
 import app.krista.extension.impl.anno.CatalogRequest;
 import app.krista.extension.impl.anno.Domain;
 import app.krista.extension.impl.anno.Field;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.CaseDaoImpl;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.KristaMediaClient;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
+import app.krista.model.base.File;
 import app.krista.model.base.FreeForm;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -25,11 +29,16 @@ import static app.krista.extensions.crm.customer_relations.salesforce_customer_s
         ecosystemVersion = "abc90187-31a8-460e-b19b-99ae146e6ee8")
 public class CaseManagementArea {
     private final CaseDaoImpl caseDao;
+    private static final Logger LOGGER = LoggerFactory.getLogger(CaseManagementArea.class);
+    private final KristaMediaClient kristaMediaClient;
+
 
     @Inject
-    private CaseManagementArea(CaseDaoImpl caseDao) {
+    private CaseManagementArea(CaseDaoImpl caseDao, KristaMediaClient kristaMediaClient) {
         this.caseDao = caseDao;
+        this.kristaMediaClient = kristaMediaClient;
     }
+
 
     @CatalogRequest(
             id = "localDomainRequest_4adceae0-923e-4163-bcc0-1c0fd9cf8b19",
@@ -37,18 +46,32 @@ public class CaseManagementArea {
             description = "This request will fetch the list of post items for the given case Id",
             area = "Case management",
             type = CatalogRequest.Type.QUERY_SYSTEM)
-    @Field.Desc(name = "Feed Items", type = "[ { Actor Name: Text, Post Message: Text } ]", required = false)
+    @Field.Desc(name = "Feed Items", type = "[ { Actor Name: Text, Post Message: Text, File: File } ]", required = false)
     public List<Map<String, Object>> getCaseFeedItemsByCaseId(
-            @Field.Text(name = "Case Id") String caseId) {
+            @Field.Text(name = "Case Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String caseId,
+            @Field(name = "Number Of Posts", type = "Number", required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) Double numberOfPosts) {
+
         try {
-            return caseDao.getFeedItemsForCaseId(caseId);
-        } catch (ExecutionException | JsonProcessingException cause) {
+            int maxNumberOfPosts = 100;
+
+            if (numberOfPosts != null && Double.isFinite(numberOfPosts)) {
+                maxNumberOfPosts = Math.min(numberOfPosts.intValue(), maxNumberOfPosts);
+                if (maxNumberOfPosts <= 0) {
+                    throw new IllegalArgumentException("Bad Request. Number of posts must be greater than 0.");
+                }
+                if (numberOfPosts > 100) {
+                    throw new IllegalArgumentException("Bad Request. Number of posts must be less than or equal to 100.");
+                }
+            }
+            return caseDao.getFeedItemsForCaseId(caseId, maxNumberOfPosts);
+        } catch (IllegalArgumentException cause) {
+            LOGGER.error("Failed to get Latest Posts" + cause.getMessage(), cause);
+        } catch (ExecutionException | IOException | InterruptedException cause) {
             throw new RuntimeException(cause);
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(interruptedException);
         }
+        return List.of();
     }
+
 
     @CatalogRequest(
             id = "localDomainRequest_b3f52b0d-f4af-462b-a600-62d8afd83836",
@@ -56,16 +79,24 @@ public class CaseManagementArea {
             description = "This request will add update to the Feed of the Case.",
             area = "Case management",
             type = CatalogRequest.Type.CHANGE_SYSTEM)
-    @Field.Boolean(name = "Is Updated", required = false)
+    @Field.Boolean(name = "Is Updated", required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {})
     public Boolean shareUpdateToCase(
-            @Field.Text(name = "Case Id") String caseId,
-            @Field(name = "Update Message", type = "Paragraph") String updateMessage) throws InterruptedException {
+            @Field.Text(name = "Case Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String caseId,
+            @Field(name = "Update Message", type = "Paragraph", required = true, attributes = {@Attribute(name = "visualWidth", value = "L")}, options = {}) String updateMessage,
+            @Field.File(name = "File", multipleFileUpload = false, required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) File file) {
         try {
-            return caseDao.addFeedUpdateToCaseById(caseId, getEscapeCharacterMessage(updateMessage));
-        } catch (ExecutionException cause) {
+            if (file != null) {
+                java.io.File javaFile = kristaMediaClient.toJavaFile(file);
+                String base64EncodedString = caseDao.getBase64EncodedString(javaFile);
+                return caseDao.addFeedUpdateToCaseById(caseId, getEscapeCharacterMessage(updateMessage), base64EncodedString, javaFile.getName());
+            } else {
+                return caseDao.addFeedUpdateToCaseById(caseId, getEscapeCharacterMessage(updateMessage), null, null);
+            }
+        } catch (ExecutionException | InterruptedException | IOException cause) {
             throw new RuntimeException(cause.getMessage(), cause);
         }
     }
+
 
     private static String getEscapeCharacterMessage(String updateMessage) {
         StringBuilder escapedMessage = new StringBuilder();
@@ -120,7 +151,7 @@ public class CaseManagementArea {
                 updateCaseDetails(eventData, caseMap);
             }
         } catch (IllegalArgumentException cause) {
-            System.err.println("This error is for case change alert." + cause.getMessage());
+            LOGGER.error("This error is for case change alert." + cause.getMessage(), cause);
         } catch (IOException | ExecutionException cause) {
             throw new IllegalStateException(cause.getMessage(), cause);
         } catch (InterruptedException cause) {
