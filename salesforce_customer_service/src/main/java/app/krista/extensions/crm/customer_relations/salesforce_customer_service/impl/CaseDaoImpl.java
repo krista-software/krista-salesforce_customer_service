@@ -42,7 +42,6 @@ public final class CaseDaoImpl implements CaseDao {
     private static final String POST_MESSAGE = "Post Message";
     private static final String FILE = "File";
     private final SalesforceService salesforceService;
-    private final FileRepository fileRepository;
     private static final String ELEMENTS = "elements";
     private static final String FEED_ELEMENT_TYPE = "feedElementType";
     private static final String ACTOR = "actor";
@@ -58,9 +57,8 @@ public final class CaseDaoImpl implements CaseDao {
     private final KristaMediaClient kristaMediaClient;
 
     @Inject
-    public CaseDaoImpl(SalesforceService salesforceService, FileRepository fileRepository, KristaMediaClient kristaMediaClient) {
+    public CaseDaoImpl(SalesforceService salesforceService, KristaMediaClient kristaMediaClient) {
         this.salesforceService = salesforceService;
-        this.fileRepository = fileRepository;
         this.kristaMediaClient = kristaMediaClient;
     }
 
