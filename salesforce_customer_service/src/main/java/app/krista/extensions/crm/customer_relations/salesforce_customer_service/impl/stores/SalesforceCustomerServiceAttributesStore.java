@@ -27,7 +27,8 @@ public class SalesforceCustomerServiceAttributesStore {
         String authContextId = UUID.randomUUID().toString();
         store.put(authContextId, Constants.GSON.toJson(Map.of(SalesforceCustomerServiceAttributes.CLIENT_ID,
                 salesforceCustomerServiceAttributes.getClientId(),
-                SalesforceCustomerServiceAttributes.CLIENT_SECRET, salesforceCustomerServiceAttributes.getClientSecret())));
+                SalesforceCustomerServiceAttributes.CLIENT_SECRET, salesforceCustomerServiceAttributes.getClientSecret(),
+                SalesforceCustomerServiceAttributes.SANDBOX, salesforceCustomerServiceAttributes.isSandbox())));
         return authContextId;
     }
 
