@@ -20,12 +20,14 @@ public final class SalesforceCustomerServiceAttributes {
     public static final String USER_NAME = "username";
     public static final String PASS_WORD = "password";
     public static final String SECURITY_TOKEN = "securityToken";
+    public static final String SANDBOX = "sandbox";
     private final String routingUrl;
     private String clientId;
     private String clientSecret;
     private String userName;
     private String password;
     private String securityToken;
+    private Boolean isSandbox;
     private OAuth20Service oAuthService;
 
     @Inject
@@ -40,16 +42,18 @@ public final class SalesforceCustomerServiceAttributes {
                 (String) attributes.get(USER_NAME),
                 (String) attributes.get(PASS_WORD),
                 (String) attributes.get(SECURITY_TOKEN),
+                (Boolean) attributes.get(SANDBOX),
                 routingUrl);
     }
 
     public SalesforceCustomerServiceAttributes(String clientId, String clientSecret, String userName, String password,
-                                               String securityToken, String routingUrl) {
+                                               String securityToken, Boolean isSandbox, String routingUrl) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.userName = userName;
         this.password = password;
         this.securityToken = securityToken;
+        this.isSandbox = isSandbox;
         this.routingUrl = routingUrl;
     }
 
@@ -82,12 +86,16 @@ public final class SalesforceCustomerServiceAttributes {
         return routingUrl + Constants.CALLBACK_URI;
     }
 
+    public boolean isSandbox() {
+        return isSandbox != null && isSandbox;
+    }
+
     public synchronized OAuth20Service getOauthService() {
         if (oAuthService == null) {
             oAuthService = new ServiceBuilder(getClientId())
                     .apiSecret(getClientSecret())
                     .callback(getCallbackUrl())
-                    .build(SalesforceApi.instance());
+                    .build(isSandbox() ? SalesforceApi.sandbox() : SalesforceApi.instance());
         }
         return oAuthService;
     }
@@ -98,5 +106,6 @@ public final class SalesforceCustomerServiceAttributes {
         userName = InvokerAttributes.getStringOrNull(newAttributes, USER_NAME);
         password = InvokerAttributes.getStringOrNull(newAttributes, PASS_WORD);
         securityToken = InvokerAttributes.getStringOrNull(newAttributes, SECURITY_TOKEN);
+        isSandbox = InvokerAttributes.getBooleanOrNull(newAttributes, SANDBOX);
     }
 }

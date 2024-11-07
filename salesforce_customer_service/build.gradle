@@ -65,8 +65,8 @@ configurations {
 
 dependencies {
 
-    annotationProcessor 'app.krista:extension-impl-anno-processors:1.0.87'
-    implementation 'app.krista:krista-apis:1.0.87'
+    annotationProcessor 'app.krista:extension-impl-anno-processors:1.0.101'
+    implementation 'app.krista:krista-apis:1.0.101'
     implementation 'org.glassfish.hk2:hk2-api:3.0.3'
     implementation 'com.github.scribejava:scribejava-apis:8.3.3'
     implementation 'commons-io:commons-io:2.11.0'
@@ -74,7 +74,7 @@ dependencies {
     implementation group: 'org.json', name: 'json', version: '20210307'
 
     testImplementation 'com.kristasoft.common:common-test:1.0.37'
-    testImplementation 'app.krista:krista-apis:1.0.87'
+    testImplementation 'app.krista:krista-apis:1.0.101'
 
 }
 
