@@ -19,7 +19,8 @@ import java.util.Map;
 @Field.Text(value = SalesforceCustomerServiceAttributes.USER_NAME, required = false)
 @Field.Text(value = SalesforceCustomerServiceAttributes.PASS_WORD, isSecured = true, required = false)
 @Field.Text(value = SalesforceCustomerServiceAttributes.SECURITY_TOKEN, isSecured = true, required = false)
-@Extension(version = "2.0.11")
+@Field.Boolean(value = SalesforceCustomerServiceAttributes.SANDBOX, required = false)
+@Extension(version = "2.0.12")
 @StaticResource(path = "docs", file = "documentations")
 public final class SalesforceCustomerServiceExtension {
 

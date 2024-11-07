@@ -38,6 +38,7 @@ public class SalesforceCustomerServiceAttributesStore {
                 (String) attributes.get(SalesforceCustomerServiceAttributes.USER_NAME),
                 (String) attributes.get(SalesforceCustomerServiceAttributes.PASS_WORD),
                 (String) attributes.get(SalesforceCustomerServiceAttributes.SECURITY_TOKEN),
+                (Boolean) attributes.get(SalesforceCustomerServiceAttributes.SANDBOX),
                 invoker.getRoutingInfo().getRoutingURL(HttpProtocol.PROTOCOL_NAME, RoutingInfo.Type.APPLIANCE));
     }
 
