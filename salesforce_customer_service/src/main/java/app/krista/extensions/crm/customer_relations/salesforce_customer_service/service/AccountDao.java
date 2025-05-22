@@ -11,10 +11,9 @@ public interface AccountDao {
      * Returns {@link Account} object of salesforce from the account id provided.
      *
      * @param id id of account to be searched
-     * @return {@link Account} object of salesforce
-     * @throws IOException
-     * @throws ExecutionException
-     * @throws InterruptedException
+     * @throws IOException          if input error occurs
+     * @throws ExecutionException   if error in execution flow
+     * @throws InterruptedException if error in the thread
      */
     Account getAccountById(String id) throws IOException, ExecutionException, InterruptedException;
 
@@ -23,13 +22,11 @@ public interface AccountDao {
      *
      * @param size           number of accounts to be fetched
      * @param page           page number to be fetched
-     * @param orderByField
-     * @param orderByOperand
-     * @return {@link List<Account>} list of object of salesforce
-     * @return empty list if does not find any records
-     * @throws IOException
-     * @throws ExecutionException
-     * @throws InterruptedException
+     * @param orderByField   field name used for sorting the results
+     * @param orderByOperand sorting direction, e.g., "ASC" or "DESC"
+     * @throws IOException          if input error occurs
+     * @throws ExecutionException   if error in execution flow
+     * @throws InterruptedException if error in the thread
      */
     List<Account> getAccounts(long size, long page, String orderByField, String orderByOperand) throws IOException, ExecutionException, InterruptedException;
 
@@ -37,11 +34,10 @@ public interface AccountDao {
      * Returns {@link List<Account>} list of object of salesforce.
      *
      * @param query query to be searched
-     * @return {@link List<Account>} list of object of salesforce
-     * @return empty list if does not find any records
-     * @throws IOException
-     * @throws ExecutionException
-     * @throws InterruptedException
+     * @return empty list if it does not find any records
+     * @throws IOException          if input error occurs
+     * @throws ExecutionException   if error in execution flow
+     * @throws InterruptedException if error in the thread
      */
     List<Account> getAccountByQuery(String query) throws IOException, ExecutionException, InterruptedException;
 
@@ -49,9 +45,9 @@ public interface AccountDao {
      * Add {@link Account} to salesforce from provided input fields
      *
      * @param entityDefinition fields which are added in the {@link Account} object of salesforce to create
-     * @throws IOException
-     * @throws ExecutionException
-     * @throws InterruptedException
+     * @throws IOException          if input error occurs
+     * @throws ExecutionException   if error in execution flow
+     * @throws InterruptedException if error in the thread
      */
     String createAccount(Map<String, Object> entityDefinition) throws IOException, ExecutionException, InterruptedException;
 
@@ -59,9 +55,9 @@ public interface AccountDao {
      * Update {@link Account} to salesforce from provided input fields
      *
      * @param account {@link Account} object of salesforce to be updated
-     * @throws IOException
-     * @throws ExecutionException
-     * @throws InterruptedException
+     * @throws IOException          if input error occurs
+     * @throws ExecutionException   if error in execution flow
+     * @throws InterruptedException if error in the thread
      */
     void updateAccount(Account account) throws IllegalAccessException, IOException, ExecutionException, InterruptedException;
 

@@ -16,17 +16,38 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+/**
+ * Implementation of the AccountDao interface for accessing Salesforce Account data.
+ * <p>
+ * This class provides methods to retrieve, create, update, and delete Account records
+ * in Salesforce. It handles the communication with the Salesforce API and converts
+ * between the API's data format and the application's Account objects.
+ */
 @Service
 public final class AccountDaoImpl implements AccountDao {
 
     public static final String ACCOUNT = "Account";
     private final SalesforceService salesforceService;
 
+    /**
+     * Constructs an AccountDaoImpl with the required Salesforce service.
+     *
+     * @param salesforceService The SalesforceService used to communicate with the Salesforce API
+     */
     @Inject
     public AccountDaoImpl(SalesforceService salesforceService) {
         this.salesforceService = salesforceService;
     }
 
+    /**
+     * Retrieves an Account by its ID from Salesforce.
+     *
+     * @param id The ID of the Account to retrieve
+     * @return The Account with the specified ID
+     * @throws IOException If an I/O error occurs during the API request
+     * @throws ExecutionException If an error occurs during request execution
+     * @throws InterruptedException If the request is interrupted
+     */
     @Override
     public Account getAccountById(String id) throws IOException, ExecutionException, InterruptedException {
         if (id == null || id.isBlank()) {
@@ -35,17 +56,39 @@ public final class AccountDaoImpl implements AccountDao {
         return new AccountImpl(Constants.GSON.fromJson(salesforceService.getRecordById(id, ACCOUNT), SFAccount.class));
     }
 
+    /**
+     * Retrieves a paginated list of Accounts from Salesforce with sorting options.
+     *
+     * @param size The number of records to return per page
+     * @param page The page number to retrieve (1-based)
+     * @param orderByField The field to sort by
+     * @param orderByOperand The sort direction (ASC or DESC)
+     * @return A list of Account objects for the requested page
+     * @throws IOException If an I/O error occurs during the API request
+     * @throws ExecutionException If an error occurs during request execution
+     * @throws InterruptedException If the request is interrupted
+     */
     @Override
     public List<Account> getAccounts(long size, long page, String orderByField, String orderByOperand) throws IOException, ExecutionException, InterruptedException {
         String QUERY_FIELDS = "id,createdDate,phone,type,website,Name,ownership,AccountNumber,Industry,NumberOfEmployees";
         return getAccountByQuery("Select " + QUERY_FIELDS + " from Account  ORDER BY " + orderByField + " " + orderByOperand + " LIMIT " + size + " OFFSET " + Math.max((page - 1) * size, 0));
     }
 
+    /**
+     * Retrieves Accounts from Salesforce using a custom SOQL query.
+     *
+     * @param query The SOQL query to execute
+     * @return A list of Account objects matching the query
+     * @throws IOException If an I/O error occurs during the API request
+     * @throws ExecutionException If an error occurs during request execution
+     * @throws InterruptedException If the request is interrupted
+     */
     @Override
     public List<Account> getAccountByQuery(String query) throws IOException, ExecutionException, InterruptedException {
         if (query == null || query.isBlank()) {
             System.err.println("Failed fetch account by query request. " + Constants.QUERY_IS_NULL_OR_EMPTY);
         }
+        assert query != null;
         String res = salesforceService.getRecordByQuery(query.trim());
         SalesforceListResponse<SFAccount> oppList =
                 Constants.GSON.fromJson(res, new TypeToken<SalesforceListResponse<SFAccount>>() {
@@ -57,6 +100,15 @@ public final class AccountDaoImpl implements AccountDao {
         }
     }
 
+    /**
+     * Creates a new Account in Salesforce.
+     *
+     * @param entityDefinition A map containing the Account fields and values
+     * @return The ID of the created Account
+     * @throws IOException If an I/O error occurs during the API request
+     * @throws ExecutionException If an error occurs during request execution
+     * @throws InterruptedException If the request is interrupted
+     */
     @Override
     public String createAccount(Map<String, Object> entityDefinition) throws IOException, ExecutionException, InterruptedException {
         if (entityDefinition == null || entityDefinition.isEmpty()) {
@@ -66,6 +118,17 @@ public final class AccountDaoImpl implements AccountDao {
         return String.valueOf(response.get("id"));
     }
 
+    /**
+     * Updates an existing Account in Salesforce.
+     * Only the changed fields will be sent to Salesforce.
+     *
+     * @param account The Account object with updated fields
+     * @throws IllegalAccessException If reflection access is denied
+     * @throws IOException If an I/O error occurs during the API request
+     * @throws ExecutionException If an error occurs during request execution
+     * @throws InterruptedException If the request is interrupted
+     * @throws IllegalArgumentException If the account is invalid
+     */
     @Override
     public void updateAccount(Account account) throws IllegalAccessException, IOException, ExecutionException, InterruptedException, IllegalArgumentException {
         if (account == null || account.getId() == null || account.getId().isBlank()) {
@@ -77,6 +140,14 @@ public final class AccountDaoImpl implements AccountDao {
         salesforceService.updateRecord(account.getId(), Constants.GSON.toJson(diff), ACCOUNT);
     }
 
+    /**
+     * Deletes an Account from Salesforce by its ID.
+     *
+     * @param accountId The ID of the Account to delete
+     * @throws IOException If an I/O error occurs during the API request
+     * @throws ExecutionException If an error occurs during request execution
+     * @throws InterruptedException If the request is interrupted
+     */
     @Override
     public void deleteAccountById(String accountId) throws IOException, ExecutionException, InterruptedException {
         salesforceService.deleteRecordById(accountId, ACCOUNT);

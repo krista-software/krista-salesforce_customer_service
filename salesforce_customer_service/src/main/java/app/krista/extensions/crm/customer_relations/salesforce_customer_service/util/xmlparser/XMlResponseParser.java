@@ -11,14 +11,21 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.StringReader;
 
+/**
+ * Utility class for parsing XML responses into Java objects using JAXB.
+ * <p>
+ * Provides methods to securely parse Salesforce case notification XML responses
+ * into {@link CaseNotifications} objects, disabling DTD and external entity support
+ * for security. Not intended to be instantiated.
+ */
 public final class XMlResponseParser {
 
     private XMlResponseParser() {
     }
 
     // region Internal
-    private static <T> JAXBElement<T> parseXmlResponse(String response, Class<T> notificationClass) {
-        try (StringReader stringReader = new StringReader(response)){
+    private static <T> JAXBElement<T> parseXmlResponse(String response, @SuppressWarnings("SameParameterValue") Class<T> notificationClass) {
+        try (StringReader stringReader = new StringReader(response)) {
             XMLInputFactory xif = XMLInputFactory.newFactory();
             xif.setProperty(XMLInputFactory.SUPPORT_DTD, false); // Disable DTD support
             xif.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false); // Disable external entities
@@ -41,6 +48,11 @@ public final class XMlResponseParser {
     }
     // endregion
 
+    /**
+     * Provides utility methods for securely parsing Salesforce case notification XML responses
+     * into {@link CaseNotifications} objects using JAXB. Disables DTD and external entity support
+     * for security. Not intended to be instantiated.
+     */
     public static JAXBElement<CaseNotifications> parseCaseXmlResponse(String response) {
         return parseXmlResponse(response, CaseNotifications.class);
     }

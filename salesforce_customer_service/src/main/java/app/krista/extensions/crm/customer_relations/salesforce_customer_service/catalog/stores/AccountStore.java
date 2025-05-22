@@ -15,7 +15,6 @@ import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +40,7 @@ public final class AccountStore implements EntityStore<Account> {
      * @return {@link Account} for the given input
      */
     @Override
-    public Account create(Map<String, Object> entityDefinition) throws InterruptedIOException {
+    public Account create(Map<String, Object> entityDefinition) {
         if (entityDefinition == null || entityDefinition.isEmpty()) {
             throw new IllegalArgumentException("Failed to create customer. " + Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
         }
@@ -59,7 +58,7 @@ public final class AccountStore implements EntityStore<Account> {
      * @return {@link Account} for the given Id.
      */
     @Override
-    public Account get(String primaryKey) throws InterruptedIOException {
+    public Account get(String primaryKey) {
         if (primaryKey == null || primaryKey.isBlank()) {
             throw new IllegalArgumentException(Constants.FAILED_TO_GET_CUSTOMER + Constants.PRIMARY_KEY_IS_EMPTY);
         }
@@ -74,10 +73,9 @@ public final class AccountStore implements EntityStore<Account> {
     /**
      * @param account {@link Account} object is given as input to update.
      * @return returns the updated entity {@link Account}
-     * @throws InterruptedIOException if there is interruption during execution of salesforce API
      */
     @Override
-    public Account update(Account account) throws InterruptedIOException {
+    public Account update(Account account) {
         if (account == null) {
             throw new IllegalArgumentException("Failed to update customer. Customer not found for update");
         }
@@ -119,18 +117,17 @@ public final class AccountStore implements EntityStore<Account> {
      * @param pageIndex   page number of the query results
      * @param pageSize    number of results per page
      * @return returns {@link List<Account>} as per the given query
-     * @throws IOException if there is any error in the given input
      */
     @Override
-    public List<Account> search(SearchQuery searchQuery, long pageIndex, int pageSize) throws IOException {
+    public List<Account> search(SearchQuery searchQuery, long pageIndex, int pageSize) {
         final List<SearchCondition> conditions = searchQuery.getSearchConditions();
         final List<QueryClause> queryClauses = searchQuery.getQueryClauses();
         if (conditions == null || conditions.isEmpty()) {
             throw new IllegalArgumentException("Failed to get Customers. " + Constants.CONDITIONS_NOT_FOUND);
         }
         try {
-            String orderByField = queryClauses.isEmpty() ? Constants.LASTMODIFIEDDATE : queryClauses.get(0).getFieldName();
-            String orderByOperand = queryClauses.isEmpty() ? Constants.DESC : queryClauses.get(0).getOperand().toString();
+            String orderByField = queryClauses.isEmpty() ? Constants.LASTMODIFIEDDATE : queryClauses.getFirst().getFieldName();
+            String orderByOperand = queryClauses.isEmpty() ? Constants.DESC : queryClauses.getFirst().getOperand().toString();
             if (conditions.size() == 1) {
                 return accountDao.getAccounts(pageSize, pageIndex, orderByField, orderByOperand).stream().map(CatalogTypes::fromSFAccount).collect(Collectors.toList());
             } else {

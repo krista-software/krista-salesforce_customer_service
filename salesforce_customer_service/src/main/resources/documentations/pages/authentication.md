@@ -1,13 +1,18 @@
-[<span style = "color : blue ; text-decoration: none">< Back<span>](/)
+[<span style="color: blue; text-decoration: none">&lt; Back</span>](/)
 
 # Authentication
 
-### Authentication as Service Account
+## Service Account Authentication
 
-* When you uncheck the **Have people authenticate with their account** checkbox under **Ask a System** step in a Conversation, then the service account will be used while executing the conversation.This is the same account that is used and validated in extension setup.
+- If the **Have people authenticate with their account** checkbox is **unchecked** in the **Ask a System** step of a Conversation, the system will use the service account to execute the conversation.  
+- The service account is configured and validated during the extension setup process.
+- This approach allows automated actions without requiring individual user credentials.
+
   ![Have Authenticate UnChecked](../_media/askASystemUnchecked.png)
 
-### Authentication as User Account
+## User Account Authentication
 
-* When you check the **Have people authenticate with their account** checkbox under **Ask a System** step in a Conversation, then you must authenticate with your account while executing the conversation.
+- If the **Have people authenticate with their account** checkbox is **checked** in the **Ask a System** step of a Conversation, each user must authenticate with their own account before the conversation can proceed.
+- This ensures that actions are performed on behalf of the authenticated user, providing user-level security and auditability.
+
   ![Have Authenticate Checked](../_media/askASystemChecked.png)

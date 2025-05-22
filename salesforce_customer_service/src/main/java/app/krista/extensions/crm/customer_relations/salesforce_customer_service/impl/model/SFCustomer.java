@@ -28,6 +28,7 @@ public final class SFCustomer {
             System.err.println(Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
         }
         SFCustomer newCustomer = new SFCustomer();
+        assert sfCustomer != null;
         newCustomer.id = sfCustomer.id;
         newCustomer.partyId = sfCustomer.partyId;
         newCustomer.name = sfCustomer.name;
@@ -42,6 +43,7 @@ public final class SFCustomer {
             System.err.println(Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
         }
         SFCustomer newCustomer = new SFCustomer();
+        assert sfCustomer != null;
         newCustomer.id = sfCustomer.getId();
         newCustomer.name = sfCustomer.getName();
         newCustomer.partyId = sfCustomer.getPartyId();
@@ -56,6 +58,7 @@ public final class SFCustomer {
             System.err.println(Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
         }
         SFCustomer newCustomer = new SFCustomer();
+        assert entityDefinition != null;
         newCustomer.id = (String) entityDefinition.get("Id");
         newCustomer.partyId = (String) entityDefinition.get("Party Id");
         newCustomer.name = (String) entityDefinition.get("Name");

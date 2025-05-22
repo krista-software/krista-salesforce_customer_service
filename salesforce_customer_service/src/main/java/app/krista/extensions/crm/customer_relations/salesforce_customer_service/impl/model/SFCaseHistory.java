@@ -13,8 +13,8 @@ public class SFCaseHistory {
     public Map<String, Object> toMap() {
         Map<String, Object> newRecord = new HashMap<>();
         if (records != null && !records.isEmpty()) {
-            newRecord.put(records.get(0).Field, records.get(0).NewValue);
-            Long createdDate = records.get(0).CreatedDate.getTime();
+            newRecord.put(records.getFirst().Field, records.getFirst().NewValue);
+            Long createdDate = records.getFirst().CreatedDate.getTime();
             for (int i = 1; i < records.size(); i++) {
                 Long newCreatedDate = records.get(i).CreatedDate.getTime();
                 if (createdDate > newCreatedDate) {
@@ -27,7 +27,7 @@ public class SFCaseHistory {
         return newRecord;
     }
 
-    public class Record {
+    public static class Record {
         public Attributes attributes;
         public String Id;
         public boolean IsDeleted;
@@ -38,7 +38,7 @@ public class SFCaseHistory {
         public String OldValue;
         public String NewValue;
 
-        public class Attributes {
+        public static class Attributes {
             public String type;
             public String url;
         }

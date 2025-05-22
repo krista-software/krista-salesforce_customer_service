@@ -3,11 +3,28 @@ package app.krista.extensions.crm.customer_relations.salesforce_customer_service
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog.entities.*;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 
+/**
+ * Utility class for converting between service objects and entity objects.
+ * <p>
+ * This class provides static methods to convert Salesforce service objects
+ * to their corresponding catalog entity objects. Each conversion method
+ * maps all relevant fields from the source object to the target entity.
+ */
 public final class CatalogTypes {
 
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
     private CatalogTypes() {
     }
 
+    /**
+     * Converts a Salesforce Case service object to a Case entity.
+     * 
+     * @param sfCase The Salesforce Case service object to convert
+     * @return A new Case entity with fields populated from the service object
+     * @throws IllegalArgumentException if the input Case is null
+     */
     public static Case fromSFCase(app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.Case sfCase) {
         if (sfCase == null) {
             throw new IllegalArgumentException("Case entity is empty");
@@ -34,6 +51,13 @@ public final class CatalogTypes {
         return newCase;
     }
 
+    /**
+     * Converts a Salesforce Contact service object to a Contact entity.
+     * 
+     * @param sfContact The Salesforce Contact service object to convert
+     * @return A new Contact entity with fields populated from the service object
+     * @throws IllegalArgumentException if the input Contact is null or empty
+     */
     public static Contact fromSFContact(app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.Contact sfContact) {
         if (sfContact == null) {
             throw new IllegalArgumentException(Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
@@ -55,6 +79,13 @@ public final class CatalogTypes {
         return newContact;
     }
 
+    /**
+     * Converts a Salesforce Account service object to an Account entity.
+     * 
+     * @param sfAccount The Salesforce Account service object to convert
+     * @return A new Account entity with fields populated from the service object
+     * @throws IllegalArgumentException if the input Account is null or empty
+     */
     public static Account fromSFAccount(app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.Account sfAccount) {
         if (sfAccount == null) {
             throw new IllegalArgumentException(Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
@@ -91,6 +122,13 @@ public final class CatalogTypes {
         return account;
     }
 
+    /**
+     * Converts a Salesforce Individual service object to an Individual entity.
+     * 
+     * @param sfIndividual The Salesforce Individual service object to convert
+     * @return A new Individual entity with fields populated from the service object
+     * @throws IllegalArgumentException if the input Individual is null
+     */
     public static Individual fromSFIndividual(app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.Individual sfIndividual) {
         if (sfIndividual == null) {
             throw new IllegalArgumentException("Individual entity is empty!");
@@ -107,6 +145,13 @@ public final class CatalogTypes {
         return newIndividual;
     }
 
+    /**
+     * Converts a Salesforce Customer service object to a Customer entity.
+     * 
+     * @param sfCustomer The Salesforce Customer service object to convert
+     * @return A new Customer entity with fields populated from the service object
+     * @throws IllegalArgumentException if the input Customer is null
+     */
     public static Customer fromSFCustomer(app.krista.extensions.crm.customer_relations.salesforce_customer_service.service.Customer sfCustomer) {
         if (sfCustomer == null) {
             throw new IllegalArgumentException("Customer entity is empty!");

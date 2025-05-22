@@ -13,8 +13,8 @@ public class SFObjectHelper {
     /**
      * This method is used to put entity fields in map.
      *
-     * @param caseData
-     * @param caseMap
+     * @param caseData a map containing raw case field values, typically retrieved from an external source or input
+     * @param caseMap  the map to be populated or updated with processed case fields and their values
      */
     public static void upsertCaseMap(Map<String, Object> caseData, Map<String, Object> caseMap) {
         caseMap.put("Case Contact Id", getStringOrEmpty(caseData.get("ContactId")));
@@ -35,4 +35,5 @@ public class SFObjectHelper {
         caseMap.put("Case Description", getStringOrEmpty(caseData.get("Description")));
         caseMap.put("Case Priority", getStringOrEmpty(caseData.get("Priority")));
     }
+
 }

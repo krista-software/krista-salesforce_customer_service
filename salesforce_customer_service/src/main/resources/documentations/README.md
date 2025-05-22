@@ -20,6 +20,9 @@ The Krista Salesforce Customer Service Module Extension connects to Salesforce s
 
 * ### Supported Requests
   * [Supported Requests](pages/supportedRequests.md)
+  
+* ### Troubleshooting
+  * [Troubleshooting](pages/troubleshooting.md)
 
 * ### Release Notes
   * [Release Notes ](pages/release-notes.md)

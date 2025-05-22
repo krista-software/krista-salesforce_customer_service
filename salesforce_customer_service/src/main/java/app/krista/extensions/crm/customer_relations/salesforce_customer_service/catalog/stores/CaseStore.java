@@ -57,7 +57,6 @@ public final class CaseStore implements EntityStore<Case> {
     /**
      * @param primaryKey Id of the {@link Case}
      * @return {@link Case} for the given Id.
-     * @throws InterruptedException if there is any interruption during execution of Salesforce API.
      */
     @Override
     public Case get(String primaryKey) throws InterruptedIOException {
@@ -142,8 +141,8 @@ public final class CaseStore implements EntityStore<Case> {
             throw new IllegalArgumentException("Failed to search case. " + Constants.CONDITIONS_NOT_FOUND);
         }
         try {
-            String orderByField = queryClauses.isEmpty() ? Constants.LASTMODIFIEDDATE : queryClauses.get(0).getFieldName();
-            String orderByOperand = queryClauses.isEmpty() ? Constants.DESC : queryClauses.get(0).getOperand().toString();
+            String orderByField = queryClauses.isEmpty() ? Constants.LASTMODIFIEDDATE : queryClauses.getFirst().getFieldName();
+            String orderByOperand = queryClauses.isEmpty() ? Constants.DESC : queryClauses.getFirst().getOperand().toString();
             if (conditions.size() == 1) {
                 return caseDao.getCases(pageSize, pageIndex, orderByField, orderByOperand).stream().map(CatalogTypes::fromSFCase).collect(Collectors.toList());
             } else {

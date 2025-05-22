@@ -21,51 +21,7 @@ public final class CaseNotifications {
     @XmlElement(name = "Notification", namespace = COM_2005_09_OUTBOUND)
     private CaseNotification caseNotification;
 
-    public String getActionId() {
-        return ActionId;
-    }
-
-    public void setActionId(String actionId) {
-        ActionId = actionId;
-    }
-
-    public String getPartnerUrl() {
-        return PartnerUrl;
-    }
-
-    public void setPartnerUrl(String partnerUrl) {
-        PartnerUrl = partnerUrl;
-    }
-
-    public String getEnterpriseUrl() {
-        return EnterpriseUrl;
-    }
-
-    public void setEnterpriseUrl(String enterpriseUrl) {
-        EnterpriseUrl = enterpriseUrl;
-    }
-
-    public String getOrganizationId() {
-        return OrganizationId;
-    }
-
-    public void setOrganizationId(String organizationId) {
-        OrganizationId = organizationId;
-    }
-
-    public String getSessionId() {
-        return SessionId;
-    }
-
-    public void setSessionId(String sessionId) {
-        SessionId = sessionId;
-    }
-
     public CaseNotification getCaseNotification() {
         return caseNotification;
-    }
-
-    public void setCaseNotification(CaseNotification caseNotification) {
-        this.caseNotification = caseNotification;
     }
 }

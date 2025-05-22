@@ -82,7 +82,7 @@ public class IndividualStore implements EntityStore<Individual> {
     }
 
     @Override
-    public void delete(String primaryKey) throws IOException {
+    public void delete(String primaryKey) {
 
         if (primaryKey == null || primaryKey.isBlank()) {
             throw new IllegalArgumentException("Failed to delete Individual. " + Constants.PRIMARY_KEY_IS_EMPTY);
@@ -103,7 +103,7 @@ public class IndividualStore implements EntityStore<Individual> {
     }
 
     @Override
-    public List<Individual> search(List<SearchCondition> list, long l, int i) throws IOException {
+    public List<Individual> search(List<SearchCondition> list, long l, int i) {
         return Collections.emptyList();
     }
 
@@ -117,8 +117,8 @@ public class IndividualStore implements EntityStore<Individual> {
             throw new IllegalArgumentException("Failed to search for individuals. " + Constants.CONDITIONS_NOT_FOUND);
         }
         try {
-            String orderByField = queryClauses.isEmpty() ? Constants.LASTMODIFIEDDATE : queryClauses.get(0).getFieldName();
-            String orderByOperand = queryClauses.isEmpty() ? Constants.DESC : queryClauses.get(0).getOperand().toString();
+            String orderByField = queryClauses.isEmpty() ? Constants.LASTMODIFIEDDATE : queryClauses.getFirst().getFieldName();
+            String orderByOperand = queryClauses.isEmpty() ? Constants.DESC : queryClauses.getFirst().getOperand().toString();
 
             if (conditions.size() == 1) {
                 return individualDao.getIndividuals(pageSize, pageIndex, orderByField, orderByOperand).stream()

@@ -8,8 +8,15 @@ import app.krista.ksdk.context.RequestContext;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
-import java.io.IOException;
 
+/**
+ * Factory class for creating SalesforceTokenProvider instances.
+ * <p>
+ * This factory is responsible for creating and configuring SalesforceTokenProvider
+ * objects with the appropriate dependencies and settings. It centralizes the creation
+ * logic and ensures that token providers are properly initialized with the necessary
+ * components for Salesforce authentication.
+ */
 @Service
 public final class SalesforceTokenProviderFactory {
 
@@ -19,6 +26,15 @@ public final class SalesforceTokenProviderFactory {
     private final SalesforceCustomerServiceAttributesStore attributesStore;
     private final AuthorizationContext authorizationContext;
 
+    /**
+     * Constructs a SalesforceTokenProviderFactory with the required dependencies.
+     *
+     * @param refreshTokenStore The store used to persist refresh tokens
+     * @param requestContext The context of the current request
+     * @param salesforceCustomerServiceAttributes The default Salesforce service attributes
+     * @param attributesStore The store for Salesforce service configuration attributes
+     * @param authorizationContext The authorization context for the current request
+     */
     @Inject
     public SalesforceTokenProviderFactory(RefreshTokenStore refreshTokenStore, RequestContext requestContext,
                                           SalesforceCustomerServiceAttributes salesforceCustomerServiceAttributes,
@@ -30,6 +46,15 @@ public final class SalesforceTokenProviderFactory {
                 attributesStore);
     }
 
+    /**
+     * Constructs a SalesforceTokenProviderFactory with the required dependencies and a pre-configured token provider.
+     *
+     * @param refreshTokenStore The store used to persist refresh tokens
+     * @param requestContext The context of the current request
+     * @param authorizationContext The authorization context for the current request
+     * @param salesforceTokenProvider The pre-configured token provider to use as default
+     * @param attributesStore The store for Salesforce service configuration attributes
+     */
     public SalesforceTokenProviderFactory(RefreshTokenStore refreshTokenStore, RequestContext requestContext,
                                           AuthorizationContext authorizationContext,
                                           SalesforceTokenProvider salesforceTokenProvider,
@@ -41,7 +66,14 @@ public final class SalesforceTokenProviderFactory {
         this.attributesStore = attributesStore;
     }
 
-    public SalesforceTokenProvider create(SalesforceCustomerServiceAttributes salesforceSalesAttributes) throws IOException {
+    /**
+     * Creates a SalesforceTokenProvider with the specified Salesforce attributes.
+     *
+     * @param salesforceSalesAttributes The Salesforce service attributes to use for configuration
+     * @return A configured SalesforceTokenProvider instance
+     * @throws IllegalArgumentException if salesforceSalesAttributes is null
+     */
+    public SalesforceTokenProvider create(SalesforceCustomerServiceAttributes salesforceSalesAttributes) {
         if (salesforceSalesAttributes == null) {
             throw new IllegalArgumentException("Attributes not found");
         }
@@ -49,6 +81,11 @@ public final class SalesforceTokenProviderFactory {
         return new SalesforceTokenProvider(refreshTokenStore, requestContext, salesforceSalesAttributes, authorizationContext, authContextId);
     }
 
+    /**
+     * Creates a SalesforceTokenProvider using the default configuration.
+     *
+     * @return The default SalesforceTokenProvider instance
+     */
     public SalesforceTokenProvider create() {
         return defaultSalesforceTokenProvider;
     }

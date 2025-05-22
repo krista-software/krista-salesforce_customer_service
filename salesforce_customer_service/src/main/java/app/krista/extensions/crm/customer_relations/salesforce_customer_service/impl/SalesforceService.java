@@ -4,6 +4,8 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.connectors.SalesforceTokenProvider;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.connectors.SalesforceTokenProviderFactory;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.scribejava.apis.salesforce.SalesforceToken;
 import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.model.Response;
@@ -22,6 +24,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * Service class for interacting with Salesforce using OAuth authentication.
+ * This class provides utility methods for performing CRUD operations on Salesforce sObjects,
+ * posting feed elements (including attachments), and checking object metadata.
+ * It communicates with Salesforce REST APIs using ScribeJava for OAuth authentication.
+ * This class is intended to be used as a reusable Salesforce service component.
+ */
 @Service
 public class SalesforceService {
 
@@ -39,11 +48,21 @@ public class SalesforceService {
         this.customerServiceAttributes = customerServiceAttributes;
     }
 
+    /**
+     * Computes field-level differences between two objects of the same type.
+     * Ignores fields containing "date" in the name and the "id" field.
+     *
+     * @param old the original object
+     * @param newObj the updated object
+     * @return a map containing changed field names and their new values
+     * @throws IllegalAccessException if field access fails
+     */
     public static Map<String, String> getDifference(Object old, Object newObj) throws IllegalAccessException {
         if (old == null || newObj == null) {
             LOGGER.info("Failed to get difference. Object is null.");
         }
         Map<String, String> values = new HashMap<>();
+        assert old != null;
         for (Field field : old.getClass().getDeclaredFields()) {
             field.setAccessible(true);
             Object value1 = field.get(old);
@@ -61,6 +80,12 @@ public class SalesforceService {
         return values;
     }
 
+    /**
+     * Converts a field value to a String, converting Doubles to integer strings.
+     *
+     * @param value the field value
+     * @return the string representation
+     */
     private static String getStringValue(Object value) {
         if (value instanceof Double) {
             return String.valueOf(((Double) value).intValue());
@@ -68,85 +93,121 @@ public class SalesforceService {
         return (String) value;
     }
 
-    public String getUserEmail() throws IOException, ExecutionException, InterruptedException {
-        SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
-        String url = "https://login.salesforce.com/services/oauth2/userinfo";
-        final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
-        return getResponse(salesforceToken, request);
-    }
-
+    /**
+     * Retrieves a Salesforce record by ID.
+     *
+     * @param id the Salesforce record ID
+     * @param sobject the Salesforce object type (e.g., "Case", "Account")
+     * @return the JSON response as a string
+     */
     public String getRecordById(String id, String sobject) throws IOException, ExecutionException, InterruptedException {
         if (id == null || id.isBlank() || sobject == null || sobject.isEmpty()) {
             LOGGER.info("Failed to get record by id. Input is null.");
         }
-        SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+        SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
         String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + sobject + "/" + id;
         final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
         return getResponse(salesforceToken, request);
     }
 
+    /**
+     * Deletes a Salesforce record by ID.
+     *
+     * @param id the Salesforce record ID
+     * @param sobject the Salesforce object type
+     */
     public void deleteRecordById(String id, String sobject) throws IOException, ExecutionException, InterruptedException {
         if (id == null || id.isBlank() || sobject == null || sobject.isBlank()) {
             LOGGER.info("Failed to delete record by id. Input is null or empty.");
         }
-        SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+        SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
         String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + sobject + "/" + id;
         final OAuthRequest request = getOauthRequest(Verb.DELETE, null, url, salesforceToken);
         getResponse(salesforceToken, request);
     }
 
+
+    /**
+     * Updates a Salesforce record using the provided body JSON.
+     *
+     * @param id the Salesforce record ID
+     * @param body the update body in JSON format
+     * @param sobject the Salesforce object type
+     */
     public void updateRecord(String id, String body, String sobject) throws IOException, ExecutionException, InterruptedException {
         if (id == null || id.isBlank() || body == null || body.isBlank() || sobject == null || sobject.isEmpty()) {
             LOGGER.info("Failed to update record by id. Input is null.");
         }
-        SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+        SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
         String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + sobject + "/" + id + "?_HttpMethod=PATCH";
         final OAuthRequest request = getOauthRequest(Verb.POST, body, url, salesforceToken);
         getResponse(salesforceToken, request);
     }
 
+    /**
+     * Executes a SOQL query against Salesforce and returns the results.
+     *
+     * @param query the SOQL query string
+     * @return the response body from Salesforce
+     */
     public String getRecordByQuery(String query) throws IOException, ExecutionException, InterruptedException {
         if (query == null || query.isBlank()) {
             LOGGER.info("Failed to get record by query. " + Constants.QUERY_IS_NULL_OR_EMPTY);
         }
-        SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+        SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
         String url = salesforceToken.getInstanceUrl() + "/services/data/v53.0/query?q=";
+        assert query != null;
         final String queryEncoded = URLEncoder.encode(query, StandardCharsets.UTF_8);
         final OAuthRequest request = getOauthRequest(Verb.GET, null, url + queryEncoded, salesforceToken);
         return getResponse(salesforceToken, request);
     }
 
+    /**
+     * Creates a new record in Salesforce.
+     *
+     * @param body the record body in JSON format
+     * @param sobject the Salesforce object type
+     * @return the response body from Salesforce
+     */
     public String createRecord(String body, String sobject) throws IOException, ExecutionException, InterruptedException {
         if (body == null || body.isBlank() || sobject == null || sobject.isEmpty()) {
             LOGGER.info("Failed to create record by id. Input is null.");
         }
-        SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+        SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
         String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + sobject;
         final OAuthRequest request = getOauthRequest(Verb.POST, body, url, salesforceToken);
         return getResponse(salesforceToken, request);
     }
 
+    /**
+     * Downloads a file from Salesforce using the given download URL.
+     *
+     * @param downloadUrl the relative Salesforce download URL
+     * @return the HTTP response containing file stream
+     */
     public Response getFileResponse(String downloadUrl) {
-        try {
-            SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
-            String url = salesforceToken.getInstanceUrl() + downloadUrl;
-            final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
-            return getResponseForFile(salesforceToken, request);
-        } catch (IOException | ExecutionException | InterruptedException cause) {
-            LOGGER.error("Failed to get file response" + cause.getMessage(), cause);
-        }
-        return null;
+        SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
+        String url = salesforceToken.getInstanceUrl() + downloadUrl;
+        final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
+        return getResponseForFile(salesforceToken, request);
     }
 
-    public String getFeedsByCaseId(String caseId, int numberOfPosts) {
+    /**
+     * Retrieves Chatter feed elements for a given Case ID.
+     *
+     * @param caseId the Case ID
+     * @param numberOfPosts the number of posts to retrieve
+     * @return the response body as a string
+     */
+    public String getFeedsByCaseId(String caseId, Double numberOfPosts) {
         try {
-            SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+            SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
             String url = salesforceToken.getInstanceUrl() + "/services/data/v48.0/chatter/feeds/record/" + caseId +
-                    "/feed-elements?sortOrder=ASC&sortField=CreatedDate&pageSize=" + numberOfPosts;
+                    "/feed-elements?sortOrder=ASC&sortField=CreatedDate&pageSize=" + numberOfPosts.intValue();
             final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
             return getResponse(salesforceToken, request);
         } catch (IOException cause) {
-            LOGGER.error("Failed to get case feed posts. " + cause.getMessage(), cause);
+            LOGGER.error("Failed to get case feed posts. {}", cause.getMessage(), cause);
         } catch (ExecutionException | InterruptedException exception) {
             throw new RuntimeException(exception);
         }
@@ -154,9 +215,15 @@ public class SalesforceService {
     }
 
 
+    /**
+     * Creates a Chatter feed post in Salesforce.
+     *
+     * @param postData the post body in JSON format
+     * @return the response from Salesforce
+     */
     public String createFeedPost(String postData) throws ExecutionException, InterruptedException {
         try {
-            SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+            SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
             String url = salesforceToken.getInstanceUrl() + "/services/data/v48.0/chatter/feed-elements";
             final OAuthRequest request = getOauthRequest(Verb.POST, postData, url, salesforceToken);
             return getResponse(salesforceToken, request);
@@ -165,9 +232,16 @@ public class SalesforceService {
         }
     }
 
+
+    /**
+     * Creates a file-based Chatter post (ContentVersion) in Salesforce.
+     *
+     * @param postData the post body in JSON format
+     * @return the response from Salesforce
+     */
     public String createFeedPostForFile(String postData) throws ExecutionException, InterruptedException {
         try {
-            SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+            SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
             String url = salesforceToken.getInstanceUrl() + "/services/data/v58.0/sobjects/ContentVersion";
             final OAuthRequest request = getOauthRequest(Verb.POST, postData, url, salesforceToken);
             return getResponse(salesforceToken, request);
@@ -176,9 +250,16 @@ public class SalesforceService {
         }
     }
 
+
+    /**
+     * Creates a FeedItem post in Salesforce.
+     *
+     * @param postData the post body in JSON format
+     * @return the response from Salesforce
+     */
     public String createFeedPostForFeedItem(String postData) throws ExecutionException, InterruptedException {
         try {
-            SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+            SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
             String url = salesforceToken.getInstanceUrl() + "/services/data/v58.0/sobjects/FeedItem";
             final OAuthRequest request = getOauthRequest(Verb.POST, postData, url, salesforceToken);
             return getResponse(salesforceToken, request);
@@ -187,9 +268,15 @@ public class SalesforceService {
         }
     }
 
+    /**
+     * Creates a FeedAttachment in Salesforce.
+     *
+     * @param postData the post body in JSON format
+     * @return the response from Salesforce
+     */
     public String createFeedPostForFeedAttachment(String postData) throws ExecutionException, InterruptedException {
         try {
-            SalesforceToken salesforceToken = tokenProvider.getSalesforceToken();
+            SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
             String url = salesforceToken.getInstanceUrl() + "/services/data/v58.0/sobjects/FeedAttachment";
             final OAuthRequest request = getOauthRequest(Verb.POST, postData, url, salesforceToken);
             return getResponse(salesforceToken, request);
@@ -198,6 +285,15 @@ public class SalesforceService {
         }
     }
 
+    /**
+     * Prepares an OAuthRequest for the given HTTP verb, body, URL, and token.
+     *
+     * @param verb the HTTP verb
+     * @param body the request body (optional)
+     * @param url the target URL
+     * @param salesforceToken the authenticated token
+     * @return an OAuthRequest object
+     */
     private OAuthRequest getOauthRequest(Verb verb, String body, String url, SalesforceToken salesforceToken) {
         final OAuthRequest request = new OAuthRequest(verb, url);
         if (body != null) {
@@ -208,11 +304,18 @@ public class SalesforceService {
         return request;
     }
 
+    /**
+     * Executes an authenticated request and returns the response body as a string.
+     *
+     * @param salesforceToken the Salesforce token
+     * @param request the OAuth request
+     * @return the response body
+     */
     private String getResponse(SalesforceToken salesforceToken, OAuthRequest request) throws IOException, ExecutionException, InterruptedException {
         customerServiceAttributes.getOauthService().signRequest(salesforceToken, request);
         try (com.github.scribejava.core.model.Response response = customerServiceAttributes.getOauthService().execute(request)) {
             if (!response.isSuccessful()) {
-                LOGGER.error("Bad Request, Incorrect input is provided. The error is" + response.getBody());
+                LOGGER.error("Bad Request, Incorrect input is provided. The error is{}", response.getBody());
             }
             if (response.getBody().contains("\"errorCode\":\"STORAGE_LIMIT_EXCEEDED\"")) {
                 throw new IllegalArgumentException("Storage limit exceeded.");
@@ -221,7 +324,14 @@ public class SalesforceService {
         }
     }
 
-    private Response getResponseForFile(SalesforceToken salesforceToken, OAuthRequest request) throws IOException, ExecutionException, InterruptedException {
+    /**
+     * Executes a file-related OAuth request and returns the raw response.
+     *
+     * @param salesforceToken the Salesforce token
+     * @param request the OAuth request
+     * @return the response object or null in case of error
+     */
+    private Response getResponseForFile(SalesforceToken salesforceToken, OAuthRequest request) {
         customerServiceAttributes.getOauthService().signRequest(salesforceToken, request);
         try (com.github.scribejava.core.model.Response response = customerServiceAttributes.getOauthService().execute(request)) {
             if (response.getCode() >= Bad_Request) {
@@ -229,8 +339,43 @@ public class SalesforceService {
             }
             return response;
         } catch (IOException | InterruptedException | ExecutionException cause) {
-            LOGGER.error("Exception occurred due to :" + cause.getMessage(), cause);
+            LOGGER.error("Exception occurred due to :{}", cause.getMessage(), cause);
         }
         return null;
     }
+
+    /**
+     * Checks whether a given field exists on a Salesforce object type.
+     *
+     * @param objectType the object type (e.g., "Account", "Contact")
+     * @param fieldName the API name of the field
+     * @return true if the field exists; false otherwise
+     */
+    public boolean checkFieldExistsInSalesforce(String objectType, String fieldName) {
+        try {
+            SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
+            String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + objectType + "/describe";
+
+            final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
+            String responseBody = getResponse(salesforceToken, request);
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode rootNode = mapper.readTree(responseBody);
+            JsonNode fieldsNode = rootNode.get("fields");
+
+            if (fieldsNode != null && fieldsNode.isArray()) {
+                for (JsonNode fieldNode : fieldsNode) {
+                    String apiName = fieldNode.get("name").asText();
+                    if (fieldName.equalsIgnoreCase(apiName)) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception cause) {
+            LOGGER.error("Error checking if field exists on Salesforce object. {}", cause.getMessage(), cause);
+        }
+        return false;
+    }
+
+
 }

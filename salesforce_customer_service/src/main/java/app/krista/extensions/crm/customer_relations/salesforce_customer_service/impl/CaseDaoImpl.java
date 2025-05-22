@@ -8,7 +8,6 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.SalesforceListResponse;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper;
-import app.krista.ksdk.files.FileRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.scribejava.core.model.Response;
@@ -33,6 +32,13 @@ import java.util.stream.Collectors;
 import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants.GSON;
 import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper.*;
 
+/**
+ * Implementation of the CaseDao interface that interacts with Salesforce.
+ * <p>
+ * This class provides methods to create, read, update, and delete Case records
+ * in Salesforce. It also handles case feed posts, file attachments, and retrieving
+ * case history information.
+ */
 @Service
 public final class CaseDaoImpl implements CaseDao {
 
@@ -56,12 +62,28 @@ public final class CaseDaoImpl implements CaseDao {
     private static final String FILES = "files";
     private final KristaMediaClient kristaMediaClient;
 
+    /**
+     * Creates a new CaseDaoImpl with the required services.
+     *
+     * @param salesforceService Service for interacting with Salesforce API
+     * @param kristaMediaClient Client for handling media files
+     */
     @Inject
     public CaseDaoImpl(SalesforceService salesforceService, KristaMediaClient kristaMediaClient) {
         this.salesforceService = salesforceService;
         this.kristaMediaClient = kristaMediaClient;
     }
 
+    /**
+     * Gets a Case by its ID.
+     *
+     * @param id The ID of the Case to retrieve
+     * @return The Case with the specified ID
+     * @throws IOException If there's a problem with the API connection
+     * @throws ExecutionException If the API request fails
+     * @throws InterruptedException If the API request is interrupted
+     * @throws RuntimeException If the Case is not found
+     */
     @Override
     public Case getCaseById(String id) throws IOException, ExecutionException, InterruptedException {
         if (id == null || id.isBlank()) {
@@ -70,6 +92,15 @@ public final class CaseDaoImpl implements CaseDao {
         return getCasesByQuery("Select " + QUERY_FIELDS + "  from Case where id = '" + id + "'").stream().findFirst().orElseThrow(() -> new RuntimeException(CASE + " Not found for id " + id));
     }
 
+    /**
+     * Gets Cases by executing a SOQL query.
+     *
+     * @param query The SOQL query to execute
+     * @return List of Cases matching the query
+     * @throws IOException If there's a problem with the API connection
+     * @throws ExecutionException If the API request fails
+     * @throws InterruptedException If the API request is interrupted
+     */
     @Override
     public List<Case> getCasesByQuery(String query) throws IOException, ExecutionException, InterruptedException {
         if (query == null || query.isBlank()) {
@@ -86,11 +117,32 @@ public final class CaseDaoImpl implements CaseDao {
         }
     }
 
+    /**
+     * Gets a paginated list of Cases sorted by the specified field.
+     *
+     * @param size Number of Cases to retrieve per page
+     * @param page Page number to retrieve (1-based)
+     * @param orderByField Field to sort by
+     * @param orderByOperand Sort direction (ASC or DESC)
+     * @return List of Cases for the specified page
+     * @throws IOException If there's a problem with the API connection
+     * @throws ExecutionException If the API request fails
+     * @throws InterruptedException If the API request is interrupted
+     */
     @Override
     public List<Case> getCases(long size, long page, String orderByField, String orderByOperand) throws IOException, ExecutionException, InterruptedException {
         return getCasesByQuery("Select " + QUERY_FIELDS + " from Case ORDER BY " + orderByField + " " + orderByOperand + " LIMIT " + size + " OFFSET " + Math.max((page - 1) * size, 0));
     }
 
+    /**
+     * Creates a new Case in Salesforce.
+     *
+     * @param entityDefinition Map containing the Case fields and values
+     * @return The ID of the newly created Case
+     * @throws IOException If there's a problem with the API connection
+     * @throws ExecutionException If the API request fails
+     * @throws InterruptedException If the API request is interrupted
+     */
     @Override
     public String createCase(Map<String, Object> entityDefinition) throws IOException, ExecutionException, InterruptedException {
         if (entityDefinition == null || entityDefinition.isEmpty()) {
@@ -100,6 +152,16 @@ public final class CaseDaoImpl implements CaseDao {
         return String.valueOf(response.get("id"));
     }
 
+    /**
+     * Updates an existing Case in Salesforce.
+     * Only changed fields will be updated.
+     *
+     * @param aCase The Case with updated field values
+     * @throws IOException If there's a problem with the API connection
+     * @throws IllegalAccessException If there's a problem accessing Case fields
+     * @throws ExecutionException If the API request fails
+     * @throws InterruptedException If the API request is interrupted
+     */
     @Override
     public void updateCase(Case aCase) throws IOException, IllegalAccessException, ExecutionException, InterruptedException {
         if (aCase == null || aCase.getId() == null || aCase.getId().isEmpty())
@@ -110,15 +172,31 @@ public final class CaseDaoImpl implements CaseDao {
         salesforceService.updateRecord(aCase.getId(), GSON.toJson(diff), CASE);
     }
 
+    /**
+     * Deletes a Case from Salesforce by its ID.
+     *
+     * @param caseId The ID of the Case to delete
+     * @throws IOException If there's a problem with the API connection
+     * @throws ExecutionException If the API request fails
+     * @throws InterruptedException If the API request is interrupted
+     */
     @Override
     public void deleteCaseById(String caseId) throws IOException, ExecutionException, InterruptedException {
         salesforceService.deleteRecordById(caseId, CASE);
     }
 
+    /**
+     * Gets feed items (posts and comments) for a Case.
+     *
+     * @param caseId The ID of the Case
+     * @param numberOfPosts Maximum number of posts to retrieve
+     * @return List of feed items as maps containing actor name, message, and files
+     * @throws IOException If there's a problem with the API connection
+     */
     @Override
-    public List<Map<String, Object>> getFeedItemsForCaseId(String caseId, int numberOfPosts) throws ExecutionException, InterruptedException, IOException {
+    public List<Map<String, Object>> getFeedItemsForCaseId(String caseId, Double numberOfPosts) throws IOException {
         String response = salesforceService.getFeedsByCaseId(caseId, numberOfPosts);
-
+        System.out.println("%Response :  " + response);
         if (response.contains("\"errorCode\":\"NOT_FOUND\"")) {
             return List.of();
         }
@@ -129,14 +207,18 @@ public final class CaseDaoImpl implements CaseDao {
         List<Map<String, Object>> feedPosts = new ArrayList<>();
         for (JsonNode elementNode : elementsNode) {
             Map<String, Object> post = parseElementToPost(elementNode);
-
-            if (post != null) {
-                feedPosts.add(post);
-            }
+            feedPosts.add(post);
         }
         return feedPosts;
     }
 
+    /**
+     * Parses a feed element node into a post map.
+     *
+     * @param elementNode The JSON node representing a feed element
+     * @return Map containing actor name, message, and files
+     * @throws IOException If there's a problem processing files
+     */
     private Map<String, Object> parseElementToPost(JsonNode elementNode) throws IOException {
         String feedElementType = elementNode.get(FEED_ELEMENT_TYPE).asText();
         if (!"FeedItem".equalsIgnoreCase(feedElementType)) {
@@ -150,11 +232,23 @@ public final class CaseDaoImpl implements CaseDao {
         return post;
     }
 
+    /**
+     * Gets the actor (author) name from a feed element.
+     *
+     * @param elementNode The JSON node representing a feed element
+     * @return The name of the actor who created the post
+     */
     private String getActorName(JsonNode elementNode) {
         JsonNode actorNode = elementNode.get(ACTOR);
         return actorNode != null ? actorNode.get(NAME).asText() : null;
     }
 
+    /**
+     * Gets the message text from a feed element.
+     *
+     * @param elementNode The JSON node representing a feed element
+     * @return The text content of the post
+     */
     private String getPostMessage(JsonNode elementNode) {
         JsonNode bodyNode = elementNode.get(BODY);
         if (bodyNode != null && bodyNode.has(MESSAGE_SEGMENTS)) {
@@ -169,6 +263,13 @@ public final class CaseDaoImpl implements CaseDao {
         return null;
     }
 
+    /**
+     * Gets files attached to a feed element.
+     *
+     * @param elementNode The JSON node representing a feed element
+     * @return List of File objects representing attached files
+     * @throws IOException If there's a problem downloading files
+     */
     private List<app.krista.model.base.File> getFiles(JsonNode elementNode) throws IOException {
         List<app.krista.model.base.File> files = new ArrayList<>();
 
@@ -192,10 +293,23 @@ public final class CaseDaoImpl implements CaseDao {
         return files;
     }
 
+    /**
+     * Checks if a message segment is an inline image.
+     *
+     * @param segmentNode The JSON node representing a message segment
+     * @return True if the segment is an inline image, false otherwise
+     */
     private boolean isInlineImage(JsonNode segmentNode) {
         return segmentNode.has(TYPE) && segmentNode.get(TYPE).asText().equals(INLINE_IMAGE);
     }
 
+    /**
+     * Downloads a file from Salesforce.
+     *
+     * @param downloadUrl The URL to download the file from
+     * @return A File object representing the downloaded file
+     * @throws IOException If there's a problem downloading the file
+     */
     private app.krista.model.base.File downloadFile(String downloadUrl) throws IOException {
 
         Response fileResponse = salesforceService.getFileResponse(downloadUrl);
@@ -211,12 +325,31 @@ public final class CaseDaoImpl implements CaseDao {
 
     }
 
+    /**
+     * Saves a file to a local temporary directory.
+     *
+     * @param inputStream The input stream containing the file data
+     * @param filePath The path where the file should be saved
+     * @return The saved File object
+     * @throws IOException If there's a problem saving the file
+     */
     private File saveToLocalTempDir(InputStream inputStream, String filePath) throws IOException {
         File localFile = new File(filePath);
         Files.copy(inputStream, localFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         return localFile;
     }
 
+    /**
+     * Adds a feed update (post) to a Case, optionally with a file attachment.
+     *
+     * @param caseId The ID of the Case to add the update to
+     * @param updateMessage The message text for the update
+     * @param base64EncodedString Base64-encoded file content (or null if no file)
+     * @param fileName Name of the file (or null if no file)
+     * @return True if the update was successful, false otherwise
+     * @throws ExecutionException If the API request fails
+     * @throws InterruptedException If the API request is interrupted
+     */
     public Boolean addFeedUpdateToCaseById(String caseId, String updateMessage, String base64EncodedString, String fileName) throws ExecutionException, InterruptedException {
         if (base64EncodedString == null && fileName == null) {
             String postData = StringHelper.createFeedPostBody(caseId, updateMessage);
@@ -235,6 +368,17 @@ public final class CaseDaoImpl implements CaseDao {
 
     }
 
+    /**
+     * Processes feed and file operations for adding a post with a file attachment.
+     *
+     * @param caseId The ID of the Case
+     * @param updateMessage The message text for the update
+     * @param base64EncodedString Base64-encoded file content
+     * @param fileName Name of the file
+     * @return True if the operations were successful, false otherwise
+     * @throws ExecutionException If the API request fails
+     * @throws InterruptedException If the API request is interrupted
+     */
     private Boolean processFeedAndFileOperations(String caseId, String updateMessage, String base64EncodedString, String fileName) throws ExecutionException, InterruptedException {
         String bodyForFeedItem = createFeedPostBodyForFeedItem(updateMessage, caseId);
         String responseForFeedItem = salesforceService.createFeedPostForFeedItem(bodyForFeedItem);
@@ -261,15 +405,30 @@ public final class CaseDaoImpl implements CaseDao {
         }
     }
 
+    /**
+     * Gets the fields that were updated in a Case.
+     *
+     * @param query The SOQL query to retrieve case history
+     * @return Map of field names to their new values
+     * @throws IOException If there's a problem with the API connection
+     * @throws ExecutionException If the API request fails
+     * @throws InterruptedException If the API request is interrupted
+     */
     public Map<String, Object> getCaseUpdatedFields(String query) throws IOException, ExecutionException, InterruptedException {
         String response = salesforceService.getRecordByQuery(query);
         SFCaseHistory sfCaseHistory = GSON.fromJson(response, SFCaseHistory.class);
         return sfCaseHistory.toMap();
     }
 
+    /**
+     * Converts a file to a Base64-encoded string.
+     *
+     * @param file The file to convert
+     * @return Base64-encoded string representation of the file
+     * @throws IOException If there's a problem reading the file
+     */
     public String getBase64EncodedString(File file) throws IOException {
         byte[] fileContent = FileUtils.readFileToByteArray(file);
         return Base64.getEncoder().encodeToString(fileContent);
     }
 }
-

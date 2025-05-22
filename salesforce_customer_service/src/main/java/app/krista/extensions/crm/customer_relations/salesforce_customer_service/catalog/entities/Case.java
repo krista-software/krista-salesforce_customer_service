@@ -2,14 +2,10 @@ package app.krista.extensions.crm.customer_relations.salesforce_customer_service
 
 
 import app.krista.extension.impl.anno.*;
-import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
-import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper;
-
-import java.util.Map;
 
 @Searchable
 @Domain(id = "catEntryDomain_a66f83b1-fa58-427f-b8b9-0c83a401bf53", name = "Customer Relations", ecosystemId = "catEntryEcosystem_8a0e8ce7-6289-492f-9202-52284024280c", ecosystemName = "CRM", ecosystemVersion = "02f1a8e5-3d30-4717-89ad-535dce7c1789")
-@Entity(name = "Case", id = "localDomainEntity_a0d5ba68-bab0-4146-abb7-a2cc8cedfb69", primaryKey = "Id")
+@Entity(name = "Case", id = "localDomainEntity_a0d5ba68-bab0-4146-abb7-a2cc8cedfb69", primaryKey = "Id", supportStore = true)
 public class Case {
 
     @Searchable
@@ -87,44 +83,4 @@ public class Case {
     @Field(name = "Priority", type = "Text", required = false)
     public String priority;
 
-    /**
-     * @param aCase is {@link Map} of {@link Case} entity field values
-     * @return {@link Case} for the given input fields
-     */
-    public static Case fromField(Map<String, Object> aCase) {
-        Case newCase = new Case();
-        String givenContactId = (String) aCase.get(Constants.CONTACT_ID);
-        String givenContactName = (String) aCase.get(Constants.CONTACT_NAME);
-        String givenContactPhone = (String) aCase.get(Constants.CONTACT_PHONE);
-        String givenContactEmail = (String) aCase.get(Constants.CONTACT_EMAIL);
-        if (StringHelper.isStringAvailable(givenContactId)) {
-            newCase.contactPhone = "";
-            newCase.contactName = "";
-            newCase.contactEmail = "";
-        } else {
-            if (StringHelper.isStringAvailable(givenContactName) || StringHelper.isStringAvailable(givenContactPhone) || StringHelper.isStringAvailable(givenContactEmail)) {
-                throw new IllegalArgumentException(Constants.CONTACT_ID_IS_REQUIRED_TO_ADD_CONTACT_INFORMATION);
-            }
-        }
-        String givenAccountName = (String) aCase.get(Constants.ACCOUNT_NAME);
-        String givenAccountId = (String) aCase.get(Constants.ACCOUNT_ID);
-        if (StringHelper.isStringAvailable(givenAccountId)) {
-            newCase.accountName = "";
-        } else {
-            if (StringHelper.isStringAvailable(givenAccountName)) {
-                throw new IllegalArgumentException(Constants.ACCOUNT_ID_IS_REQUIRED_TO_ADD_ACCOUNT_NAME);
-            }
-        }
-        newCase.subject = (String) aCase.get(Constants.SUBJECT);
-        newCase.isClosed = (Boolean) aCase.get(Constants.IS_CLOSED);
-        // TODO: 13/12/22 Handle the case if there are more than one owner will be handled in next release.
-        // TODO: newCase.ownerId = (String) aCase.get("Owner Id");
-
-        newCase.status = (String) aCase.get(Constants.STATUS);
-        newCase.reason = (String) aCase.get(Constants.REASON);
-        newCase.origin = (String) aCase.get(Constants.ORIGIN);
-        newCase.description = (String) aCase.get(Constants.DESCRIPTION);
-        newCase.priority = (String) aCase.get(Constants.PRIORITY);
-        return newCase;
-    }
 }

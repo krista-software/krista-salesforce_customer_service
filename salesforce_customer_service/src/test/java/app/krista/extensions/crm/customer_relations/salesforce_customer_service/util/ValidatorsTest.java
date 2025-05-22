@@ -8,8 +8,8 @@ public class ValidatorsTest {
     @Test
     public void testGetDoubleOrZeroWithValidInput() {
         Double input = 5.5;
-        Double result = Validators.getDoubleOrZero(input);
-        assertEquals(input, result, 0.0);
+        double result = Validators.getDoubleOrZero(input);
+        assertEquals(5.5, result, 0.0);
     }
 
     @Test
@@ -19,14 +19,14 @@ public class ValidatorsTest {
     }
 
     @Test
-    public void testGetStringOrEmptyWithValidInput(){
+    public void testGetStringOrEmptyWithValidInput() {
         String input = "hello";
         String result = Validators.getStringOrEmpty(input);
         assertEquals(input, result);
     }
 
     @Test
-    public void testGetStringOrEmptyWithNull(){
+    public void testGetStringOrEmptyWithNull() {
         String result = Validators.getStringOrEmpty(null);
         assertEquals("", result);
     }

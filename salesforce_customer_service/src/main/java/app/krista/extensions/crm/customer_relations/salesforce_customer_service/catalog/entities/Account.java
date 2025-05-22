@@ -2,9 +2,6 @@ package app.krista.extensions.crm.customer_relations.salesforce_customer_service
 
 
 import app.krista.extension.impl.anno.*;
-import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
-
-import java.util.Map;
 
 @Searchable
 @Domain(id = "catEntryDomain_a66f83b1-fa58-427f-b8b9-0c83a401bf53",
@@ -12,7 +9,7 @@ import java.util.Map;
         ecosystemId = "catEntryEcosystem_8a0e8ce7-6289-492f-9202-52284024280c",
         ecosystemName = "CRM",
         ecosystemVersion = "02f1a8e5-3d30-4717-89ad-535dce7c1789")
-@Entity(name = "Account", id = "localDomainEntity_414ed916-6f06-4544-9ce4-cb47f5516d6a", primaryKey = "Id")
+@Entity(name = "Account", id = "localDomainEntity_414ed916-6f06-4544-9ce4-cb47f5516d6a", primaryKey = "Id", supportStore = true)
 public class Account {
 
     @Searchable
@@ -106,42 +103,5 @@ public class Account {
 
     @Field(name = "Industry", type = "Text", required = false)
     public String industry;
-
-    /**
-     * @param customer is {@link Map} of Entity Fields
-     * @return {@link Account} entity for the given input map
-     */
-    public static Account fromFields(Map<String, Object> customer) {
-        Account newAccount = new Account();
-        newAccount.id = (String) customer.get(Constants.ID);
-        newAccount.name = (String) customer.get(Constants.NAME);
-        newAccount.type = (String) customer.get(Constants.TYPE);
-        newAccount.fax = (String) customer.get(Constants.FAX);
-        newAccount.accountNumber = (String) customer.get(Constants.ACCOUNT_NUMBER);
-        newAccount.website = (String) customer.get(Constants.WEBSITE);
-        newAccount.sic = (String) customer.get(Constants.SIC);
-        newAccount.ownerId = (String) customer.get(Constants.OWNER_ID);
-        newAccount.createdById = (String) customer.get(Constants.CREATED_BY_ID);
-        newAccount.cleanStatus = (String) customer.get(Constants.CLEAN_STATUS);
-        newAccount.customerPriority = (String) customer.get(Constants.CUSTOMER_PRIORITY);
-        newAccount.sLASerialNumber = (String) customer.get(Constants.SLA_SERIAL_NUMBER);
-        newAccount.createdDate = (Long) customer.get(Constants.CREATED_DATE);
-        newAccount.billingStreet = (String) customer.get(Constants.BILLING_STREET);
-        newAccount.billingCity = (String) customer.get(Constants.BILLING_CITY);
-        newAccount.billingState = (String) customer.get(Constants.BILLING_STATE);
-        newAccount.billingPostalCode = (String) customer.get(Constants.BILLING_POSTAL_CODE);
-        newAccount.billingCountry = (String) customer.get(Constants.BILLING_COUNTRY);
-        newAccount.shippingStreet = (String) customer.get(Constants.SHIPPING_STREET);
-        newAccount.shippingCity = (String) customer.get(Constants.SHIPPING_CITY);
-        newAccount.shippingState = (String) customer.get(Constants.SHIPPING_STATE);
-        newAccount.shippingPostalCode = (String) customer.get(Constants.SHIPPING_POSTAL_CODE);
-        newAccount.shippingCountry = (String) customer.get(Constants.SHIPPING_COUNTRY);
-        newAccount.phone = (String) customer.get(Constants.PHONE);
-        newAccount.numberOfEmployees = (Double) customer.get(Constants.NUMBER_OF_EMPLOYEES);
-        newAccount.sLAExpirationDate = (Long) customer.get(Constants.SLA_EXPIRATION_DATE);
-        newAccount.ownership = (String) customer.get(Constants.OWNERSHIP);
-        newAccount.industry = (String) customer.get(Constants.INDUSTRY);
-        return newAccount;
-    }
 
 }

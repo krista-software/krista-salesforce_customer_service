@@ -12,8 +12,6 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper;
 import org.jvnet.hk2.annotations.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -44,7 +42,6 @@ public final class ContactStore implements EntityStore<Contact> {
     /**
      * @param entityDefinition input map with {@link Contact} entity fields.
      * @return {@link Contact} for the given input
-     * @throws InterruptedException if there is any interruption during execution of Salesforce API.
      */
     @Override
     public Contact create(Map<String, Object> entityDefinition) throws InterruptedIOException {
@@ -67,7 +64,6 @@ public final class ContactStore implements EntityStore<Contact> {
     /**
      * @param primaryKey Id of the {@link Contact}
      * @return {@link Contact} for the given Id.
-     * @throws InterruptedException if there is any interruption during execution of Salesforce API.
      */
     @Override
     public Contact get(String primaryKey) throws InterruptedIOException {
@@ -149,8 +145,8 @@ public final class ContactStore implements EntityStore<Contact> {
         if (conditions == null || conditions.isEmpty()) {
             throw new IllegalArgumentException("Failed to search contact. Conditions not found.");
         }
-        String orderByField = queryClauses.isEmpty() ? Constants.LASTMODIFIEDDATE : queryClauses.get(0).getFieldName();
-        String orderByOperand = queryClauses.isEmpty() ? Constants.DESC : queryClauses.get(0).getOperand().toString();
+        String orderByField = queryClauses.isEmpty() ? Constants.LASTMODIFIEDDATE : queryClauses.getFirst().getFieldName();
+        String orderByOperand = queryClauses.isEmpty() ? Constants.DESC : queryClauses.getFirst().getOperand().toString();
         try {
             if (conditions.size() == 1) {
                 return contactDao.getContacts(pageSize, pageIndex, orderByField, orderByOperand).stream().map(CatalogTypes::fromSFContact).collect(Collectors.toList());

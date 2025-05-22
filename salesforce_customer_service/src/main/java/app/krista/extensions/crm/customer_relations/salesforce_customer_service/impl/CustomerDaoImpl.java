@@ -19,6 +19,13 @@ import java.util.stream.Collectors;
 
 import static java.lang.Math.max;
 
+/**
+ * Implementation of the CustomerDao interface that interacts with Salesforce.
+ * <p>
+ * This class provides methods to create, read, update, and delete Customer records
+ * in Salesforce. It handles the communication with the Salesforce API and converts
+ * between the API's data format and the application's Customer objects.
+ */
 @Service
 public class CustomerDaoImpl implements CustomerDao {
 
@@ -26,12 +33,26 @@ public class CustomerDaoImpl implements CustomerDao {
     public static final String QUERY_FIELDS = "id, customerStatusType, name, partyId, totalLifeTimeValue";
     private final SalesforceService salesforceService;
 
+    /**
+     * Creates a new CustomerDaoImpl with the required Salesforce service.
+     *
+     * @param salesforceService Service for interacting with Salesforce API
+     */
     @Inject
     public CustomerDaoImpl(SalesforceService salesforceService) {
         this.salesforceService = salesforceService;
     }
 
 
+    /**
+     * Gets a Customer by its ID.
+     *
+     * @param id The ID of the Customer to retrieve
+     * @return The Customer with the specified ID
+     * @throws IOException If there's a problem with the API connection
+     * @throws ExecutionException If the API request fails
+     * @throws InterruptedException If the API request is interrupted
+     */
     @Override
     public Customer getCustomerById(String id) throws IOException, ExecutionException, InterruptedException {
         if (id == null || id.isBlank()) {
@@ -41,28 +62,56 @@ public class CustomerDaoImpl implements CustomerDao {
                 SFCustomer.class));
     }
 
+    /**
+     * Gets a paginated list of Customers sorted by the specified field.
+     *
+     * @param size Number of Customers to retrieve per page
+     * @param page Page number to retrieve (1-based)
+     * @param orderByField Field to sort by
+     * @param orderByOperand Sort direction (ASC or DESC)
+     * @return List of Customers for the specified page
+     * @throws IOException If there's a problem with the API connection
+     * @throws ExecutionException If the API request fails
+     * @throws InterruptedException If the API request is interrupted
+     */
     @Override
     public List<Customer> getCustomers(long size, long page, String orderByField, String orderByOperand) throws IOException, ExecutionException, InterruptedException {
         return getCustomerByQuery("Select " + QUERY_FIELDS + " from Customer ORDER BY " + orderByField + " " + orderByOperand +
                 " LIMIT " + size + " OFFSET " + max((page - 1) * size, 0));
     }
 
+    /**
+     * Gets Customers by executing a SOQL query.
+     *
+     * @param query The SOQL query to execute
+     * @return List of Customers matching the query
+     * @throws IOException If there's a problem with the API connection
+     * @throws ExecutionException If the API request fails
+     * @throws InterruptedException If the API request is interrupted
+     */
     @Override
     public List<Customer> getCustomerByQuery(String query) throws IOException, ExecutionException, InterruptedException {
         if (query == null || query.isBlank()) {
             System.err.println("Failed to fetch customers by query. " + Constants.QUERY_IS_NULL_OR_EMPTY);
         }
+        assert query != null;
         String result = salesforceService.getRecordByQuery(query.trim());
         SalesforceListResponse<SFCustomer> customersList =
                 Constants.GSON.fromJson(result, new TypeToken<SalesforceListResponse<SFCustomer>>() {
                 }.getType());
-        if (customersList.records.size() > 0) {
+        if (!customersList.records.isEmpty()) {
             return customersList.records.stream().map(CustomerImpl::new).collect(Collectors.toList());
         } else {
             return new ArrayList<>();
         }
     }
 
+    /**
+     * Creates a new Customer in Salesforce.
+     *
+     * @param entityDefinition Map containing the Customer fields and values
+     * @return The ID of the newly created Customer, or empty string if creation fails
+     */
     @Override
     public String createCustomer(Map<String, Object> entityDefinition) {
         if (entityDefinition == null || entityDefinition.isEmpty()) {
@@ -80,20 +129,38 @@ public class CustomerDaoImpl implements CustomerDao {
         return "";
     }
 
+    /**
+     * Updates an existing Customer in Salesforce.
+     * Only changed fields will be updated.
+     *
+     * @param customer The Customer with updated field values
+     * @throws IllegalAccessException If there's a problem accessing Customer fields
+     * @throws IOException If there's a problem with the API connection
+     * @throws ExecutionException If the API request fails
+     * @throws InterruptedException If the API request is interrupted
+     */
     @Override
     public void updateCustomer(Customer customer) throws IllegalAccessException, IOException, ExecutionException, InterruptedException {
         if (customer == null || customer.getId() == null || customer.getId().isBlank()) {
             System.err.println("Failed to update account. Account not found for update.");
         }
         SFCustomer updatedCustomer = SFCustomer.from(customer);
+        assert customer != null;
         SFCustomer oldCustomer = SFCustomer.from(getCustomerById(customer.getId()));
         Map<String, String> differences = SalesforceService.getDifference(oldCustomer, updatedCustomer);
         salesforceService.updateRecord(customer.getId(), Constants.GSON.toJson(differences), CUSTOMER);
     }
 
+    /**
+     * Deletes a Customer from Salesforce by its ID.
+     *
+     * @param primaryKey The ID of the Customer to delete
+     * @throws IOException If there's a problem with the API connection
+     * @throws ExecutionException If the API request fails
+     * @throws InterruptedException If the API request is interrupted
+     */
     @Override
     public void deleteCustomerById(String primaryKey) throws IOException, ExecutionException, InterruptedException {
         salesforceService.deleteRecordById(primaryKey, CUSTOMER);
-
     }
 }

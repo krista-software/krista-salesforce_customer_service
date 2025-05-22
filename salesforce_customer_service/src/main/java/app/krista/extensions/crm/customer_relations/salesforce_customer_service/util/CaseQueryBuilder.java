@@ -12,6 +12,12 @@ import static app.krista.extensions.crm.customer_relations.salesforce_customer_s
 import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants.WHERE;
 import static app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.StringHelper.isStringAvailable;
 
+
+/**
+ * Utility class for building dynamic SOQL queries for Salesforce Case objects based on search conditions.
+ * <p>
+ * This class is stateless and cannot be instantiated.
+ */
 public final class CaseQueryBuilder {
 
     private static final String QUERY_FIELDS = "Contact.Name, ContactId, ContactEmail, ContactPhone, Account.Name, AccountId, Subject, Priority, Description, IsClosed, ClosedDate, OwnerId, CreatedById, CaseNumber, Status, Type, CreatedDate, LastModifiedDate, Id, Origin";
@@ -19,6 +25,17 @@ public final class CaseQueryBuilder {
     private CaseQueryBuilder() {
     }
 
+    /**
+     * Constructs a SOQL query for the Case object based on provided search conditions and pagination/sorting details.
+     *
+     * @param conditions       List of {@link SearchCondition} containing filters to be applied.
+     * @param size             Number of records per page.
+     * @param page             Page number to retrieve.
+     * @param orderByField     Field to sort the results by.
+     * @param orderByOperand   Sorting order (ASC or DESC).
+     * @return                 A valid SOQL query string.
+     * @throws IllegalArgumentException if the conditions list is null or empty.
+     */
     public static String getQuery(List<SearchCondition> conditions, long size, long page, String orderByField, String orderByOperand) {
         if (conditions == null || conditions.isEmpty()) {
             throw new IllegalArgumentException(Constants.CONDITIONS_NOT_FOUND);
@@ -44,6 +61,15 @@ public final class CaseQueryBuilder {
         return createQuery(id, contactId, accountId, contactName, subject, ownerId, accountName, caseNumber, contactEmail, contactPhone, status, origin, createdDate, createdDateLessThan, createdDateGreaterThan, modifiedDate, modifiedDateLessThan, modifiedDateGreaterThan, size, page, orderByField, orderByOperand);
     }
 
+    /**
+     * Extracts the operand value from the search condition list based on the field, data type, and operator.
+     *
+     * @param conditions     List of conditions to search.
+     * @param fieldName      Field name to match.
+     * @param datatype       Data type (String, Double, Long).
+     * @param queryOperand   Operator (e.g., "=", "<", ">").
+     * @return               The formatted operand value, or an empty string if not found.
+     */
     private static String getConditionValue(List<SearchCondition> conditions, String fieldName, String datatype, String queryOperand) {
         for (SearchCondition con : conditions) {
             if (fieldName.equalsIgnoreCase(con.getFieldName()) && con.getOperator().toString().equalsIgnoreCase(queryOperand)) {
@@ -52,7 +78,7 @@ public final class CaseQueryBuilder {
                 } else if (datatype.equalsIgnoreCase(Constants.STRING)) {
                     return String.valueOf(con.getOperand()).trim();
                 } else if (datatype.equalsIgnoreCase("Double")) {
-                    return new BigDecimal((Double) con.getOperand()).toPlainString().trim();
+                    return BigDecimal.valueOf((Double) con.getOperand()).toPlainString().trim();
                 } else if (datatype.equalsIgnoreCase("Long")) {
                     String dateString = String.valueOf(con.getOperand()).trim().replace("E", "").replace(".", "");
                     long epoch = Long.parseLong(dateString) * 1000;
@@ -65,6 +91,11 @@ public final class CaseQueryBuilder {
         return "";
     }
 
+    /**
+     * Constructs the final SOQL query string using provided filter and pagination/sorting parameters.
+     *
+     * @return A SOQL query string for Salesforce Case object.
+     */
     private static String createQuery(String id, String contactId, String accountId, String contactName, String subject, String ownerId, String accountName, String caseNumber, String contactEmail, String contactPhone, String status, String origin, String createdDate, String createdDateLessThan, String createdDateGreaterThan, String modifiedDate,
                                       String modifiedDateLessThan, String modifiedDateGreaterThan, long size, long page, String orderByField, String orderByOperand) {
         StringBuilder builder = new StringBuilder();

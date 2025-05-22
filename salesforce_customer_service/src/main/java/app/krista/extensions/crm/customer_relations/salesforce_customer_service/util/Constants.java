@@ -1,13 +1,11 @@
 package app.krista.extensions.crm.customer_relations.salesforce_customer_service.util;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 public class Constants {
 
     public static final String CALLBACK_URI = "/rest/salesforcecustomerservice/callback";
 
-    public static final String REFRESH_TOKEN = "refresh_token";
     public static final String INVALID_STATE_PARAMETERS = "Invalid state parameters!";
     public static final String AND = "AND";
     public static final String WHERE = "WHERE";
@@ -49,7 +47,6 @@ public class Constants {
     public static final String WEBSITE = "Website";
     public static final String SIC = "Sic";
     public static final String OWNER_ID = "Owner Id";
-    public static final String CREATED_BY_ID = "Created By Id";
     public static final String CLEAN_STATUS = "Clean Status";
     public static final String CUSTOMER_PRIORITY = "CustomerPriority";
     public static final String SLA_SERIAL_NUMBER = "SLA Serial Number";
@@ -89,7 +86,10 @@ public class Constants {
     public static final String ENTERPRISE_SOAP_SFORCE_COM = "urn:sobject.enterprise.soap.sforce.com";
     public static final String COM_2005_09_OUTBOUND = "http://soap.sforce.com/2005/09/outbound";
     public static final String BOOLEAN = "Boolean";
-
+    public static final String INVALID_CASE_ID = "Invalid case id";
+    public static final String INVALID_NUMBER_OF_POSTS = "Invalid number of posts";
+    public static final String INVALID = "Invalid";
+    public static final String ERROR_CASE_CHANGE_ALERT = "This error is for case change alert";
 
     private Constants() {
     }

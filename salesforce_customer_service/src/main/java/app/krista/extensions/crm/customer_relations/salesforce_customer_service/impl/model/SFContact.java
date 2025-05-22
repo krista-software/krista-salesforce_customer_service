@@ -146,7 +146,7 @@ public final class SFContact {
     }
 
     public static class Account {
-        public String Name;
+        public final String Name;
 
         public Account(String name) {
             this.Name = name;

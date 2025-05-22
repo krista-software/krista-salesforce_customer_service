@@ -34,21 +34,21 @@ public final class CustomerStore implements EntityStore<Customer> {
 
 
     @Override
-    public Customer create(Map<String, Object> entityDefinition) throws IOException {
+    public Customer create(Map<String, Object> entityDefinition) {
         if (entityDefinition == null || entityDefinition.isEmpty()) {
             System.err.println("Failed to create customer. " + Constants.ENTITY_INPUT_IS_NULL_OR_EMPTY);
         }
         try {
             String customerId = customerDao.createCustomer(entityDefinition);
             return get(customerId);
-        } catch (IOException | IllegalArgumentException cause) {
+        } catch (IllegalArgumentException cause) {
             System.err.println(Constants.FAILED_TO_GET_CUSTOMER + cause.getMessage());
         }
         return new Customer();
     }
 
     @Override
-    public Customer get(String primaryKey) throws IOException {
+    public Customer get(String primaryKey) {
         if (primaryKey == null || primaryKey.isBlank()) {
             System.err.println(Constants.FAILED_TO_GET_CUSTOMER + Constants.PRIMARY_KEY_IS_EMPTY);
         }
@@ -61,12 +61,13 @@ public final class CustomerStore implements EntityStore<Customer> {
     }
 
     @Override
-    public Customer update(Customer customer) throws IOException {
+    public Customer update(Customer customer) {
         if (customer == null) {
             System.err.println("Failed to update customer. Customer not found for update");
         }
         try {
             customerDao.updateCustomer(new CustomerImpl(SFCustomer.from(customer)));
+            assert customer != null;
             return get(customer.id);
         } catch (IOException | ExecutionException | InterruptedException | IllegalAccessException |
                  IllegalArgumentException cause) {
@@ -76,7 +77,7 @@ public final class CustomerStore implements EntityStore<Customer> {
     }
 
     @Override
-    public void delete(String primaryKey) throws IOException {
+    public void delete(String primaryKey) {
         if (primaryKey == null || primaryKey.isBlank()) {
             System.err.println("Failed to delete case." + Constants.PRIMARY_KEY_IS_EMPTY);
         }
@@ -93,12 +94,12 @@ public final class CustomerStore implements EntityStore<Customer> {
     }
 
     @Override
-    public List<Customer> search(List<SearchCondition> list, long l, int i) throws IOException {
+    public List<Customer> search(List<SearchCondition> list, long l, int i) {
         return Collections.emptyList();
     }
 
     @Override
-    public List<Customer> search(SearchQuery searchQuery, long pageIndex, int pageSize) throws IOException {
+    public List<Customer> search(SearchQuery searchQuery, long pageIndex, int pageSize) {
         final List<SearchCondition> conditions = searchQuery.getSearchConditions();
         final List<QueryClause> queryClauses = searchQuery.getQueryClauses();
 
@@ -106,8 +107,8 @@ public final class CustomerStore implements EntityStore<Customer> {
             throw new IllegalArgumentException("Failed to search for individuals. " + Constants.CONDITIONS_NOT_FOUND);
         }
         try {
-            String orderByField = queryClauses.isEmpty() ? Constants.LASTMODIFIEDDATE : queryClauses.get(0).getFieldName();
-            String orderByOperand = queryClauses.isEmpty() ? Constants.DESC : queryClauses.get(0).getOperand().toString();
+            String orderByField = queryClauses.isEmpty() ? Constants.LASTMODIFIEDDATE : queryClauses.getFirst().getFieldName();
+            String orderByOperand = queryClauses.isEmpty() ? Constants.DESC : queryClauses.getFirst().getOperand().toString();
 
             if (conditions.size() == 1) {
                 return customerDao.getCustomers(pageSize, pageIndex, orderByField, orderByOperand).stream()

@@ -12,7 +12,7 @@ public interface CustomerDao {
 
     List<Customer> getCustomerByQuery(String query) throws IOException, ExecutionException, InterruptedException;
 
-    String createCustomer(Map<String, Object> entityDefinition) throws IOException, ExecutionException, InterruptedException;
+    String createCustomer(Map<String, Object> entityDefinition);
 
     void updateCustomer(Customer customer) throws IllegalAccessException, IOException, ExecutionException, InterruptedException;
 

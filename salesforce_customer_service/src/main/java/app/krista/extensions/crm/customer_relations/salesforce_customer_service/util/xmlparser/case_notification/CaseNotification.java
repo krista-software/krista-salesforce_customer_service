@@ -16,16 +16,4 @@ public final class CaseNotification {
         return SalesforceXMLCase;
     }
 
-    public void setSalesforceXMLCase(app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.xmlparser
-                                             .case_notification.SalesforceXMLCase salesforceXMLCase) {
-        SalesforceXMLCase = salesforceXMLCase;
-    }
-
-    public String getId() {
-        return Id;
-    }
-
-    public void setId(String id) {
-        Id = id;
-    }
 }
