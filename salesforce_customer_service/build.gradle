@@ -5,7 +5,7 @@ group 'app.krista.extensions.crm.customer_relations'
 
 /*
  * Use extension.name for archiveBaseName, extension.version for version.
- * Resulting jar: <extension.name>-<extension.version>.jar e.g. Office365Calendar-2.0.13-rc1.jar
+ * Resulting jar: <extension.name>-<extension.version>.jar e.g. Office365Calendar-2.0.13.jar
  */
 def computedBaseName = "SalesforceCustomerService"
 def computedVersion = "local"
