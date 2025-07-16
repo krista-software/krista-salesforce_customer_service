@@ -1,7 +1,6 @@
 apply plugin: 'java-library'
 jar.archiveBaseName = "salesforce_customer_service-extension"
 group 'app.krista.extensions.crm.customer_relations'
-version '2.0.13'
 
 /*
  * Use extension.name for archiveBaseName, extension.version for version.
