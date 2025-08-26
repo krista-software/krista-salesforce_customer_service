@@ -49,6 +49,7 @@ public class SalesforceCustomerServiceAttributesStore {
         store.put(authContextId, Constants.GSON.toJson(Map.of(SalesforceCustomerServiceAttributes.CLIENT_ID,
                 salesforceCustomerServiceAttributes.getClientId(),
                 SalesforceCustomerServiceAttributes.CLIENT_SECRET, salesforceCustomerServiceAttributes.getClientSecret(),
+                SalesforceCustomerServiceAttributes.INSTANCE_URL, salesforceCustomerServiceAttributes.getInstanceUrl(),
                 SalesforceCustomerServiceAttributes.SANDBOX, salesforceCustomerServiceAttributes.isSandbox())));
         return authContextId;
     }
@@ -66,6 +67,7 @@ public class SalesforceCustomerServiceAttributesStore {
         var attributes = Constants.GSON.fromJson(store.get(authContextId).toString(), Map.class);
         return new SalesforceCustomerServiceAttributes((String) attributes.get(SalesforceCustomerServiceAttributes.CLIENT_ID),
                 (String) attributes.get(SalesforceCustomerServiceAttributes.CLIENT_SECRET),
+                (String) attributes.get(SalesforceCustomerServiceAttributes.INSTANCE_URL),
                 (String) attributes.get(SalesforceCustomerServiceAttributes.USER_NAME),
                 (String) attributes.get(SalesforceCustomerServiceAttributes.PASS_WORD),
                 (String) attributes.get(SalesforceCustomerServiceAttributes.SECURITY_TOKEN),

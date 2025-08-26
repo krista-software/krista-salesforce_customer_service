@@ -2,12 +2,12 @@
 
 # Release Notes - Krista Salesforce Customer Service Extension
 
-## Version 2.0.13
+## Version 2.0.15
 
 - **Developer Name** : Hamitha Chandu
-- **Krista Service APIs Java** : 1.0.113
+- **Krista Service APIs Java** : 1.0.115
 - **Global Catalog Version** : 1.0.59
-- **Appliance Release Version** : 3.4.8
+- **Appliance Release Version** : 3.5.1
 
 ## Resolved Bugs
 

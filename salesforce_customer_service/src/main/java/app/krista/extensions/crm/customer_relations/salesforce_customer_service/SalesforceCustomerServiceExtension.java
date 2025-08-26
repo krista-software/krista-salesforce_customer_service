@@ -19,11 +19,12 @@ import java.util.Map;
  */
 @Field.Text(value = SalesforceCustomerServiceAttributes.CLIENT_ID)
 @Field.Text(value = SalesforceCustomerServiceAttributes.CLIENT_SECRET, isSecured = true)
+@Field.Text(value = SalesforceCustomerServiceAttributes.INSTANCE_URL, required = false)
 @Field.Text(value = SalesforceCustomerServiceAttributes.USER_NAME, required = false)
 @Field.Text(value = SalesforceCustomerServiceAttributes.PASS_WORD, isSecured = true, required = false)
 @Field.Text(value = SalesforceCustomerServiceAttributes.SECURITY_TOKEN, isSecured = true, required = false)
 @Field.Boolean(value = SalesforceCustomerServiceAttributes.SANDBOX, required = false)
-@Extension(version = "2.0.14-rc1", name = "Salesforce Customer Service", description = "Integrating Salesforce with Krista")
+@Extension(version = "2.0.15", name = "Salesforce Customer Service", description = "Integrating Salesforce with Krista")
 @Java(version = Java.Version.JAVA_21)
 @StaticResource(path = "docs", file = "documentations")
 public final class SalesforceCustomerServiceExtension {
@@ -124,6 +125,9 @@ public final class SalesforceCustomerServiceExtension {
                 serviceAttributes.getSecurityToken() == null || serviceAttributes.getSecurityToken().isBlank()) {
             providerFactory.create(serviceAttributes).getSalesforceTokenForUser();
         } else {
+            if(serviceAttributes.getInstanceUrl() == null || serviceAttributes.getInstanceUrl().isBlank()) {
+                throw new IllegalArgumentException("Instance URL is required.");
+            }
             providerFactory.create(serviceAttributes).getSalesforceTokenForAdmin();
         }
     }

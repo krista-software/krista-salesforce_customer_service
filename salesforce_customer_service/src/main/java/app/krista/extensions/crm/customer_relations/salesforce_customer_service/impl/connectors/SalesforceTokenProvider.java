@@ -1,4 +1,5 @@
 package app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.connectors;
+
 import app.krista.extension.authorization.MustAuthorizeException;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.SalesforceCustomerServiceAttributes;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.RefreshTokenStore;
@@ -7,17 +8,14 @@ import app.krista.ksdk.context.RequestContext;
 import app.krista.model.field.NamedValuedField;
 import com.github.scribejava.apis.salesforce.SalesforceToken;
 import com.github.scribejava.core.model.OAuth2AccessToken;
-import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 public class SalesforceTokenProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(SalesforceTokenProvider.class);
@@ -96,22 +94,15 @@ public class SalesforceTokenProvider {
      */
     private SalesforceToken getSalesforceToken(boolean isAdmin, String accountId) throws IllegalArgumentException {
         if (SalesforceTokenProvider.validateUsingOAuth(isAdmin, salesforceCustomerServiceAttributes)) {
-            accountId = accountId == null ? authorizationContext.getAuthorizedAccount().getAccountId() : accountId;
-            String refreshToken = refreshTokenStore.get(getRefreshTokenKey(accountId));
-            if (refreshToken == null) {
-                throw createMustAuthorizationException(false, accountId);
-            }
             try {
-                return getSalesforceTokenForUser(salesforceCustomerServiceAttributes.getOauthService().refreshAccessToken(refreshToken));
-            } catch (MustAuthorizeException cause) {
-                throw createMustAuthorizationException(true, accountId);
-            } catch (OAuth2AccessTokenErrorResponse cause) {
-                if (cause.getErrorDescription() != null && cause.getErrorDescription().equals("expired access/refresh token")) {
-                    throw createMustAuthorizationException(true, accountId);
-                }
-                throw new RuntimeException("Something went wrong, please try again later. " + cause.getErrorDescription(), cause);
-            } catch (InterruptedException | ExecutionException | IOException cause) {
-                throw new RuntimeException("Refresh Token not found. Please re authorize yourself. " + cause.getMessage(), cause);
+                String domain = salesforceCustomerServiceAttributes.getInstanceUrl();
+                return getSalesforceTokenForUser(salesforceCustomerServiceAttributes.getOauthService(domain).getAccessTokenClientCredentialsGrant());
+            } catch (Exception cause) {
+//                throw new RuntimeException("Refresh Token not found. Please re authorize yourself. " + cause.getMessage(), cause);
+                cause.printStackTrace();
+                LOGGER.error("Failed to get access token for user. - {}", cause.getMessage(), cause);
+                String message = this.getErrorMessage(cause);
+                throw new IllegalArgumentException(message , cause);
             }
         } else {
             Object username = salesforceCustomerServiceAttributes.getUserName();
@@ -192,8 +183,10 @@ public class SalesforceTokenProvider {
         final SalesforceToken salesforceAccessToken;
         if (accessToken instanceof SalesforceToken) {
             salesforceAccessToken = (SalesforceToken) accessToken;
+        } else if (accessToken.getAccessToken() != null) {
+            salesforceAccessToken = new SalesforceToken(accessToken.getAccessToken(), salesforceCustomerServiceAttributes.getInstanceUrl(), accessToken.getRawResponse());
         } else {
-            throw new MustAuthorizeException("Salesforce didn't return the correct token. Please Reauthorize");
+            throw new IllegalArgumentException("Salesforce didn't return the correct token. Please provide valid credentials.");
         }
         return salesforceAccessToken;
     }

@@ -4,6 +4,7 @@ import app.krista.extension.executor.Invoker;
 import app.krista.extension.request.RoutingInfo;
 import app.krista.extension.request.protos.http.HttpProtocol;
 import app.krista.extension.util.InvokerAttributes;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.api.SalesforceCustomApi;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import com.github.scribejava.apis.SalesforceApi;
 import com.github.scribejava.core.builder.ServiceBuilder;
@@ -22,6 +23,7 @@ public final class SalesforceCustomerServiceAttributes {
 
     public static final String CLIENT_ID = "clientId";
     public static final String CLIENT_SECRET = "clientSecret";
+    public static final String INSTANCE_URL = "Instance URL";
     public static final String USER_NAME = "username";
     public static final String PASS_WORD = "password";
     public static final String SECURITY_TOKEN = "securityToken";
@@ -30,6 +32,7 @@ public final class SalesforceCustomerServiceAttributes {
     private final String routingUrl;
     private String clientId;
     private String clientSecret;
+    private String instanceUrl;
     private String userName;
     private String password;
     private String securityToken;
@@ -56,6 +59,7 @@ public final class SalesforceCustomerServiceAttributes {
     public SalesforceCustomerServiceAttributes(String routingUrl, Map<String, Object> attributes) {
         this((String) attributes.get(CLIENT_ID),
                 (String) attributes.get(CLIENT_SECRET),
+                (String) attributes.get(INSTANCE_URL),
                 (String) attributes.get(USER_NAME),
                 (String) attributes.get(PASS_WORD),
                 (String) attributes.get(SECURITY_TOKEN),
@@ -74,10 +78,11 @@ public final class SalesforceCustomerServiceAttributes {
      * @param isSandbox     whether to use the sandbox environment
      * @param routingUrl    the callback routing URL
      */
-    public SalesforceCustomerServiceAttributes(String clientId, String clientSecret, String userName, String password,
+    public SalesforceCustomerServiceAttributes(String clientId, String clientSecret, String instanceUrl, String userName, String password,
                                                String securityToken, Boolean isSandbox, String routingUrl) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
+        this.instanceUrl = instanceUrl;
         this.userName = userName;
         this.password = password;
         this.securityToken = securityToken;
@@ -109,6 +114,13 @@ public final class SalesforceCustomerServiceAttributes {
      */
     public String getClientSecret() {
         return clientSecret;
+    }
+
+    /**
+     * @return the Salesforce instance URL
+     */
+    public String getInstanceUrl() {
+        return instanceUrl;
     }
 
     /**
@@ -161,6 +173,16 @@ public final class SalesforceCustomerServiceAttributes {
         return oAuthService;
     }
 
+    public synchronized OAuth20Service getOauthService(String domainUrl) {
+        if (oAuthService == null) {
+            oAuthService = new ServiceBuilder(getClientId())
+                    .apiSecret(getClientSecret())
+                    .callback(getCallbackUrl())
+                    .build(new SalesforceCustomApi(domainUrl));
+        }
+        return oAuthService;
+    }
+
     /**
      * Updates the current configuration with new attribute values.
      *
@@ -169,6 +191,7 @@ public final class SalesforceCustomerServiceAttributes {
     public void update(Map<String, Object> newAttributes) {
         clientId = InvokerAttributes.getStringOrNull(newAttributes, CLIENT_ID);
         clientSecret = InvokerAttributes.getStringOrNull(newAttributes, CLIENT_SECRET);
+        instanceUrl = InvokerAttributes.getStringOrNull(newAttributes, INSTANCE_URL);
         userName = InvokerAttributes.getStringOrNull(newAttributes, USER_NAME);
         password = InvokerAttributes.getStringOrNull(newAttributes, PASS_WORD);
         securityToken = InvokerAttributes.getStringOrNull(newAttributes, SECURITY_TOKEN);
