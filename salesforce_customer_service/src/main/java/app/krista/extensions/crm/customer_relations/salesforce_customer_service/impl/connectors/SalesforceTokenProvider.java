@@ -8,14 +8,17 @@ import app.krista.ksdk.context.RequestContext;
 import app.krista.model.field.NamedValuedField;
 import com.github.scribejava.apis.salesforce.SalesforceToken;
 import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class SalesforceTokenProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(SalesforceTokenProvider.class);
@@ -28,10 +31,10 @@ public class SalesforceTokenProvider {
     /**
      * Constructs a SalesforceTokenProvider with the specified dependencies.
      *
-     * @param refreshTokenStore The store used to persist refresh tokens
-     * @param requestContext The context of the current request
+     * @param refreshTokenStore                   The store used to persist refresh tokens
+     * @param requestContext                      The context of the current request
      * @param salesforceCustomerServiceAttributes The Salesforce service configuration attributes
-     * @param authorizationContext The authorization context for the current user
+     * @param authorizationContext                The authorization context for the current user
      */
     @Inject
     public SalesforceTokenProvider(RefreshTokenStore refreshTokenStore, RequestContext requestContext, SalesforceCustomerServiceAttributes salesforceCustomerServiceAttributes, AuthorizationContext authorizationContext) {
@@ -41,11 +44,11 @@ public class SalesforceTokenProvider {
     /**
      * Constructs a SalesforceTokenProvider with the specified dependencies and authorization context ID.
      *
-     * @param refreshTokenStore The store used to persist refresh tokens
-     * @param requestContext The context of the current request
+     * @param refreshTokenStore                   The store used to persist refresh tokens
+     * @param requestContext                      The context of the current request
      * @param salesforceCustomerServiceAttributes The Salesforce service configuration attributes
-     * @param authorizationContext The authorization context for the current user
-     * @param authContextId The authorization context ID, if applicable
+     * @param authorizationContext                The authorization context for the current user
+     * @param authContextId                       The authorization context ID, if applicable
      */
     public SalesforceTokenProvider(RefreshTokenStore refreshTokenStore, RequestContext requestContext, SalesforceCustomerServiceAttributes salesforceCustomerServiceAttributes, AuthorizationContext authorizationContext, String authContextId) {
         this.requestContext = requestContext;
@@ -86,23 +89,43 @@ public class SalesforceTokenProvider {
     /**
      * Retrieves a Salesforce token based on the specified parameters.
      *
-     * @param isAdmin Whether the token is for admin operations
+     * @param isAdmin   Whether the token is for admin operations
      * @param accountId The account ID to use, or null to use the current authorized account
      * @return A valid Salesforce token
      * @throws IllegalArgumentException If the provided credentials are invalid
-     * @throws MustAuthorizeException If authorization is required to obtain a new token
+     * @throws MustAuthorizeException   If authorization is required to obtain a new token
      */
     private SalesforceToken getSalesforceToken(boolean isAdmin, String accountId) throws IllegalArgumentException {
         if (SalesforceTokenProvider.validateUsingOAuth(isAdmin, salesforceCustomerServiceAttributes)) {
-            try {
-                String domain = salesforceCustomerServiceAttributes.getInstanceUrl();
-                return getSalesforceTokenForUser(salesforceCustomerServiceAttributes.getOauthService(domain).getAccessTokenClientCredentialsGrant());
-            } catch (Exception cause) {
-//                throw new RuntimeException("Refresh Token not found. Please re authorize yourself. " + cause.getMessage(), cause);
-                cause.printStackTrace();
-                LOGGER.error("Failed to get access token for user. - {}", cause.getMessage(), cause);
-                String message = this.getErrorMessage(cause);
-                throw new IllegalArgumentException(message , cause);
+            String domain = salesforceCustomerServiceAttributes.getInstanceUrl();
+            if (domain != null && !domain.isEmpty()) {
+
+                try {
+                    return getSalesforceTokenForUser(salesforceCustomerServiceAttributes.getOauthService(domain).getAccessTokenClientCredentialsGrant());
+                } catch (Exception cause) {
+                    cause.printStackTrace();
+                    LOGGER.error("Failed to get access token for user. - {}", cause.getMessage(), cause);
+                    String message = this.getErrorMessage(cause);
+                    throw new IllegalArgumentException(message, cause);
+                }
+            } else {
+                accountId = accountId == null ? authorizationContext.getAuthorizedAccount().getAccountId() : accountId;
+                String refreshToken = refreshTokenStore.get(getRefreshTokenKey(accountId));
+                if (refreshToken == null) {
+                    throw createMustAuthorizationException(false, accountId);
+                }
+                try {
+                    return getSalesforceTokenForUser(salesforceCustomerServiceAttributes.getOauthService().refreshAccessToken(refreshToken));
+                } catch (MustAuthorizeException cause) {
+                    throw createMustAuthorizationException(true, accountId);
+                } catch (OAuth2AccessTokenErrorResponse cause) {
+                    if (cause.getErrorDescription() != null && cause.getErrorDescription().equals("expired access/refresh token")) {
+                        throw createMustAuthorizationException(true, accountId);
+                    }
+                    throw new RuntimeException("Something went wrong, please try again later. " + cause.getErrorDescription(), cause);
+                } catch (InterruptedException | ExecutionException | IOException cause) {
+                    throw new RuntimeException("Refresh Token not found. Please re authorize yourself. " + cause.getMessage(), cause);
+                }
             }
         } else {
             Object username = salesforceCustomerServiceAttributes.getUserName();
@@ -115,7 +138,7 @@ public class SalesforceTokenProvider {
                                 password + String.valueOf(securityToken)));
             } catch (Exception cause) {
                 String message = this.getErrorMessage(cause);
-                throw new IllegalArgumentException(message , cause);
+                throw new IllegalArgumentException(message, cause);
             }
         }
     }
@@ -195,7 +218,7 @@ public class SalesforceTokenProvider {
      * Creates a MustAuthorizeException with appropriate details for the authorization flow.
      *
      * @param reAuthentication Whether this is a re-authentication request
-     * @param accountId The account ID requiring authentication
+     * @param accountId        The account ID requiring authentication
      * @return A MustAuthorizeException with appropriate details
      */
     private MustAuthorizeException createMustAuthorizationException(boolean reAuthentication, String accountId) {
@@ -216,7 +239,7 @@ public class SalesforceTokenProvider {
      * <p>
      * OAuth is used when in admin context or when username/password credentials are not fully provided.
      *
-     * @param isAdmin Whether the context is admin
+     * @param isAdmin                   Whether the context is admin
      * @param salesforceSalesAttributes The Salesforce attributes
      * @return True if OAuth should be used, false if password grant is sufficient
      */

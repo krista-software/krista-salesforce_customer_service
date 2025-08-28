@@ -125,9 +125,6 @@ public final class SalesforceCustomerServiceExtension {
                 serviceAttributes.getSecurityToken() == null || serviceAttributes.getSecurityToken().isBlank()) {
             providerFactory.create(serviceAttributes).getSalesforceTokenForUser();
         } else {
-            if(serviceAttributes.getInstanceUrl() == null || serviceAttributes.getInstanceUrl().isBlank()) {
-                throw new IllegalArgumentException("Instance URL is required.");
-            }
             providerFactory.create(serviceAttributes).getSalesforceTokenForAdmin();
         }
     }
