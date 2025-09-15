@@ -9,6 +9,7 @@ import app.krista.extensions.util.KeyValueStore;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -27,7 +28,7 @@ public class SalesforceCustomerServiceAttributesStore {
     /**
      * Constructs a SalesforceCustomerServiceAttributesStore with the required dependencies.
      *
-     * @param store The key-value store used to persist attributes
+     * @param store   The key-value store used to persist attributes
      * @param invoker The invoker used for making API requests
      */
     @Inject
@@ -46,13 +47,22 @@ public class SalesforceCustomerServiceAttributesStore {
      */
     public String save(SalesforceCustomerServiceAttributes salesforceCustomerServiceAttributes) {
         String authContextId = UUID.randomUUID().toString();
-        store.put(authContextId, Constants.GSON.toJson(Map.of(SalesforceCustomerServiceAttributes.CLIENT_ID,
-                salesforceCustomerServiceAttributes.getClientId(),
-                SalesforceCustomerServiceAttributes.CLIENT_SECRET, salesforceCustomerServiceAttributes.getClientSecret(),
-                SalesforceCustomerServiceAttributes.INSTANCE_URL, salesforceCustomerServiceAttributes.getInstanceUrl(),
-                SalesforceCustomerServiceAttributes.SANDBOX, salesforceCustomerServiceAttributes.isSandbox())));
+        store.put(authContextId, getAttributesJson(salesforceCustomerServiceAttributes));
         return authContextId;
     }
+
+    private static String getAttributesJson(SalesforceCustomerServiceAttributes salesforceCustomerServiceAttributes) {
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put(SalesforceCustomerServiceAttributes.CLIENT_ID,
+                salesforceCustomerServiceAttributes.getClientId());
+        attributes.put(SalesforceCustomerServiceAttributes.CLIENT_SECRET, salesforceCustomerServiceAttributes.getClientSecret());
+        attributes.put(SalesforceCustomerServiceAttributes.SANDBOX, salesforceCustomerServiceAttributes.isSandbox());
+        if (salesforceCustomerServiceAttributes.getInstanceUrl() != null) {
+            attributes.put(SalesforceCustomerServiceAttributes.INSTANCE_URL, salesforceCustomerServiceAttributes.getInstanceUrl());
+        }
+        return Constants.GSON.toJson(attributes);
+    }
+
 
     /**
      * Loads Salesforce Customer Service attributes from the store.
