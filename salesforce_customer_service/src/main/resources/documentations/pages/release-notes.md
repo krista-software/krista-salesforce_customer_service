@@ -4,9 +4,9 @@
 
 ## Version 2.0.15
 
-- **Developer Name** : Hamitha Chandu
+- **Developer Name** : Jalpesh Adesara, Vaibhav Choudhary
 - **Krista Service APIs Java** : 1.0.115
-- **Global Catalog Version** : 1.0.59
+- **Global Catalog Version** : GC-2025.09.3
 - **Appliance Release Version** : 3.5.1
 
 ## Resolved Bugs
