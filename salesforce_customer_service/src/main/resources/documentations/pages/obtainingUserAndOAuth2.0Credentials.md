@@ -2,6 +2,8 @@
 
 # Obtaining User and OAuth2.0 Credentials
 
+> Note: The extension supports optional Instance URL and Sandbox settings. If your org requires a specific domain, you may set Instance URL to your Salesforce base domain (for example, https://mydomain.my.salesforce.com). Use the Sandbox flag if you are connecting to a sandbox org.
+
 ### Obtaining Username, Password, and Security Token
 
 
@@ -20,7 +22,7 @@
 * Ensure that you check the verification email in your Inbox. Click **Verify Account**.
   ![Verify Account](../_media/verifyAccount.png)
 
-  
+
 * You will be redirected to the **Change Your Password** page on the Salesforce system. Set up the new password following the guidelines. Also, configure the **Security Question** and **Answer**.
   ![Change Password](../_media/changePassword.png)
 
@@ -44,11 +46,11 @@
 * Navigate to the Setup icon and then click **Setup**.
   ![Setup](../_media/setup.png)
 
-   
+
 * On the SETUP Home page, under the **Apps** menu on the left panel, click **App Manager**.
   ![Apps](../_media/apps.png)
 
-  
+
 * On the SETUP Lightening Experience App Manager, click **New Connected App**.
   ![New Connected App](../_media/newConnectedApp.png)
 
@@ -85,7 +87,7 @@
 
 * Select the **Require Secret for Refresh Token Flow** checkbox.
   ![Api Oauth Information](../_media/apiOauth.png)
-  
+
 
 * Click **Save** and then Click on **Continue**.
 * Now you will land in the App info Page. Under API (Enable OAuth Settings) Click on **Manage Consumer Details**.
@@ -100,6 +102,27 @@
 
 * Click **Save**.
 
+### Enabling OAuth 2.0 Client Credentials (optional, for server-to-server)
+
+If you plan to use the Client Credentials flow (no user prompt), configure the Connected App Policies:
+
+1. In App Manager, open your Connected App → Manage → Edit Policies
+2. In the “OAuth 2.0 Client Credentials Flow” section:
+   - Check “Enable OAuth 2.0 Client Credentials Flow”
+   - Set Principal to “Named Principal (Run As)” and select your Integration User
+3. Save and wait 2–5 minutes for changes to propagate
+
+   Example: API (Enable OAuth Settings) with “Enable Client Credentials Flow” selected
+
+   ![Enable Client Credentials Flow](../_media/enableClientCredentials.png)
+
+4. Use your org domain as the Instance URL in the extension, for example: https://your-domain.my.salesforce.com
+   - Do not use https://…lightning.force.com
+   - Do not include a trailing slash
+
+With this configured, when you set Instance URL in the extension, it will request tokens using client_credentials and act as the selected Run As user.
+![Client Credentials Flow — Run As](../_media/clientCredentialsFlowRunAs.png)
+
 * Provide the values of Client ID and Client Secret in your Salesforce Customer Service Extension setup page and proceed with the Extension request.
 
 * If you want to use the Basic Authentication Flow for authentication then follow the following steps:
@@ -111,3 +134,6 @@
   * Click **OAuth and OpenID Connect Settings**.
   * To enable the Basic Authentication Flow, use the **Allow OAuth Username-Password Flows** toggle switch.
     ![](../_media/UsernamePasswordFlow.png)
+
+
+
