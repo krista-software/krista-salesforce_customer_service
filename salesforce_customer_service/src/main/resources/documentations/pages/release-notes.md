@@ -9,6 +9,7 @@
 - **Global Catalog Version** : GC-2025.09.3
 - **Appliance Release Version** : 3.5.1
 
+
 ## Resolved Bugs
 
 * [KE-1894](https://antbrains.atlassian.net/browse/KE-1894) Salesforce customer service: Entering invalid credentials, extension not working as expected
