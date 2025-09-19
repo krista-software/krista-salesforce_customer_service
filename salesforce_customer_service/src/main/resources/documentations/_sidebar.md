@@ -4,7 +4,7 @@
 
 * [Overview](pages/overview.md)
 
-* [Obtaining User and OAuth2.0 Credentials](pages/obtainingUserAndOAuth2.0Credentials.md)
+* [Obtaining Auth Credentials](pages/obtainAuthCredentials.md)
 
 * [Connecting with Salesforce Customer Service Module Extension](pages/connectionWithCustomerServieExtension.md)
 
