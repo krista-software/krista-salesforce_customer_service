@@ -5,7 +5,7 @@
 ## Version 2.0.15
 
 - **Developer Name** : Jalpesh Adesara, Vaibhav Choudhary
-- **Krista Service APIs Java** : 1.0.115
+- **Krista Service APIs Java** : 1.0.117
 - **Global Catalog Version** : GC-2025.10.1
 
 
