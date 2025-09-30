@@ -7,12 +7,11 @@
 - **Developer Name** : Jalpesh Adesara, Vaibhav Choudhary
 - **Krista Service APIs Java** : 1.0.115
 - **Global Catalog Version** : GC-2025.10.1
-- **Appliance Release Version** : 3.5.1
 
 
 ## Resolved Bugs
 
-* [KE-1894](https://antbrains.atlassian.net/browse/KE-1894) Salesforce customer service: Entering invalid credentials, extension not working as expected
+* [KE-2428](https://antbrains.atlassian.net/browse/KE-2428) Salesforce Customer Service Extension (then all the rest) Should Support Client Credentials Flow
   
 ## Known Issues
 
