@@ -99,15 +99,7 @@ public class SalesforceTokenProvider {
         if (SalesforceTokenProvider.validateUsingOAuth(isAdmin, salesforceCustomerServiceAttributes)) {
             String domain = salesforceCustomerServiceAttributes.getInstanceUrl();
             if (domain != null && !domain.isEmpty()) {
-
-                try {
-                    return getSalesforceTokenForUser(salesforceCustomerServiceAttributes.getOauthService(domain).getAccessTokenClientCredentialsGrant());
-                } catch (Exception cause) {
-                    cause.printStackTrace();
-                    LOGGER.error("Failed to get access token for user. - {}", cause.getMessage(), cause);
-                    String message = this.getErrorMessage(cause);
-                    throw new IllegalArgumentException(message, cause);
-                }
+                return getTokenUsingClientCredentials(domain);
             } else {
                 accountId = accountId == null ? authorizationContext.getAuthorizedAccount().getAccountId() : accountId;
                 String refreshToken = refreshTokenStore.get(getRefreshTokenKey(accountId));
@@ -140,6 +132,23 @@ public class SalesforceTokenProvider {
                 String message = this.getErrorMessage(cause);
                 throw new IllegalArgumentException(message, cause);
             }
+        }
+    }
+
+    /**
+     * Retrieves a Salesforce token using OAuth 2.0 Client Credentials flow.
+     *
+     * @param domain The Salesforce instance domain
+     * @return A valid Salesforce token
+     * @throws IllegalArgumentException If the client credentials are invalid or the request fails
+     */
+    private SalesforceToken getTokenUsingClientCredentials(String domain) throws IllegalArgumentException {
+        try {
+            return getSalesforceTokenForUser(salesforceCustomerServiceAttributes.getOauthService(domain).getAccessTokenClientCredentialsGrant());
+        } catch (Exception cause) {
+            LOGGER.error("Failed to get access token for user. - {}", cause.getMessage(), cause);
+            String message = this.getErrorMessage(cause);
+            throw new IllegalArgumentException(message, cause);
         }
     }
 
