@@ -12,9 +12,6 @@ The Krista Salesforce Customer Service Module Extension connects to Salesforce s
 * ### Obtaining Auth Credentials
   * [Obtaining Auth Credentials](pages/obtainAuthCredentials.md)
 
-* ### Connecting with Salesforce Customer Service Module Extension
-  * [Connecting with Salesforce Customer Service Module Extension](pages/connectionWithCustomerServieExtension.md)
-
 * ### Authentication
   * [Authentication](pages/authentication.md)
 

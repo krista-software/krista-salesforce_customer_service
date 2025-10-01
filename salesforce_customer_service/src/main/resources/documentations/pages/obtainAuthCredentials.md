@@ -10,85 +10,39 @@ The extension automatically chooses the authentication method based on what you 
 
 1. **OAuth 2.0 Client Credentials Flow** - Used when you provide `Instance URL` + `Client ID` + `Client Secret`
 2. **OAuth 2.0 Authorization Code Flow** - Used when you provide only `Client ID` + `Client Secret` (Instance URL left blank)
-3. **OAuth 2.0 Password Grant Flow** - Used as fallback when OAuth is not configured (requires `Client ID` + `Client Secret` + `Username` + `Password` + `Security Token`)
+3. **OAuth 2.0 Password Grant Flow** - Used when OAuth is not configured (requires `Client ID` + `Client Secret` + `Username` + `Password` + `Security Token`)
 
 > **Important**: You don't select an "authentication method" - the extension automatically determines which flow to use based on the parameters you provide.
 
 ## Quick Reference: Parameter Combinations
 
-| Parameters Provided | Authentication Method Used | Use Case |
-|-------------------|---------------------------|----------|
-| `Client ID` + `Client Secret` + `Instance URL` | **Client Credentials Flow** | Server-to-server, no user interaction |
-| `Client ID` + `Client Secret` (Instance URL blank) | **Authorization Code Flow** | User interactive, web-based |
-| `Client ID` + `Client Secret` + `Username` + `Password` + `Security Token` | **Password Grant Flow** | Fallback when OAuth not configured |
+| Parameters Provided                                                          | Authentication Method Used     | Use Case                                  |
+|------------------------------------------------------------------------------|--------------------------------|-------------------------------------------|
+| `Client ID` + `Client Secret` + `Instance URL`                               | **Client Credentials Flow**    | Server-to-server, no user interaction     |
+| `Client ID` + `Client Secret` (Instance URL blank)                           | **Authorization Code Flow**    | User interactive, web-based               |
+| `Client ID` + `Client Secret` + `Username` + `Password` + `Security Token`   | **Password Grant Flow**        | When OAuth not configured                 |
+
 
 ---
 
-## 1. OAuth 2.0 Password Grant Flow
+### Important Notes for Setup and Testing
 
-> **When used**: As fallback when OAuth is not configured
-> **Required parameters**: `Username` + `Password` + `Security Token` + `Client ID` + `Client Secret`
-> **Best for**: Development, testing, and simple integrations
-> **Best for**: Development, testing, and simple integrations
+> **After Configuration**: Once you've provided the required credentials (Client ID, Client Secret, and any additional fields based on your authentication method), click **Validate Attributes**.
 
-### Overview
-The OAuth 2.0 Password Grant Flow uses your Salesforce username, password, and security token to authenticate via OAuth 2.0. This method is straightforward but requires storing credentials directly in the extension configuration.
+> **Authorization Process**: When you click **Validate Attributes**, an authentication page may appear (for OAuth flows). Click on that tab and authorize yourself using the same account that was used to register your Connected App in Salesforce.
 
-### Prerequisites
-- A Salesforce Developer Account or regular Salesforce account
-- Access to your Salesforce org's setup area
-- Email access to receive the security token
+> **Save and Test**: After authorization, click **Save Changes**. Then navigate to **Diagnostics** and click **Test Connection** to confirm the connection is established. When successful, you can proceed with using the extension's requests.
 
-### Step 1: Obtaining Username and Password
+> **Instance URL Requirements**:
+> - Must be your org base domain (e.g., `https://your-domain.my.salesforce.com`)
+> - Do NOT use Lightning domain (`...lightning.force.com`)
+> - Do NOT include a trailing slash
 
-#### If you already have a Salesforce account:
-* Use your existing Salesforce username and password
-
-#### If you need a new Salesforce Developer Account:
-* Go to the Salesforce Developer portal from [here](https://developer.salesforce.com/).
-* Click the **Sign Up** button. Enter all personal details and click **Sign Me Up**.
-* Check the verification email in your Inbox and click **Verify Account**.
-  ![Verify Account](../_media/verifyAccount.png)
-* You will be redirected to the **Change Your Password** page. Set up a new password and configure your **Security Question** and **Answer**.
-  ![Change Password](../_media/changePassword.png)
-* Click **Change Password**. Save these credentials as your **Username** and **Password**.
-
-### Step 2: Obtaining Security Token
-* Log in to your Salesforce account and navigate to your user profile. Click **Settings**.
-  ![Profile](../_media/profile.png)
-* On the navigation panel, click **Reset My Security Token** and then **Reset Security Token**.
-  ![Reset Security Token](../_media/resetSecurityToken.png)
-* You will receive a unique security token via email. Save this token for the extension setup.
-
-### Step 3: Enable Username-Password Flow (if needed)
-* Navigate to the Setup icon and click **Setup**.
-  ![Setup](../_media/setup.png)
-* From the left navigation panel under **SETTINGS**, click on the **Identity** dropdown.
-  * Click **OAuth and OpenID Connect Settings**.
-  * Enable the **Allow OAuth Username-Password Flows** toggle switch.
-    ![Username Password Flow](../_media/UsernamePasswordFlow.png)
-
-### Step 4: Configure Extension
-When setting up the extension for Password Grant Flow (fallback):
-1. **Client ID**: Enter your Connected App's Consumer Key
-2. **Client Secret**: Enter your Connected App's Consumer Secret
-3. **Username**: Enter your Salesforce username
-4. **Password**: Enter your Salesforce password
-5. **Security Token**: Enter the security token received via email
-6. **Instance URL**: Leave blank (this triggers Authorization Code Flow if OAuth is configured)
-7. **Sandbox**: Check if connecting to a sandbox org
-
-> **Note**: The extension will use Password Grant Flow only as a fallback when other OAuth flows are not properly configured.
-
-### Security Considerations
-- **Less Secure**: Credentials are stored in the extension configuration
-- **No Token Expiration**: Unlike OAuth tokens, these credentials don't automatically expire
-- **Limited Scope**: Cannot restrict access to specific resources
-- **Recommended Use**: Development, testing, or simple integrations only
+> **Client Credentials Prerequisites**: For Client Credentials Flow, ensure your Salesforce Connected App has "OAuth 2.0 Client Credentials Flow" enabled and "Run As" set to your Integration User (Manage → Edit Policies).
 
 ---
 
-## 2. OAuth 2.0 Authorization Code Flow
+## 1. OAuth 2.0 Authorization Code Flow
 
 > **When used**: When you provide only `Client ID` + `Client Secret` (Instance URL left blank)
 > **Required parameters**: `Client ID` + `Client Secret` (Instance URL must be blank)
@@ -172,6 +126,10 @@ When setting up the extension for Authorization Code Flow:
 6. **Security Token**: Leave blank (not needed for OAuth flows)
 7. **Sandbox**: Check if connecting to a sandbox org
 
+### Steps for connection
+To set up the connection, you need to provide **Client ID** and **Client Secret** (obtained from the Salesforce portal) and set the **Sandbox** flag if you are connecting to a Salesforce Sandbox.
+![Salesforce Customer Service Attributes](../_media/inputAttributes_1.png)
+
 > **Critical**: Instance URL must be left blank to trigger Authorization Code Flow. If you provide an Instance URL, the extension will use Client Credentials Flow instead.
 
 ### Authentication Process
@@ -192,7 +150,7 @@ When setting up the extension for Authorization Code Flow:
 
 ---
 
-## 3. OAuth 2.0 Client Credentials Flow
+## 2. OAuth 2.0 Client Credentials Flow
 
 > **When used**: When you provide `Instance URL` + `Client ID` + `Client Secret`
 > **Required parameters**: `Client ID` + `Client Secret` + `Instance URL`
@@ -254,7 +212,85 @@ The OAuth 2.0 Client Credentials Flow enables direct server-to-server authentica
 
 > **Note**: The extension supports optional Instance URL and Sandbox settings. If your org requires a specific domain, you may set Instance URL to your Salesforce base domain (for example, https://mydomain.my.salesforce.com). Use the Sandbox flag if you are connecting to a sandbox org.
 
-When setting up the extension for Client Credentials Flow:
+
+### Steps for connection
+To set up the connection, you need to provide **Client ID** , **Client Secret** (obtained from the Salesforce portal) and **Instance URL**  and set the **Sandbox** flag if you are connecting to a Salesforce Sandbox.
+![Salesforce Customer Service Attributes](../_media/inputAttributes_2.png)
+
+---
+
+## 3. OAuth 2.0 Password Grant Flow
+
+> **When used**: When OAuth is not configured
+> **Required parameters**: `Username` + `Password` + `Security Token` + `Client ID` + `Client Secret`
+> **Best for**: Development, testing, and simple integrations
+> **Best for**: Development, testing, and simple integrations
+
+### Overview
+The OAuth 2.0 Password Grant Flow uses your Salesforce username, password, and security token to authenticate via OAuth 2.0. This method is straightforward but requires storing credentials directly in the extension configuration.
+
+### Prerequisites
+- A Salesforce Developer Account or regular Salesforce account
+- Access to your Salesforce org's setup area
+- Email access to receive the security token
+
+### Step 1: Obtaining Username and Password
+
+#### If you already have a Salesforce account:
+* Use your existing Salesforce username and password
+
+#### If you need a new Salesforce Developer Account:
+* Go to the Salesforce Developer portal from [here](https://developer.salesforce.com/).
+* Click the **Sign Up** button. Enter all personal details and click **Sign Me Up**.
+* Check the verification email in your Inbox and click **Verify Account**.
+  ![Verify Account](../_media/verifyAccount.png)
+* You will be redirected to the **Change Your Password** page. Set up a new password and configure your **Security Question** and **Answer**.
+  ![Change Password](../_media/changePassword.png)
+* Click **Change Password**. Save these credentials as your **Username** and **Password**.
+
+### Step 2: Obtaining Security Token
+* Log in to your Salesforce account and navigate to your user profile. Click **Settings**.
+  ![Profile](../_media/profile.png)
+* On the navigation panel, click **Reset My Security Token** and then **Reset Security Token**.
+  ![Reset Security Token](../_media/resetSecurityToken.png)
+* You will receive a unique security token via email. Save this token for the extension setup.
+
+### Step 3: Enable Username-Password Flow (if needed)
+* Navigate to the Setup icon and click **Setup**.
+  ![Setup](../_media/setup.png)
+* From the left navigation panel under **SETTINGS**, click on the **Identity** dropdown.
+  * Click **OAuth and OpenID Connect Settings**.
+  * Enable the **Allow OAuth Username-Password Flows** toggle switch.
+    ![Username Password Flow](../_media/UsernamePasswordFlow.png)
+
+### Step 4: Configure Extension
+When setting up the extension for Password Grant Flow:
+1. **Client ID**: Enter your Connected App's Consumer Key
+2. **Client Secret**: Enter your Connected App's Consumer Secret
+3. **Username**: Enter your Salesforce username
+4. **Password**: Enter your Salesforce password
+5. **Security Token**: Enter the security token received via email
+6. **Instance URL**: Leave blank (this triggers Authorization Code Flow if OAuth is configured)
+7. **Sandbox**: Check if connecting to a sandbox org
+
+### Steps for connection
+To set up the connection, you need to provide **Client ID** and **Client Secret** (obtained from the Salesforce portal). Depending on your authentication method, you also need **Username**, **Password**, and **Security Token** and set the **Sandbox** flag if you are connecting to a Salesforce Sandbox.
+![Salesforce Customer Service Attributes](../_media/inputAttributes_3.png)
+
+
+> **Note** : 
+> 1. For **Username** and **Password**, use your Salesforce login credentials.
+> 2. For **Security Token**, use the security token that you received via email after resetting it in your Salesforce org.
+
+### Security Considerations
+- **Less Secure**: Credentials are stored in the extension configuration
+- **No Token Expiration**: Unlike OAuth tokens, these credentials don't automatically expire
+- **Limited Scope**: Cannot restrict access to specific resources
+- **Recommended Use**: Development, testing, or simple integrations only
+
+---
+
+### When setting up the extension for Client Credentials Flow:
 1. **Client ID**: Enter the Consumer Key
 2. **Client Secret**: Enter the Consumer Secret
 3. **Instance URL**: **Must provide** your Salesforce org domain (e.g., https://your-domain.my.salesforce.com)

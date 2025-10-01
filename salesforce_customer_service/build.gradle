@@ -110,51 +110,82 @@ import java.util.regex.Pattern
     Every extension developer should update extensionFile and areaFileName with relative path.
  */
 
-abstract class GenerateReleasePropertiesTask extends DefaultTask {
-    @TaskAction
-    def generateProperties() {
-        // Update this path to point to your salesforce customer service extension main class
+tasks.register('generateReleaseProperties') {
+    group = 'build'
+    description = 'Generates release.properties file with extension version and domain information'
+
+    doLast {
         def extensionFilePath = 'src/main/java/app/krista/extensions/crm/customer_relations/salesforce_customer_service/SalesforceCustomerServiceExtension.java'
-        def areaFilePath = 'src/main/java/app/krista/extensions/crm/customer_relations/salesforce_customer_service/catalog/CaseManagementArea.java'
+        def caseManagementAreaFilePath = 'src/main/java/app/krista/extensions/crm/customer_relations/salesforce_customer_service/catalog/CaseManagementArea.java'
+        def contentAreaFilePath = 'src/main/java/app/krista/extensions/crm/customer_relations/salesforce_customer_service/catalog/ContentArea.java'
 
         def extensionFile = project.file(extensionFilePath)
-        def areaFile = project.file(areaFilePath)
+        def caseManagementAreaFile = project.file(caseManagementAreaFilePath)
+        def contentAreaFile = project.file(contentAreaFilePath)
+
         if (!extensionFile.exists()) {
             throw new GradleException("Extension file not found: ${extensionFilePath}")
         }
-        if (!areaFile.exists()) {
-            throw new GradleException("Area file not found: ${areaFilePath}")
+        // Check that at least one area file exists
+        if (!caseManagementAreaFile.exists() && !contentAreaFile.exists()) {
+            throw new GradleException("None of the area files found. At least one must exist.")
         }
+
         def properties = new Properties()
+        // Pre-compile the regex pattern for better performance
         def keyValuePattern = Pattern.compile(/(\w+)\s*=\s*"([^"]+)"/)
 
-        // Extract Extension annotation info
+        // Extract Extension annotation information
         extractAnnotationInfo(extensionFile, "@Extension", keyValuePattern) { key, value ->
-            if (key == "name") {
-                properties.setProperty("extension.name", value)
-                logger.lifecycle("Found extension name: ${value}")
-            } else if (key == "version") {
+            if (key == "version") {
                 properties.setProperty("extension.version", value)
                 logger.lifecycle("Found extension version: ${value}")
+            } else if (key == "name") {
+                properties.setProperty("extension.name", value)
+                logger.lifecycle("Found extension name: ${value}")
             }
         }
 
-        // Extract Domain annotation info
-        extractAnnotationInfo(areaFile, "@Domain", keyValuePattern) { key, value ->
-            if (key == "name") {
-                properties.setProperty("domain.name", value)
-                logger.lifecycle("Found domain name: ${value}")
-            } else if (key == "ecosystemName") {
-                properties.setProperty("ecosystem.name", value)
-                logger.lifecycle("Found ecosystem name: ${value}")
+        // Set default extension name if not found
+        if (!properties.getProperty('extension.name')) {
+            properties.setProperty("extension.name", "Salesforce Customer Service")
+            logger.lifecycle("Set default extension name: Salesforce Customer Service")
+        }
+
+        // Try to extract Domain annotation information from all area files
+        def domainFound = false
+        def ecosystemFound = false
+
+        // Check each area file if it exists
+        [caseManagementAreaFile, contentAreaFile].each { areaFile ->
+            if (areaFile.exists()) {
+                extractAnnotationInfo(areaFile, "@Domain", keyValuePattern) { key, value ->
+                    if (key == "name" && !domainFound) {
+                        properties.setProperty("domain.name", value)
+                        logger.lifecycle("Found domain name: ${value} from ${areaFile.name}")
+                        domainFound = true
+                    } else if (key == "ecosystemName" && !ecosystemFound) {
+                        properties.setProperty("ecosystem.name", value)
+                        logger.lifecycle("Found ecosystem name: ${value} from ${areaFile.name}")
+                        ecosystemFound = true
+                    }
+                }
             }
         }
 
         if (!properties.getProperty('extension.version')) {
             throw new GradleException("Could not find extension version in ${extensionFilePath}")
         }
-        if (!properties.getProperty('domain.name') || !properties.getProperty('ecosystem.name')) {
-            throw new GradleException("Could not find domain name or ecosystem name in ${extensionFilePath}")
+
+        // Set default values if not found in annotations
+        if (!properties.getProperty('domain.name')) {
+            properties.setProperty("domain.name", "customer_relations")
+            logger.lifecycle("Set default domain name: customer_relations")
+        }
+
+        if (!properties.getProperty('ecosystem.name')) {
+            properties.setProperty("ecosystem.name", "CRM")
+            logger.lifecycle("Set default ecosystem name: CRM")
         }
 
         def releasePropertiesFile = project.file('release.properties')
@@ -162,41 +193,31 @@ abstract class GenerateReleasePropertiesTask extends DefaultTask {
         releasePropertiesFile.text = content + '\n'
         logger.lifecycle("Generated release.properties with content:\n${content}")
     }
+}
 
-    /**
-     * Extracts annotation information from a file
-     * @param file The file to extract from
-     * @param annotationName The annotation name to look for
-     * @param keyValuePattern The regex pattern to extract key-value pairs
-     * @param processProperty Closure to process each property
-     */
-    private static void extractAnnotationInfo(File file, String annotationName, Pattern keyValuePattern, Closure processProperty) {
-        StringBuilder annotationText = new StringBuilder()
-        boolean inAnnotation = false
-        file.eachLine { line ->
-            line = line.trim()
-            if (line.contains(annotationName)) {
-                inAnnotation = true
-            }
-            if (inAnnotation) {
-                annotationText.append(line)
-                if (line.contains(")")) {
-                    inAnnotation = false
-                    def matcher = keyValuePattern.matcher(annotationText.toString())
-                    while (matcher.find()) {
-                        def key = matcher.group(1)
-                        def value = matcher.group(2)
-                        processProperty.call(key, value)
-                    }
-                }
+def extractAnnotationInfo(File file, String annotationName, Pattern keyValuePattern, Closure processProperty) {
+    StringBuilder annotationText = new StringBuilder()
+    boolean inAnnotation = false
+    file.eachLine { line ->
+        line = line.trim()
+        if (line.contains(annotationName)) {
+            inAnnotation = true
+            annotationText.setLength(0) // Reset the buffer when starting a new annotation
+            annotationText.append(line)
+        } else if (inAnnotation) {
+            annotationText.append(line)
+        }
+
+        if (inAnnotation && line.contains(")")) {
+            inAnnotation = false
+            def matcher = keyValuePattern.matcher(annotationText.toString())
+            while (matcher.find()) {
+                def key = matcher.group(1)
+                def value = matcher.group(2)
+                processProperty.call(key, value)
             }
         }
     }
-}
-
-tasks.register('generateReleaseProperties', GenerateReleasePropertiesTask) {
-    group = 'build'
-    description = 'Generates release.properties file with extension version and domain information'
 }
 tasks.named("jar") {
     dependsOn tasks.named("generateReleaseProperties")
