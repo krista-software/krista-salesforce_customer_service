@@ -8,19 +8,19 @@ This guide covers how the Krista Salesforce Customer Service Extension automatic
 
 The extension automatically chooses the authentication method based on what you configure:
 
-1. **OAuth 2.0 Client Credentials Flow** - Used when you provide `Instance URL` + `Client ID` + `Client Secret`
-2. **OAuth 2.0 Authorization Code Flow** - Used when you provide only `Client ID` + `Client Secret` (Instance URL left blank)
+1. **OAuth 2.0 Authorization Code Flow** - Used when you provide only `Client ID` + `Client Secret` (Instance URL left blank)
+2. **OAuth 2.0 Client Credentials Flow** - Used when you provide `Instance URL` + `Client ID` + `Client Secret` 
 3. **OAuth 2.0 Password Grant Flow** - Used when OAuth is not configured (requires `Client ID` + `Client Secret` + `Username` + `Password` + `Security Token`)
 
 > **Important**: You don't select an "authentication method" - the extension automatically determines which flow to use based on the parameters you provide.
 
 ## Quick Reference: Parameter Combinations
 
-| Parameters Provided                                                          | Authentication Method Used     | Use Case                                  |
-|------------------------------------------------------------------------------|--------------------------------|-------------------------------------------|
-| `Client ID` + `Client Secret` + `Instance URL`                               | **Client Credentials Flow**    | Server-to-server, no user interaction     |
-| `Client ID` + `Client Secret` (Instance URL blank)                           | **Authorization Code Flow**    | User interactive, web-based               |
-| `Client ID` + `Client Secret` + `Username` + `Password` + `Security Token`   | **Password Grant Flow**        | When OAuth not configured                 |
+| Parameters Provided                                                        | Authentication Method Used   | Use Case                              |
+|----------------------------------------------------------------------------|------------------------------|---------------------------------------|
+| `Client ID` + `Client Secret` (Instance URL blank)                         | **Authorization Code Flow**  | User interactive, web-based           |
+| `Client ID` + `Client Secret` + `Instance URL`                             | **Client Credentials Flow**  | Server-to-server, no user interaction |
+| `Client ID` + `Client Secret` + `Username` + `Password` + `Security Token` | **Password Grant Flow**      | When OAuth not configured             |
 
 
 ---
