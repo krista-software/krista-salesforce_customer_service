@@ -1,6 +1,11 @@
 package app.krista.extensions.crm.customer_relations.salesforce_customer_service.validators;
 
-import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.*;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.AccountDaoImpl;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.CaseDaoImpl;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.ContactDaoImpl;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.CustomerDaoImpl;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.IndividualDaoImpl;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.SalesforceService;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;

@@ -10,7 +10,7 @@ import java.time.format.DateTimeParseException;
  * Utility class for date formatting and parsing operations.
  * Provides helper methods to convert between timestamps and {@link String}
  * representations in the format {@code yyyy-MM-dd}.
- *
+ * <p>
  * This class is thread-safe and uses the modern java.time API.
  */
 public final class DatePlus {
