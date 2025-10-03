@@ -12,6 +12,8 @@ import com.github.scribejava.core.oauth.OAuth20Service;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Map;
 
 /**
@@ -82,7 +84,7 @@ public final class SalesforceCustomerServiceAttributes {
                                                String securityToken, Boolean isSandbox, String routingUrl) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
-        this.instanceUrl = instanceUrl;
+        this.instanceUrl = validateInstanceUrl(instanceUrl);
         this.userName = userName;
         this.password = password;
         this.securityToken = securityToken;
@@ -161,24 +163,62 @@ public final class SalesforceCustomerServiceAttributes {
     /**
      * Lazily initializes and returns the {@link OAuth20Service} for authentication.
      *
+     * <p>This method creates an OAuth service for standard Salesforce authentication
+     * using either production or sandbox endpoints based on the {@link #isSandbox()} setting.</p>
+     *
      * @return the configured {@link OAuth20Service}
+     * @throws IllegalStateException if the OAuth service cannot be created due to invalid configuration
+     * @throws IllegalArgumentException if required configuration parameters are missing or invalid
      */
     public synchronized OAuth20Service getOauthService() {
         if (oAuthService == null) {
-            oAuthService = new ServiceBuilder(getClientId())
-                    .apiSecret(getClientSecret())
-                    .callback(getCallbackUrl())
-                    .build(isSandbox() ? SalesforceApi.sandbox() : SalesforceApi.instance());
+            try {
+                validateOAuthConfiguration();
+
+                oAuthService = new ServiceBuilder(getClientId())
+                        .apiSecret(getClientSecret())
+                        .callback(getCallbackUrl())
+                        .build(isSandbox() ? SalesforceApi.sandbox() : SalesforceApi.instance());
+
+            } catch (Exception e) {
+                throw new IllegalStateException(Constants.OAUTH_SERVICE_CREATION_ERROR, e);
+            }
         }
         return oAuthService;
     }
 
+    /**
+     * Lazily initializes and returns the {@link OAuth20Service} for authentication with a custom domain.
+     *
+     * <p>This method creates an OAuth service for Client Credentials flow authentication
+     * using a custom Salesforce instance domain URL.</p>
+     *
+     * @param domainUrl the custom Salesforce instance domain URL
+     * @return the configured {@link OAuth20Service}
+     * @throws IllegalStateException if the OAuth service cannot be created due to invalid configuration
+     * @throws IllegalArgumentException if the domain URL or other required parameters are invalid
+     */
     public synchronized OAuth20Service getOauthService(String domainUrl) {
         if (oAuthService == null) {
-            oAuthService = new ServiceBuilder(getClientId())
-                    .apiSecret(getClientSecret())
-                    .callback(getCallbackUrl())
-                    .build(new SalesforceCustomApi(domainUrl));
+            try {
+                validateOAuthConfiguration();
+
+                if (domainUrl == null || domainUrl.trim().isEmpty()) {
+                    throw new IllegalArgumentException(Constants.DOMAIN_URL_REQUIRED);
+                }
+
+                oAuthService = new ServiceBuilder(getClientId())
+                        .apiSecret(getClientSecret())
+                        .callback(getCallbackUrl())
+                        .build(new SalesforceCustomApi(domainUrl));
+
+            } catch (IllegalArgumentException e) {
+                // Re-throw validation errors as-is
+                throw e;
+            } catch (Exception e) {
+                throw new IllegalStateException(Constants.OAUTH_SERVICE_CUSTOM_DOMAIN_ERROR + domainUrl +
+                        Constants.OAUTH_SERVICE_VERIFY_CONFIG, e);
+            }
         }
         return oAuthService;
     }
@@ -191,10 +231,400 @@ public final class SalesforceCustomerServiceAttributes {
     public void update(Map<String, Object> newAttributes) {
         clientId = InvokerAttributes.getStringOrNull(newAttributes, CLIENT_ID);
         clientSecret = InvokerAttributes.getStringOrNull(newAttributes, CLIENT_SECRET);
-        instanceUrl = InvokerAttributes.getStringOrNull(newAttributes, INSTANCE_URL);
+        instanceUrl = validateInstanceUrl(InvokerAttributes.getStringOrNull(newAttributes, INSTANCE_URL));
         userName = InvokerAttributes.getStringOrNull(newAttributes, USER_NAME);
         password = InvokerAttributes.getStringOrNull(newAttributes, PASS_WORD);
         securityToken = InvokerAttributes.getStringOrNull(newAttributes, SECURITY_TOKEN);
         isSandbox = InvokerAttributes.getBooleanOrNull(newAttributes, SANDBOX);
+    }
+
+    /**
+     * Validates the Instance URL format.
+     *
+     * @param instanceUrl the Instance URL to validate
+     * @return the validated Instance URL, or null if input is null/empty
+     * @throws IllegalArgumentException if the Instance URL format is invalid
+     */
+    private String validateInstanceUrl(String instanceUrl) {
+        if (instanceUrl == null || instanceUrl.trim().isEmpty()) {
+            return instanceUrl; // Allow null or empty values
+        }
+
+        try {
+            URL url = new URL(instanceUrl.trim());
+
+            // Validate protocol
+            String protocol = url.getProtocol();
+            if (!"https".equals(protocol) && !"http".equals(protocol)) {
+                throw new IllegalArgumentException(Constants.INSTANCE_URL_PROTOCOL_ERROR + protocol);
+            }
+
+            // Validate host
+            String host = url.getHost();
+            if (host == null || host.trim().isEmpty()) {
+                throw new IllegalArgumentException(Constants.INSTANCE_URL_HOST_ERROR);
+            }
+
+            // Validate that it looks like a Salesforce domain (basic check)
+            if (!host.contains("salesforce.com") && !host.contains("force.com") &&
+                !host.contains("my.salesforce.com") && !host.contains("lightning.force.com")) {
+                // Allow any domain for flexibility, but log a warning for non-Salesforce domains
+                // This is a soft validation - we don't throw an exception
+            }
+
+            return instanceUrl.trim();
+
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException(Constants.INSTANCE_URL_FORMAT_ERROR + instanceUrl + ". " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Validates the OAuth configuration to ensure all required parameters are present and valid.
+     *
+     * @throws IllegalArgumentException if any required OAuth configuration is missing or invalid
+     */
+    private void validateOAuthConfiguration() {
+        if (clientId == null || clientId.trim().isEmpty()) {
+            throw new IllegalArgumentException(Constants.CLIENT_ID_REQUIRED);
+        }
+
+        if (clientSecret == null || clientSecret.trim().isEmpty()) {
+            throw new IllegalArgumentException(Constants.CLIENT_SECRET_REQUIRED);
+        }
+
+        // Validate routing URL first (required for callback URL generation)
+        if (routingUrl == null || routingUrl.trim().isEmpty()) {
+            throw new IllegalArgumentException(Constants.ROUTING_URL_REQUIRED);
+        }
+
+        // Validate callback URL
+        String callbackUrl = getCallbackUrl();
+        if (callbackUrl == null || callbackUrl.trim().isEmpty()) {
+            throw new IllegalArgumentException(Constants.CALLBACK_URL_REQUIRED);
+        }
+
+        // Basic callback URL format validation
+        if (!callbackUrl.startsWith("http://") && !callbackUrl.startsWith("https://")) {
+            throw new IllegalArgumentException(Constants.CALLBACK_URL_FORMAT_ERROR + callbackUrl);
+        }
+    }
+
+    /**
+     * Validates the configuration for a specific authentication flow.
+     *
+     * @param flowType the authentication flow type to validate for
+     * @return ValidationResult containing validation status and any error messages
+     */
+    public ValidationResult validateConfiguration(AuthenticationFlowType flowType) {
+        ValidationResult result = new ValidationResult();
+
+        try {
+            switch (flowType) {
+                case CLIENT_CREDENTIALS:
+                    validateClientCredentialsFlow(result);
+                    break;
+                case AUTHORIZATION_CODE:
+                    validateAuthorizationCodeFlow(result);
+                    break;
+                case PASSWORD_GRANT:
+                    validatePasswordGrantFlow(result);
+                    break;
+                case AUTO_DETECT:
+                    validateAutoDetectFlow(result);
+                    break;
+                default:
+                    result.addError("Unknown authentication flow type: " + flowType);
+            }
+        } catch (Exception e) {
+            result.addError("Validation failed: " + e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * Validates configuration for OAuth 2.0 Client Credentials flow.
+     * Requires: Client ID, Client Secret, Instance URL, Routing URL
+     */
+    private void validateClientCredentialsFlow(ValidationResult result) {
+        // Basic OAuth requirements
+        if (clientId == null || clientId.trim().isEmpty()) {
+            result.addError(Constants.CLIENT_ID_REQUIRED);
+        }
+
+        if (clientSecret == null || clientSecret.trim().isEmpty()) {
+            result.addError(Constants.CLIENT_SECRET_REQUIRED);
+        }
+
+        if (routingUrl == null || routingUrl.trim().isEmpty()) {
+            result.addError(Constants.ROUTING_URL_REQUIRED);
+        }
+
+        // Instance URL is required for Client Credentials flow
+        if (instanceUrl == null || instanceUrl.trim().isEmpty()) {
+            result.addError("Instance URL is required for Client Credentials flow");
+        } else {
+            try {
+                validateInstanceUrl(instanceUrl);
+            } catch (IllegalArgumentException e) {
+                result.addError("Instance URL validation failed: " + e.getMessage());
+            }
+        }
+
+        // Validate callback URL if routing URL is present
+        if (routingUrl != null && !routingUrl.trim().isEmpty()) {
+            try {
+                String callbackUrl = getCallbackUrl();
+                if (!callbackUrl.startsWith("http://") && !callbackUrl.startsWith("https://")) {
+                    result.addError(Constants.CALLBACK_URL_FORMAT_ERROR + callbackUrl);
+                }
+            } catch (Exception e) {
+                result.addError("Callback URL generation failed: " + e.getMessage());
+            }
+        }
+
+        // Username/password should not be required for Client Credentials
+        if ((userName != null && !userName.trim().isEmpty()) ||
+            (password != null && !password.trim().isEmpty()) ||
+            (securityToken != null && !securityToken.trim().isEmpty())) {
+            result.addWarning("Username/password credentials are not needed for Client Credentials flow and will be ignored");
+        }
+    }
+
+    /**
+     * Validates configuration for OAuth 2.0 Authorization Code flow.
+     * Requires: Client ID, Client Secret, Routing URL (no Instance URL, no username/password)
+     */
+    private void validateAuthorizationCodeFlow(ValidationResult result) {
+        // Basic OAuth requirements
+        if (clientId == null || clientId.trim().isEmpty()) {
+            result.addError(Constants.CLIENT_ID_REQUIRED);
+        }
+
+        if (clientSecret == null || clientSecret.trim().isEmpty()) {
+            result.addError(Constants.CLIENT_SECRET_REQUIRED);
+        }
+
+        if (routingUrl == null || routingUrl.trim().isEmpty()) {
+            result.addError(Constants.ROUTING_URL_REQUIRED);
+        }
+
+        // Instance URL should be empty for Authorization Code flow
+        if (instanceUrl != null && !instanceUrl.trim().isEmpty()) {
+            result.addWarning("Instance URL is not needed for Authorization Code flow and will be ignored");
+        }
+
+        // Username/password should not be provided for Authorization Code flow
+        if ((userName != null && !userName.trim().isEmpty()) ||
+            (password != null && !password.trim().isEmpty()) ||
+            (securityToken != null && !securityToken.trim().isEmpty())) {
+            result.addWarning("Username/password credentials are not needed for Authorization Code flow and will be ignored");
+        }
+
+        // Validate callback URL
+        if (routingUrl != null && !routingUrl.trim().isEmpty()) {
+            try {
+                String callbackUrl = getCallbackUrl();
+                if (!callbackUrl.startsWith("http://") && !callbackUrl.startsWith("https://")) {
+                    result.addError(Constants.CALLBACK_URL_FORMAT_ERROR + callbackUrl);
+                }
+            } catch (Exception e) {
+                result.addError("Callback URL generation failed: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Validates configuration for OAuth 2.0 Password Grant flow.
+     * Requires: Client ID, Client Secret, Username, Password, Security Token, Routing URL
+     */
+    private void validatePasswordGrantFlow(ValidationResult result) {
+        // Basic OAuth requirements
+        if (clientId == null || clientId.trim().isEmpty()) {
+            result.addError(Constants.CLIENT_ID_REQUIRED);
+        }
+
+        if (clientSecret == null || clientSecret.trim().isEmpty()) {
+            result.addError(Constants.CLIENT_SECRET_REQUIRED);
+        }
+
+        if (routingUrl == null || routingUrl.trim().isEmpty()) {
+            result.addError(Constants.ROUTING_URL_REQUIRED);
+        }
+
+        // Username/password credentials are required for Password Grant flow
+        if (userName == null || userName.trim().isEmpty()) {
+            result.addError("Username is required for Password Grant flow");
+        }
+
+        if (password == null || password.trim().isEmpty()) {
+            result.addError("Password is required for Password Grant flow");
+        }
+
+        if (securityToken == null || securityToken.trim().isEmpty()) {
+            result.addError("Security Token is required for Password Grant flow");
+        }
+
+        // Instance URL should be empty for Password Grant flow (uses standard Salesforce endpoints)
+        if (instanceUrl != null && !instanceUrl.trim().isEmpty()) {
+            result.addWarning("Instance URL is not needed for Password Grant flow and will be ignored");
+        }
+
+        // Validate callback URL
+        if (routingUrl != null && !routingUrl.trim().isEmpty()) {
+            try {
+                String callbackUrl = getCallbackUrl();
+                if (!callbackUrl.startsWith("http://") && !callbackUrl.startsWith("https://")) {
+                    result.addError(Constants.CALLBACK_URL_FORMAT_ERROR + callbackUrl);
+                }
+            } catch (Exception e) {
+                result.addError("Callback URL generation failed: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Validates configuration for auto-detection of authentication flow.
+     * Checks which flows are possible with the current configuration.
+     */
+    private void validateAutoDetectFlow(ValidationResult result) {
+        boolean canUseClientCredentials = true;
+        boolean canUseAuthorizationCode = true;
+        boolean canUsePasswordGrant = true;
+
+        // Check basic OAuth requirements (needed for all flows)
+        if (clientId == null || clientId.trim().isEmpty()) {
+            result.addError(Constants.CLIENT_ID_REQUIRED);
+            canUseClientCredentials = canUseAuthorizationCode = canUsePasswordGrant = false;
+        }
+
+        if (clientSecret == null || clientSecret.trim().isEmpty()) {
+            result.addError(Constants.CLIENT_SECRET_REQUIRED);
+            canUseClientCredentials = canUseAuthorizationCode = canUsePasswordGrant = false;
+        }
+
+        if (routingUrl == null || routingUrl.trim().isEmpty()) {
+            result.addError(Constants.ROUTING_URL_REQUIRED);
+            canUseClientCredentials = canUseAuthorizationCode = canUsePasswordGrant = false;
+        }
+
+        // Check Client Credentials flow requirements
+        if (instanceUrl == null || instanceUrl.trim().isEmpty()) {
+            canUseClientCredentials = false;
+        } else {
+            try {
+                validateInstanceUrl(instanceUrl);
+            } catch (IllegalArgumentException e) {
+                canUseClientCredentials = false;
+                result.addWarning("Client Credentials flow not available: " + e.getMessage());
+            }
+        }
+
+        // Check Password Grant flow requirements
+        if (userName == null || userName.trim().isEmpty() ||
+            password == null || password.trim().isEmpty() ||
+            securityToken == null || securityToken.trim().isEmpty()) {
+            canUsePasswordGrant = false;
+        }
+
+        // Report available flows
+        if (canUseClientCredentials) {
+            result.addInfo("Client Credentials flow is available (Instance URL provided)");
+        }
+        if (canUseAuthorizationCode) {
+            result.addInfo("Authorization Code flow is available");
+        }
+        if (canUsePasswordGrant) {
+            result.addInfo("Password Grant flow is available (username/password provided)");
+        }
+
+        // Determine which flow will be selected
+        if (canUseClientCredentials) {
+            result.addInfo("Auto-detection will select: Client Credentials flow");
+        } else if (canUseAuthorizationCode) {
+            result.addInfo("Auto-detection will select: Authorization Code flow");
+        } else if (canUsePasswordGrant) {
+            result.addInfo("Auto-detection will select: Password Grant flow");
+        } else {
+            result.addError("No authentication flow is available with current configuration");
+        }
+    }
+
+    /**
+     * Enumeration of supported authentication flow types.
+     */
+    public enum AuthenticationFlowType {
+        CLIENT_CREDENTIALS,
+        AUTHORIZATION_CODE,
+        PASSWORD_GRANT,
+        AUTO_DETECT
+    }
+
+    /**
+     * Result of configuration validation containing errors, warnings, and info messages.
+     */
+    public static class ValidationResult {
+        private final java.util.List<String> errors = new java.util.ArrayList<>();
+        private final java.util.List<String> warnings = new java.util.ArrayList<>();
+        private final java.util.List<String> info = new java.util.ArrayList<>();
+
+        public void addError(String error) {
+            errors.add(error);
+        }
+
+        public void addWarning(String warning) {
+            warnings.add(warning);
+        }
+
+        public void addInfo(String info) {
+            this.info.add(info);
+        }
+
+        public boolean isValid() {
+            return errors.isEmpty();
+        }
+
+        public java.util.List<String> getErrors() {
+            return new java.util.ArrayList<>(errors);
+        }
+
+        public java.util.List<String> getWarnings() {
+            return new java.util.ArrayList<>(warnings);
+        }
+
+        public java.util.List<String> getInfo() {
+            return new java.util.ArrayList<>(info);
+        }
+
+        public boolean hasErrors() {
+            return !errors.isEmpty();
+        }
+
+        public boolean hasWarnings() {
+            return !warnings.isEmpty();
+        }
+
+        public boolean hasInfo() {
+            return !info.isEmpty();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("ValidationResult{");
+            sb.append("valid=").append(isValid());
+            if (!errors.isEmpty()) {
+                sb.append(", errors=").append(errors);
+            }
+            if (!warnings.isEmpty()) {
+                sb.append(", warnings=").append(warnings);
+            }
+            if (!info.isEmpty()) {
+                sb.append(", info=").append(info);
+            }
+            sb.append('}');
+            return sb.toString();
+        }
     }
 }

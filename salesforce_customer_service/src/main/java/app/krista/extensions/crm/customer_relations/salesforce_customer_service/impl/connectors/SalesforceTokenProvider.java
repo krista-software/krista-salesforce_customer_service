@@ -3,6 +3,7 @@ package app.krista.extensions.crm.customer_relations.salesforce_customer_service
 import app.krista.extension.authorization.MustAuthorizeException;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.SalesforceCustomerServiceAttributes;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.RefreshTokenStore;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import app.krista.ksdk.context.AuthorizationContext;
 import app.krista.ksdk.context.RequestContext;
 import app.krista.model.field.NamedValuedField;
@@ -99,36 +100,49 @@ public class SalesforceTokenProvider {
         if (SalesforceTokenProvider.validateUsingOAuth(isAdmin, salesforceCustomerServiceAttributes)) {
             String domain = salesforceCustomerServiceAttributes.getInstanceUrl();
             if (domain != null && !domain.isEmpty()) {
+                LOGGER.info("Using OAuth 2.0 Client Credentials flow for authentication with custom domain: {}", domain);
                 return getTokenUsingClientCredentials(domain);
             } else {
+                LOGGER.info("Using OAuth 2.0 Authorization Code flow for authentication (no custom domain provided)");
                 accountId = accountId == null ? authorizationContext.getAuthorizedAccount().getAccountId() : accountId;
                 String refreshToken = refreshTokenStore.get(getRefreshTokenKey(accountId));
                 if (refreshToken == null) {
+                    LOGGER.debug("No refresh token found for account: {}, requiring user authorization", accountId);
                     throw createMustAuthorizationException(false, accountId);
                 }
                 try {
+                    LOGGER.debug("Attempting to refresh access token for account: {}", accountId);
                     return getSalesforceTokenForUser(salesforceCustomerServiceAttributes.getOauthService().refreshAccessToken(refreshToken));
                 } catch (MustAuthorizeException cause) {
+                    LOGGER.debug("Refresh token failed, requiring re-authorization for account: {}", accountId);
                     throw createMustAuthorizationException(true, accountId);
                 } catch (OAuth2AccessTokenErrorResponse cause) {
                     if (cause.getErrorDescription() != null && cause.getErrorDescription().equals("expired access/refresh token")) {
+                        LOGGER.debug("Refresh token expired for account: {}, requiring re-authorization", accountId);
                         throw createMustAuthorizationException(true, accountId);
                     }
-                    throw new RuntimeException("Something went wrong, please try again later. " + cause.getErrorDescription(), cause);
+                    throw new RuntimeException("OAuth token refresh failed: " + cause.getErrorDescription() +
+                            ". This may indicate an issue with your Salesforce connected app configuration or network connectivity. " +
+                            "Please verify your OAuth settings and try again.", cause);
                 } catch (InterruptedException | ExecutionException | IOException cause) {
-                    throw new RuntimeException("Refresh Token not found. Please re authorize yourself. " + cause.getMessage(), cause);
+                    throw new RuntimeException("OAuth token refresh failed due to a technical error: " + cause.getMessage() +
+                            ". Please re-authorize yourself by logging in again. If the problem persists, " +
+                            "check your network connection and Salesforce service status.", cause);
                 }
             }
         } else {
+            LOGGER.info("Using OAuth 2.0 Password Grant flow for authentication with username/password credentials");
             Object username = salesforceCustomerServiceAttributes.getUserName();
             Object password = salesforceCustomerServiceAttributes.getPassword();
             Object securityToken = salesforceCustomerServiceAttributes.getSecurityToken();
 
             try {
+                LOGGER.debug("Attempting password grant authentication for username: {}", username);
                 return getSalesforceTokenForUser(
                         salesforceCustomerServiceAttributes.getOauthService().getAccessTokenPasswordGrant(String.valueOf(username),
                                 password + String.valueOf(securityToken)));
             } catch (Exception cause) {
+                LOGGER.error("Password Grant authentication failed for username: {} - {}", username, cause.getMessage());
                 String message = this.getErrorMessage(cause);
                 throw new IllegalArgumentException(message, cause);
             }
@@ -144,9 +158,10 @@ public class SalesforceTokenProvider {
      */
     private SalesforceToken getTokenUsingClientCredentials(String domain) throws IllegalArgumentException {
         try {
+            LOGGER.debug("Executing Client Credentials grant request to domain: {}", domain);
             return getSalesforceTokenForUser(salesforceCustomerServiceAttributes.getOauthService(domain).getAccessTokenClientCredentialsGrant());
         } catch (Exception cause) {
-            LOGGER.error("Failed to get access token for user. - {}", cause.getMessage(), cause);
+            LOGGER.error("Client Credentials flow failed for domain: {} - {}", domain, cause.getMessage(), cause);
             String message = this.getErrorMessage(cause);
             throw new IllegalArgumentException(message, cause);
         }
@@ -168,28 +183,112 @@ public class SalesforceTokenProvider {
             try {
                 // Attempt to parse the message as JSON
                 JSONObject json = new JSONObject(message);
-                if (json.has("error")) {
+                if (json.has(Constants.JSON_ERROR_KEY)) {
                     // Return the value of the "error" key directly
-                    String errorMessage = json.getString("error");
+                    String errorMessage = json.getString(Constants.JSON_ERROR_KEY);
                     return switch (errorMessage) {
                         // Thrown when the client ID or Client Secret is invalid
-                        case "invalid_client" ->
-                                "Authentication failed. Please check your Salesforce client credentials.";
+                        case Constants.INVALID_CLIENT_ERROR -> {
+                            LOGGER.debug("Invalid client credentials detected");
+                            yield buildClientCredentialsErrorMessage();
+                        }
 
                         //Thrown when the user credentials (username, password, or security token) are invalid
-                        case "invalid_grant" ->
-                                "Authentication failed. Please check your Salesforce username, password, and security token.";
+                        case Constants.INVALID_GRANT_ERROR -> {
+                            LOGGER.debug("Invalid grant credentials detected");
+                            yield buildPasswordGrantErrorMessage();
+                        }
 
                         //Handles any other authentication errors returned by Salesforce
-                        default -> "Authentication failed: " + errorMessage;
+                        default -> {
+                            LOGGER.debug("Other authentication error: {}", errorMessage);
+                            yield Constants.AUTHENTICATION_FAILED_PREFIX + errorMessage + ". " +
+                                  "Please verify your Salesforce configuration and try again.";
+                        }
                     };
                 }
             } catch (Exception exception) {
                 LOGGER.debug("Failed to parse error message as JSON: {}", exception.getMessage(), exception);
-                return "Provided attributes are not valid.";
+                return buildGenericErrorMessage(message);
             }
         }
-        return "An unexpected error occurred. Please contact support.";
+        return "An unexpected error occurred during authentication. Please verify your Salesforce configuration and contact support if the issue persists.";
+    }
+
+    /**
+     * Builds a detailed error message for client credentials authentication failures.
+     * Provides specific guidance based on the current configuration.
+     */
+    private String buildClientCredentialsErrorMessage() {
+        StringBuilder errorMsg = new StringBuilder(Constants.INVALID_CLIENT_MESSAGE);
+
+        // Add specific guidance based on configuration
+        String instanceUrl = salesforceCustomerServiceAttributes.getInstanceUrl();
+        if (instanceUrl != null && !instanceUrl.trim().isEmpty()) {
+            errorMsg.append(" You are using Client Credentials flow with custom domain: ")
+                   .append(instanceUrl)
+                   .append(". Verify that:");
+        } else {
+            errorMsg.append(" You are using Authorization Code flow. Verify that:");
+        }
+
+        errorMsg.append("\n1. Your Client ID is correct and active in Salesforce")
+               .append("\n2. Your Client Secret matches the connected app configuration")
+               .append("\n3. The connected app has the correct OAuth scopes enabled");
+
+        if (instanceUrl != null && !instanceUrl.trim().isEmpty()) {
+            errorMsg.append("\n4. The Instance URL (").append(instanceUrl).append(") is correct and accessible");
+        }
+
+        return errorMsg.toString();
+    }
+
+    /**
+     * Builds a detailed error message for password grant authentication failures.
+     * Provides specific guidance for username/password authentication.
+     */
+    private String buildPasswordGrantErrorMessage() {
+        StringBuilder errorMsg = new StringBuilder(Constants.INVALID_GRANT_MESSAGE);
+
+        String username = String.valueOf(salesforceCustomerServiceAttributes.getUserName());
+        errorMsg.append(" You are using Password Grant flow");
+
+        if (username != null && !username.equals("null") && !username.trim().isEmpty()) {
+            errorMsg.append(" with username: ").append(username);
+        }
+
+        errorMsg.append(". Verify that:")
+               .append("\n1. Your username is correct and the user account is active")
+               .append("\n2. Your password is current and not expired")
+               .append("\n3. Your security token is valid (check your email for the latest token)")
+               .append("\n4. The user has API access enabled in their profile")
+               .append("\n5. Your organization allows API access")
+               .append("\n6. You are connecting to the correct Salesforce environment (production vs sandbox)");
+
+        return errorMsg.toString();
+    }
+
+    /**
+     * Builds a generic error message when JSON parsing fails.
+     * Attempts to extract useful information from the raw error message.
+     */
+    private String buildGenericErrorMessage(String rawMessage) {
+        // Check for common error patterns in non-JSON responses
+        if (rawMessage.toLowerCase().contains("unauthorized")) {
+            return "Authentication failed: Unauthorized access. Please check your credentials and ensure your user account has the necessary permissions.";
+        } else if (rawMessage.toLowerCase().contains("forbidden")) {
+            return "Authentication failed: Access forbidden. Your credentials may be correct but lack sufficient permissions for API access.";
+        } else if (rawMessage.toLowerCase().contains("timeout")) {
+            return "Authentication failed: Request timeout. Please check your network connection and try again.";
+        } else if (rawMessage.toLowerCase().contains("connection")) {
+            return "Authentication failed: Connection error. Please verify your Instance URL and network connectivity.";
+        } else if (rawMessage.toLowerCase().contains("ssl") || rawMessage.toLowerCase().contains("certificate")) {
+            return "Authentication failed: SSL/Certificate error. Please verify your Instance URL uses HTTPS and has a valid certificate.";
+        }
+
+        // Generic fallback with the original message
+        return "Authentication failed with error: " + rawMessage +
+               ". Please verify your Salesforce configuration and contact support if the issue persists.";
     }
 
     /**
@@ -218,7 +317,9 @@ public class SalesforceTokenProvider {
         } else if (accessToken.getAccessToken() != null) {
             salesforceAccessToken = new SalesforceToken(accessToken.getAccessToken(), salesforceCustomerServiceAttributes.getInstanceUrl(), accessToken.getRawResponse());
         } else {
-            throw new IllegalArgumentException("Salesforce didn't return the correct token. Please provide valid credentials.");
+            throw new IllegalArgumentException("Salesforce authentication succeeded but returned an invalid token format. " +
+                    "This may indicate a configuration issue with your Salesforce connected app or an unexpected response format. " +
+                    "Please verify your connected app settings and contact support if the issue persists.");
         }
         return salesforceAccessToken;
     }
@@ -254,9 +355,20 @@ public class SalesforceTokenProvider {
      */
     public static boolean validateUsingOAuth(boolean isAdmin, SalesforceCustomerServiceAttributes
             salesforceSalesAttributes) {
-        return isAdmin || (salesforceSalesAttributes.getUserName() == null || salesforceSalesAttributes.getUserName().isBlank() ||
+        boolean useOAuth = isAdmin || (salesforceSalesAttributes.getUserName() == null || salesforceSalesAttributes.getUserName().isBlank() ||
                 salesforceSalesAttributes.getPassword() == null || salesforceSalesAttributes.getPassword().isBlank() ||
                 salesforceSalesAttributes.getSecurityToken() == null || salesforceSalesAttributes.getSecurityToken().isBlank());
+
+        LOGGER.debug("Authentication flow selection - Admin context: {}, Use OAuth: {}, " +
+                "Has username: {}, Has password: {}, Has security token: {}, Instance URL: {}",
+                isAdmin, useOAuth,
+                salesforceSalesAttributes.getUserName() != null && !salesforceSalesAttributes.getUserName().isBlank(),
+                salesforceSalesAttributes.getPassword() != null && !salesforceSalesAttributes.getPassword().isBlank(),
+                salesforceSalesAttributes.getSecurityToken() != null && !salesforceSalesAttributes.getSecurityToken().isBlank(),
+                salesforceSalesAttributes.getInstanceUrl() != null && !salesforceSalesAttributes.getInstanceUrl().isEmpty() ?
+                    "provided" : "not provided");
+
+        return useOAuth;
     }
 
 }

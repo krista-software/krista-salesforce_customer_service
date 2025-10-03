@@ -166,4 +166,111 @@ public class SalesforceTokenProviderTest {
         assertTrue("Mixed credentials should trigger OAuth",
                   SalesforceTokenProvider.validateUsingOAuth(false, attributes3));
     }
+
+    /**
+     * Test Client Credentials flow with various Instance URL formats.
+     */
+    @Test
+    public void testClientCredentialsFlow_InstanceUrlFormats() {
+        // Test with standard HTTPS URL
+        SalesforceCustomerServiceAttributes attributes1 = new SalesforceCustomerServiceAttributes(
+            CLIENT_ID, CLIENT_SECRET, "https://test.my.salesforce.com", null, null, null, false, ROUTING_URL);
+        assertTrue("HTTPS Instance URL should trigger OAuth",
+                  SalesforceTokenProvider.validateUsingOAuth(false, attributes1));
+
+        // Test with sandbox URL
+        SalesforceCustomerServiceAttributes attributes2 = new SalesforceCustomerServiceAttributes(
+            CLIENT_ID, CLIENT_SECRET, "https://test--sandbox.my.salesforce.com", null, null, null, true, ROUTING_URL);
+        assertTrue("Sandbox Instance URL should trigger OAuth",
+                  SalesforceTokenProvider.validateUsingOAuth(false, attributes2));
+
+        // Test with custom domain
+        SalesforceCustomerServiceAttributes attributes3 = new SalesforceCustomerServiceAttributes(
+            CLIENT_ID, CLIENT_SECRET, "https://custom.my.salesforce.com", null, null, null, false, ROUTING_URL);
+        assertTrue("Custom domain Instance URL should trigger OAuth",
+                  SalesforceTokenProvider.validateUsingOAuth(false, attributes3));
+
+        // Test with trailing slash
+        SalesforceCustomerServiceAttributes attributes4 = new SalesforceCustomerServiceAttributes(
+            CLIENT_ID, CLIENT_SECRET, "https://test.my.salesforce.com/", null, null, null, false, ROUTING_URL);
+        assertTrue("Instance URL with trailing slash should trigger OAuth",
+                  SalesforceTokenProvider.validateUsingOAuth(false, attributes4));
+    }
+
+    /**
+     * Test Instance URL edge cases for Client Credentials flow.
+     */
+    @Test
+    public void testClientCredentialsFlow_InstanceUrlEdgeCases() {
+        // Test with empty Instance URL (should not trigger Client Credentials)
+        SalesforceCustomerServiceAttributes attributes1 = new SalesforceCustomerServiceAttributes(
+            CLIENT_ID, CLIENT_SECRET, "", USERNAME, PASSWORD, SECURITY_TOKEN, false, ROUTING_URL);
+        assertFalse("Empty Instance URL with full credentials should use Password Grant",
+                   SalesforceTokenProvider.validateUsingOAuth(false, attributes1));
+
+        // Test with whitespace Instance URL
+        SalesforceCustomerServiceAttributes attributes2 = new SalesforceCustomerServiceAttributes(
+            CLIENT_ID, CLIENT_SECRET, "   ", null, null, null, false, ROUTING_URL);
+        assertTrue("Whitespace Instance URL should trigger OAuth",
+                  SalesforceTokenProvider.validateUsingOAuth(false, attributes2));
+
+        // Test Instance URL with missing credentials (should still use OAuth)
+        SalesforceCustomerServiceAttributes attributes3 = new SalesforceCustomerServiceAttributes(
+            CLIENT_ID, CLIENT_SECRET, INSTANCE_URL, USERNAME, null, SECURITY_TOKEN, false, ROUTING_URL);
+        assertTrue("Instance URL with missing credentials should trigger OAuth",
+                  SalesforceTokenProvider.validateUsingOAuth(false, attributes3));
+    }
+
+    /**
+     * Test authentication flow priority - validateUsingOAuth checks credentials, not Instance URL.
+     */
+    @Test
+    public void testAuthenticationFlowPriority() {
+        // When both Instance URL and full credentials are provided, validateUsingOAuth should return false
+        // because all credentials are present (it doesn't check Instance URL)
+        SalesforceCustomerServiceAttributes attributes = new SalesforceCustomerServiceAttributes(
+            CLIENT_ID, CLIENT_SECRET, INSTANCE_URL, USERNAME, PASSWORD, SECURITY_TOKEN, false, ROUTING_URL);
+        assertFalse("validateUsingOAuth should return false when all credentials are present",
+                   SalesforceTokenProvider.validateUsingOAuth(false, attributes));
+
+        // However, the actual flow logic will still use Client Credentials because Instance URL is present
+        // This is handled in the getSalesforceToken method, not in validateUsingOAuth
+    }
+
+    /**
+     * Test validation with null attributes object.
+     */
+    @Test(expected = NullPointerException.class)
+    public void testValidateUsingOAuth_NullAttributes() {
+        // Act & Assert - Should throw NullPointerException
+        SalesforceTokenProvider.validateUsingOAuth(false, null);
+    }
+
+    /**
+     * Test comprehensive scenarios covering all authentication methods.
+     */
+    @Test
+    public void testComprehensiveAuthenticationScenarios() {
+        // Scenario 1: Client Credentials - Instance URL provided, no other credentials
+        SalesforceCustomerServiceAttributes scenario1 = new SalesforceCustomerServiceAttributes(
+            CLIENT_ID, CLIENT_SECRET, INSTANCE_URL, null, null, null, false, ROUTING_URL);
+        assertTrue("Client Credentials scenario should use OAuth",
+                  SalesforceTokenProvider.validateUsingOAuth(false, scenario1));
+
+        // Scenario 2: Authorization Code - No Instance URL, no credentials
+        SalesforceCustomerServiceAttributes scenario2 = new SalesforceCustomerServiceAttributes(
+            CLIENT_ID, CLIENT_SECRET, null, null, null, null, false, ROUTING_URL);
+        assertTrue("Authorization Code scenario should use OAuth",
+                  SalesforceTokenProvider.validateUsingOAuth(false, scenario2));
+
+        // Scenario 3: Password Grant - No Instance URL, full credentials
+        SalesforceCustomerServiceAttributes scenario3 = new SalesforceCustomerServiceAttributes(
+            CLIENT_ID, CLIENT_SECRET, null, USERNAME, PASSWORD, SECURITY_TOKEN, false, ROUTING_URL);
+        assertFalse("Password Grant scenario should NOT use OAuth",
+                   SalesforceTokenProvider.validateUsingOAuth(false, scenario3));
+
+        // Scenario 4: Admin context - Always OAuth regardless of other settings
+        assertTrue("Admin context should always use OAuth",
+                  SalesforceTokenProvider.validateUsingOAuth(true, scenario3));
+    }
 }
