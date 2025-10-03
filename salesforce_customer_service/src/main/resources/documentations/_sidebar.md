@@ -1,6 +1,6 @@
 [comment]: <> (Left navigation)
 
-* [Home](/)
+* [Home](README.md)
 
 * [Overview](pages/overview.md)
 

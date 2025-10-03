@@ -1,4 +1,4 @@
-[<span style = "color : blue ; text-decoration: none">< Back<span>](/)
+[<span style="color: blue; text-decoration: none">< Back</span>](README.md)
 
 # Release Notes - Krista Salesforce Customer Service Extension
 
