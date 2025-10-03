@@ -43,10 +43,6 @@ public class SalesforceTokenProviderTest {
         // Act & Assert - Should use OAuth when Instance URL is provided
         assertTrue("Should use OAuth when Instance URL is provided",
                   SalesforceTokenProvider.validateUsingOAuth(false, attributes));
-
-        System.out.println("✅ Client Credentials Flow - Method Selection Test Passed");
-        System.out.println("Instance URL: " + INSTANCE_URL);
-        System.out.println("Authentication Method: OAuth 2.0 Client Credentials Flow");
     }
 
     /**
@@ -62,10 +58,6 @@ public class SalesforceTokenProviderTest {
         // Act & Assert - Should use OAuth when credentials are missing
         assertTrue("Should use OAuth when Instance URL is blank and credentials missing",
                   SalesforceTokenProvider.validateUsingOAuth(false, attributes));
-
-        System.out.println("✅ Authorization Code Flow - Method Selection Test Passed");
-        System.out.println("Instance URL: [BLANK]");
-        System.out.println("Authentication Method: OAuth 2.0 Authorization Code Flow");
     }
 
     /**
@@ -81,10 +73,6 @@ public class SalesforceTokenProviderTest {
         // Act & Assert - Should NOT use OAuth when all credentials are provided
         assertFalse("Should use Password Grant when all credentials are provided",
                    SalesforceTokenProvider.validateUsingOAuth(false, attributes));
-
-        System.out.println("✅ Password Grant Flow - Method Selection Test Passed");
-        System.out.println("Username: " + USERNAME);
-        System.out.println("Authentication Method: OAuth 2.0 Password Grant Flow");
     }
 
     /**
@@ -100,8 +88,6 @@ public class SalesforceTokenProviderTest {
         // Act & Assert - Admin context should always use OAuth
         assertTrue("Admin context should always use OAuth",
                   SalesforceTokenProvider.validateUsingOAuth(true, attributes));
-
-        System.out.println("✅ Admin Context - Always OAuth Test Passed");
     }
 
     /**
@@ -127,8 +113,6 @@ public class SalesforceTokenProviderTest {
             CLIENT_ID, CLIENT_SECRET, null, USERNAME, PASSWORD, null, true, ROUTING_URL);
         assertTrue("Missing security token should trigger OAuth",
                   SalesforceTokenProvider.validateUsingOAuth(false, attributes3));
-
-        System.out.println("✅ Missing Credentials - OAuth Trigger Test Passed");
     }
 
     /**
@@ -137,15 +121,12 @@ public class SalesforceTokenProviderTest {
      */
     @Test
     public void testComprehensiveAuthenticationMethodSelection() {
-        System.out.println("=== Comprehensive Authentication Method Selection Test ===");
-
         // Scenario 1: Client Credentials Flow (Instance URL provided)
         SalesforceCustomerServiceAttributes clientCredentialsAttrs = new SalesforceCustomerServiceAttributes(
             CLIENT_ID, CLIENT_SECRET, INSTANCE_URL, null, null, null, true, ROUTING_URL);
 
         assertTrue("Client Credentials Flow should use OAuth",
                   SalesforceTokenProvider.validateUsingOAuth(false, clientCredentialsAttrs));
-        System.out.println("✅ Client Credentials Flow: OAuth Selected");
 
         // Scenario 2: Authorization Code Flow (Instance URL blank, missing credentials)
         SalesforceCustomerServiceAttributes authCodeAttrs = new SalesforceCustomerServiceAttributes(
@@ -153,7 +134,6 @@ public class SalesforceTokenProviderTest {
 
         assertTrue("Authorization Code Flow should use OAuth",
                   SalesforceTokenProvider.validateUsingOAuth(false, authCodeAttrs));
-        System.out.println("✅ Authorization Code Flow: OAuth Selected");
 
         // Scenario 3: Password Grant Flow (All credentials provided, no Instance URL)
         SalesforceCustomerServiceAttributes passwordGrantAttrs = new SalesforceCustomerServiceAttributes(
@@ -161,9 +141,6 @@ public class SalesforceTokenProviderTest {
 
         assertFalse("Password Grant Flow should NOT use OAuth",
                    SalesforceTokenProvider.validateUsingOAuth(false, passwordGrantAttrs));
-        System.out.println("✅ Password Grant Flow: Direct Authentication Selected");
-
-        System.out.println("=== All Authentication Methods Tested Successfully ===");
     }
 
     /**
@@ -171,29 +148,22 @@ public class SalesforceTokenProviderTest {
      */
     @Test
     public void testAuthenticationMethodEdgeCases() {
-        System.out.println("=== Authentication Method Edge Cases Test ===");
-
         // Edge Case 1: Empty strings vs null
         SalesforceCustomerServiceAttributes attributes1 = new SalesforceCustomerServiceAttributes(
             CLIENT_ID, CLIENT_SECRET, null, "", "", "", true, ROUTING_URL);
         assertTrue("Empty strings should trigger OAuth",
                   SalesforceTokenProvider.validateUsingOAuth(false, attributes1));
-        System.out.println("✅ Empty strings trigger OAuth");
 
         // Edge Case 2: Whitespace-only strings
         SalesforceCustomerServiceAttributes attributes2 = new SalesforceCustomerServiceAttributes(
             CLIENT_ID, CLIENT_SECRET, null, "   ", "   ", "   ", true, ROUTING_URL);
         assertTrue("Whitespace-only strings should trigger OAuth",
                   SalesforceTokenProvider.validateUsingOAuth(false, attributes2));
-        System.out.println("✅ Whitespace-only strings trigger OAuth");
 
         // Edge Case 3: Mixed valid and invalid credentials
         SalesforceCustomerServiceAttributes attributes3 = new SalesforceCustomerServiceAttributes(
             CLIENT_ID, CLIENT_SECRET, null, USERNAME, "", SECURITY_TOKEN, true, ROUTING_URL);
         assertTrue("Mixed credentials should trigger OAuth",
                   SalesforceTokenProvider.validateUsingOAuth(false, attributes3));
-        System.out.println("✅ Mixed credentials trigger OAuth");
-
-        System.out.println("=== Edge Cases Tested Successfully ===");
     }
 }

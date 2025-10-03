@@ -1,6 +1,6 @@
 apply plugin: 'java-library'
 jar.archiveBaseName = "salesforce_customer_service-extension"
-group 'app.krista.extensions.crm.customer_relations'
+group = 'app.krista.extensions.crm.customer_relations'
 
 /*
  * Use extension.name for archiveBaseName, extension.version for version.
@@ -22,14 +22,14 @@ tasks.register("setReleaseProperties") {
             computedVersion = props['extension.version'] ?: computedVersion
 
             System.setProperty("extensionVersion", computedVersion)
-            project.ext.set("finalBaseName", computedBaseName)
-            project.version = computedVersion
+            ext.set("finalBaseName", computedBaseName)
+            version = computedVersion
 
             println "✔ Loaded extension name = ${computedBaseName}, version = ${computedVersion}"
         } else {
             logger.warn("⚠ release.properties not found; using default values.")
-            project.ext.set("finalBaseName", computedBaseName)
-            project.version = computedVersion
+            ext.set("finalBaseName", computedBaseName)
+            version = computedVersion
         }
     }
 }
@@ -39,13 +39,16 @@ if (rootProject.file('builder.txt').canRead()) {
 } else {
     ext.buildnr = "0"
 }
+def buildnrProvider = provider { ext.buildnr }
+
 tasks.register('updateVersion') {
     doFirst {
-        project.ext.newbuildnr = Integer.parseInt(project.ext.buildnr) + 1
-        print "Building extension version: " + version.toString() + "-" + project.ext.newbuildnr
-        rootProject.file('builder.txt').text = project.ext.newbuildnr
+        def currentBuildnr = buildnrProvider.get()
+        def newbuildnr = Integer.parseInt(currentBuildnr) + 1
+        print "Building extension version: " + version.toString() + "-" + newbuildnr
+        rootProject.file('builder.txt').text = newbuildnr.toString()
         System.clearProperty("extensionVersion")
-        System.setProperty("extensionVersion", version.toString() + "-" + project.ext.newbuildnr)
+        System.setProperty("extensionVersion", version.toString() + "-" + newbuildnr)
     }
 }
 compileJava.dependsOn clean
@@ -53,19 +56,31 @@ compileJava.dependsOn updateVersion
 
 System.setProperty("extensionVersion", version.toString())
 
-sourceCompatibility = '21'
-targetCompatibility = '21'
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+// Add compiler options to show deprecation warnings
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ['-Xlint:deprecation']
+}
 
 repositories {
     mavenLocal()
     maven {
-        url "https://packages.cicd.in.antbrains.com/artifactory/libs-release"
+        url = "https://packages.cicd.in.antbrains.com/artifactory/libs-release"
     }
     mavenCentral()
 }
 
 configurations {
     implementation {
+        canBeConsumed = false
+    }
+    // Create a resolvable configuration for the jar task
+    jarClasspath {
+        extendsFrom implementation
         canBeConsumed = false
         canBeResolved = true
     }
@@ -119,9 +134,9 @@ tasks.register('generateReleaseProperties') {
         def caseManagementAreaFilePath = 'src/main/java/app/krista/extensions/crm/customer_relations/salesforce_customer_service/catalog/CaseManagementArea.java'
         def contentAreaFilePath = 'src/main/java/app/krista/extensions/crm/customer_relations/salesforce_customer_service/catalog/ContentArea.java'
 
-        def extensionFile = project.file(extensionFilePath)
-        def caseManagementAreaFile = project.file(caseManagementAreaFilePath)
-        def contentAreaFile = project.file(contentAreaFilePath)
+        def extensionFile = file(extensionFilePath)
+        def caseManagementAreaFile = file(caseManagementAreaFilePath)
+        def contentAreaFile = file(contentAreaFilePath)
 
         if (!extensionFile.exists()) {
             throw new GradleException("Extension file not found: ${extensionFilePath}")
@@ -188,7 +203,7 @@ tasks.register('generateReleaseProperties') {
             logger.lifecycle("Set default ecosystem name: CRM")
         }
 
-        def releasePropertiesFile = project.file('release.properties')
+        def releasePropertiesFile = file('release.properties')
         def content = properties.collect { key, value -> "${key}=${value}" }.join('\n')
         releasePropertiesFile.text = content + '\n'
         logger.lifecycle("Generated release.properties with content:\n${content}")
@@ -234,7 +249,7 @@ jar {
     archiveBaseName = project.ext.has("finalBaseName") ? project.ext.finalBaseName : "SalesforceCustomerService"
     manifest {}
     from {
-        configurations.implementation.collect {
+        configurations.jarClasspath.collect {
             it.isDirectory() ? it : zipTree(it)
         }
     }

@@ -23,10 +23,10 @@ public class SFObjectHelper {
         caseMap.put("Case Is Closed", caseData.get("IsClosed"));
         caseMap.put("Case Owner Id", getStringOrEmpty(caseData.get("OwnerId")));
         caseMap.put("Case Created Date", caseData.get("CreatedDate") != null
-                ? Objects.requireNonNull(DatePlus.fromYYYYMMDD(caseData.get("CreatedDate").toString())).getTime()
+                ? DatePlus.fromYYYYMMDDToEpochMilli(caseData.get("CreatedDate").toString())
                 : null);
         caseMap.put("Case Last Modified Case", caseData.get("LastModifiedDate") != null
-                ? Objects.requireNonNull(DatePlus.fromYYYYMMDD(caseData.get("LastModifiedDate").toString())).getTime()
+                ? DatePlus.fromYYYYMMDDToEpochMilli(caseData.get("LastModifiedDate").toString())
                 : null);
         caseMap.put("Case Number", getDoubleOrZero(caseData.get("CaseNumber")));
         caseMap.put("Case Status", getStringOrEmpty(caseData.get("Status")));

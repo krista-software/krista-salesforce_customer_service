@@ -1,15 +1,21 @@
 package app.krista.extensions.crm.customer_relations.salesforce_customer_service.util;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 /**
  * Utility class for date formatting and parsing operations.
- * Provides helper methods to convert between {@link Date} and {@link String}
+ * Provides helper methods to convert between timestamps and {@link String}
  * representations in the format {@code yyyy-MM-dd}.
+ *
+ * This class is thread-safe and uses the modern java.time API.
  */
 public final class DatePlus {
+
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private DatePlus() {
     }
@@ -22,24 +28,39 @@ public final class DatePlus {
      * @return a formatted date string in {@code yyyy-MM-dd} format
      */
     public static String getYYYYMMDD(long date) {
-        SimpleDateFormat sdf;
-        sdf = new SimpleDateFormat("yyyy-MM-dd");
-        return sdf.format(new Date(date));
+        LocalDate localDate = Instant.ofEpochMilli(date)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+        return localDate.format(FORMATTER);
     }
 
     /**
-     * Parses a date string in {@code yyyy-MM-dd} format into a {@link Date} object.
+     * Parses a date string in {@code yyyy-MM-dd} format into a {@link LocalDate} object.
      *
      * @param date the date string in {@code yyyy-MM-dd} format
-     * @return a {@link Date} object representing the parsed date,
+     * @return a {@link LocalDate} object representing the parsed date,
      *         or {@code null} if the string is not a valid date
      */
-    public static Date fromYYYYMMDD(String date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    public static LocalDate fromYYYYMMDD(String date) {
         try {
-            return sdf.parse(date);
-        } catch (ParseException e) {
+            return LocalDate.parse(date, FORMATTER);
+        } catch (DateTimeParseException e) {
             return null;
         }
+    }
+
+    /**
+     * Parses a date string in {@code yyyy-MM-dd} format and converts it to epoch milliseconds.
+     *
+     * @param date the date string in {@code yyyy-MM-dd} format
+     * @return the epoch milliseconds representing the parsed date at start of day in system timezone,
+     *         or {@code null} if the string is not a valid date
+     */
+    public static Long fromYYYYMMDDToEpochMilli(String date) {
+        LocalDate localDate = fromYYYYMMDD(date);
+        if (localDate == null) {
+            return null;
+        }
+        return localDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
 }
