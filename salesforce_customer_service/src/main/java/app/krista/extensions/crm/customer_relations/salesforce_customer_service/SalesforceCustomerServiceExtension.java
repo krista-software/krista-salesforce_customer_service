@@ -31,7 +31,7 @@ import java.util.Map;
 @Field.Boolean(value = SalesforceCustomerServiceAttributes.SANDBOX, required = false)
 @Extension(version = "2.0.15", name = "Salesforce Customer Service", description = "Integrating Salesforce with Krista")
 @Java(version = Java.Version.JAVA_21)
-@StaticResource(path = "docs", file = "documentations")
+@StaticResource(path = "docs", file = "docs")
 public final class SalesforceCustomerServiceExtension {
 
     private final SalesforceCustomerServiceAttributes customerServiceAttributes;
