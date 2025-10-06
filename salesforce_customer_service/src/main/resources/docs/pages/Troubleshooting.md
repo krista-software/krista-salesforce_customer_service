@@ -130,7 +130,7 @@ This guide provides solutions to common issues you may encounter when using the 
 
 3. Verify the user still has API access in Salesforce
 
-![Profile Settings](../_media/Troubleshooting_ProfileSettings.png)
+![Profile Settings](../_media/CreatingSalesforceApp_Profile.png)
 
 4. Check that the user's profile hasn't been changed to restrict API access
 5. Ensure the Connected App hasn't been revoked or disabled
