@@ -103,6 +103,7 @@ public class IndividualStore implements EntityStore<Individual> {
     }
 
     @Override
+    @Deprecated
     public List<Individual> search(List<SearchCondition> list, long l, int i) {
         return Collections.emptyList();
     }

@@ -1,6 +1,11 @@
 package app.krista.extensions.crm.customer_relations.salesforce_customer_service.validators;
 
-import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.*;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.AccountDaoImpl;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.CaseDaoImpl;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.ContactDaoImpl;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.CustomerDaoImpl;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.IndividualDaoImpl;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.SalesforceService;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
@@ -34,7 +39,9 @@ public class ValidationOrchestrator {
         List<ValidationResult> results = new ArrayList<>();
         for (Map.Entry<Validator.ValidationResource, String> entry : resources.entrySet()) {
             Validator validator = validators.get(entry.getKey());
-            assert validator != null;
+            if (validator == null) {
+                throw new IllegalStateException("Validator not found for resource: " + entry.getKey());
+            }
             if (!validator.validate(entry.getValue(), resources)) {
                 results.add(new ValidationResult(validator.getConfirmationStepMessage(entry.getValue(), resources),
                         validator.getFetchFieldName(), validator.getFetchStepMessage(),

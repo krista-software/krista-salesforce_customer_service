@@ -71,7 +71,7 @@ public class IndividualImpl implements Individual {
     @Override
     public Long getBirthDate() {
         return sfIndividual.birthDate != null
-                ? Objects.requireNonNull(DatePlus.fromYYYYMMDD(sfIndividual.birthDate)).getTime()
+                ? DatePlus.fromYYYYMMDDToEpochMilli(sfIndividual.birthDate)
                 : null;
     }
     /**

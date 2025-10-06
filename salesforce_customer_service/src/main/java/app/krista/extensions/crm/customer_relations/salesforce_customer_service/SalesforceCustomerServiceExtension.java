@@ -2,7 +2,12 @@ package app.krista.extensions.crm.customer_relations.salesforce_customer_service
 
 import app.krista.extension.authorization.RequestAuthenticator;
 import app.krista.extension.executor.Invoker;
-import app.krista.extension.impl.anno.*;
+import app.krista.extension.impl.anno.Attribute;
+import app.krista.extension.impl.anno.Extension;
+import app.krista.extension.impl.anno.Field;
+import app.krista.extension.impl.anno.InvokerRequest;
+import app.krista.extension.impl.anno.Java;
+import app.krista.extension.impl.anno.StaticResource;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.connectors.SalesforceTokenProviderFactory;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.SalesforceCustomerServiceAttributesStore;
 
@@ -19,13 +24,14 @@ import java.util.Map;
  */
 @Field.Text(value = SalesforceCustomerServiceAttributes.CLIENT_ID)
 @Field.Text(value = SalesforceCustomerServiceAttributes.CLIENT_SECRET, isSecured = true)
+@Field.Text(value = SalesforceCustomerServiceAttributes.INSTANCE_URL, required = false)
 @Field.Text(value = SalesforceCustomerServiceAttributes.USER_NAME, required = false)
 @Field.Text(value = SalesforceCustomerServiceAttributes.PASS_WORD, isSecured = true, required = false)
 @Field.Text(value = SalesforceCustomerServiceAttributes.SECURITY_TOKEN, isSecured = true, required = false)
 @Field.Boolean(value = SalesforceCustomerServiceAttributes.SANDBOX, required = false)
-@Extension(version = "2.0.14-rc1", name = "Salesforce Customer Service", description = "Integrating Salesforce with Krista")
+@Extension(version = "2.0.15", name = "Salesforce Customer Service", description = "Integrating Salesforce with Krista")
 @Java(version = Java.Version.JAVA_21)
-@StaticResource(path = "docs", file = "documentations")
+@StaticResource(path = "docs", file = "docs")
 public final class SalesforceCustomerServiceExtension {
 
     private final SalesforceCustomerServiceAttributes customerServiceAttributes;
