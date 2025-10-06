@@ -1,89 +1,80 @@
-# Krista Salesforce Customer Service Extension
+# Salesforce Customer Service Extension
+
+Welcome to the Krista Salesforce Customer Service Extension documentation. This extension enables seamless integration between Krista and Salesforce Customer Service, providing powerful automation capabilities for case management, customer data operations, and workflow optimization.
 
 ## Overview
 
-The Krista Salesforce Customer Service Extension enables seamless integration between Krista and Salesforce Customer Service, allowing you to automate case management, retrieve custom fields, and manage customer service operations directly from your Krista conversations.
-
-This extension connects to Salesforce using OAuth 2.0 authentication and supports both service account and user account authentication modes, providing flexibility for automated workflows and user-specific actions.
+The Salesforce Customer Service Extension connects Krista to Salesforce, enabling automated case management, customer relationship operations, and real-time data synchronization. Built with OAuth 2.0 security and comprehensive error handling, this extension provides reliable access to Salesforce Customer Service functionality.
 
 ## Key Features
 
-- **Case Feed Management**: Retrieve and share updates to case feeds with optional file attachments
-- **Real-time Case Alerts**: Receive notifications when cases are created or updated in Salesforce
-- **Custom Field Retrieval**: Access custom fields from any Salesforce object (Account, Case, Contact, Customer, Individual)
-- **Flexible Authentication**: Support for both service account (automated) and user account (interactive) authentication
-- **Entity Management**: Full CRUD operations for Individual, Customer, Account, Case, and Contact entities
-- **Sandbox Support**: Connect to both production and sandbox Salesforce environments
-- **OAuth 2.0 Security**: Industry-standard authentication with automatic token refresh
+- **Case Management**: Retrieve case feed items, share updates, and monitor case changes
+- **Custom Field Operations**: Access and manage custom fields across Salesforce objects
+- **Entity Operations**: Full CRUD operations for Accounts, Cases, Contacts, Customers, and Individuals
+- **Real-time Alerts**: Automated notifications for case changes and updates
+- **OAuth 2.0 Authentication**: Secure, token-based authentication with automatic refresh
+- **Comprehensive Validation**: Input validation with user-friendly error handling
+- **Retry Support**: Built-in retry mechanisms for reliable operations
 
 ## Quick Start Guide
 
 ### 1. Prerequisites
-- Salesforce Developer or Enterprise account
-- Krista Appliance version 3.5.1 or higher
-- Admin access to Salesforce to create Connected Apps
+- Salesforce org with appropriate permissions
+- Krista platform access
+- System Administrator access to Salesforce
 
 ### 2. Setup Steps
-1. [Create a Salesforce Connected App](pages/CreatingSalesforceApp.md) to obtain OAuth credentials
-2. [Configure the extension](pages/ExtensionConfiguration.md) in Krista with your Salesforce credentials
-3. [Understand authentication modes](pages/Authentication.md) and choose the appropriate mode for your use case
-4. Start using catalog requests in your conversations
+1. **[Create Salesforce Connected App](pages/CreatingSalesforceApp.md)** - Configure OAuth application
+2. **[Configure Extension](pages/ExtensionConfiguration.md)** - Set up connection parameters
+3. **[Authenticate](pages/Authentication.md)** - Connect to your Salesforce instance
+4. **Test Connection** - Verify setup with a simple catalog request
 
-### 3. First Conversation
-Try retrieving case feed items:
-- Use the "Get Case Feed Items By Case Id" catalog request
-- Provide a valid Salesforce Case ID
-- Optionally specify the number of posts to retrieve
+### 3. First Request
+Try the "Get Case Feed Items By Case Id" request to verify your setup is working correctly.
 
 ## Documentation Structure
 
-### Getting Started
-- [Extension Configuration](pages/ExtensionConfiguration.md) - Complete setup guide with all configuration parameters
-- [Authentication](pages/Authentication.md) - OAuth 2.0 flows, token management, and authentication modes
-- [Creating Salesforce Connected App](pages/CreatingSalesforceApp.md) - Step-by-step guide to set up Salesforce
+### 🚀 Getting Started
+- [Extension Configuration](pages/ExtensionConfiguration.md) - Complete setup and configuration guide
+- [Authentication](pages/Authentication.md) - OAuth 2.0 authentication and token management
+- [Creating Salesforce App](pages/CreatingSalesforceApp.md) - Connected App creation and setup
 
-### Case Management
-- [Get Case Feed Items By Case Id](pages/GetCaseFeedItemsByCaseId.md) - Retrieve posts and updates from a case feed
+### 📋 Case Management
+- [Get Case Feed Items By Case Id](pages/GetCaseFeedItemsByCaseId.md) - Retrieve case feed posts and comments
 - [Share Update to Case](pages/ShareUpdateToCase.md) - Add updates and files to case feeds
-- [Case Change Alert](pages/CaseChangeAlert.md) - Receive real-time notifications for case changes
+- [Case Change Alert](pages/CaseChangeAlert.md) - Monitor and respond to case changes
 
-### Content Operations
-- [Retrieve Custom Fields For Given Object](pages/RetrieveCustomFieldsForGivenObject.md) - Access custom fields from Salesforce objects
+### 📊 Content Operations
+- [Retrieve Custom Fields For Given Object](pages/RetrieveCustomFieldsForGivenObject.md) - Access custom field data
 
-### Entity Operations
-The extension supports full CRUD operations for the following entities:
-- **[Individual](pages/IndividualEntity.md)**: Person records for GDPR/privacy compliance
-- **[Customer](pages/CustomerEntity.md)**: Customer account records with Individual references
-- **[Account](pages/AccountEntity.md)**: Business account records for organizations
-- **[Case](pages/CaseEntity.md)**: Customer service case/support ticket records
-- **[Contact](pages/ContactEntity.md)**: Individual people associated with accounts
+### 🏢 Entity Operations
+- [Individual Entity](pages/IndividualEntity.md) - GDPR compliance and personal data management
+- [Customer Entity](pages/CustomerEntity.md) - Business relationship management
+- [Account Entity](pages/AccountEntity.md) - Organization and company management
+- [Case Entity](pages/CaseEntity.md) - Support ticket and case operations
+- [Contact Entity](pages/ContactEntity.md) - Contact and person management
 
-> **📝 Note**: Entity operations are performed through Krista's standard entity request mechanisms. Refer to the [Entity Operations Overview](pages/SupportedRequests.md) page for a summary, or click on individual entity links above for detailed documentation.
+### 📖 Reference & Support
+- [Supported Requests](pages/SupportedRequests.md) - Complete catalog and entity request reference
+- [Troubleshooting](pages/Troubleshooting.md) - Common issues, solutions, and best practices
+- [Release Notes](pages/ReleaseNotes.md) - Version history, updates, and changes
 
 ## Support & Resources
 
 - **Extension Version**: 2.0.15
-- **Krista Service APIs Java**: 1.0.115
-- **Global Catalog Version**: GC-2025.09.3
-- **Appliance Release Version**: 3.5.1 or higher
-- **Salesforce API**: REST API v52.0+
-- **OAuth Scopes**: `api`, `refresh_token`, `full` (depending on your requirements)
+- **Salesforce API**: REST API v61.0
+- **Authentication**: OAuth 2.0 Authorization Code Grant
+- **Java Version**: Java 21
+- **Supported Salesforce Objects**: Account, Case, Contact, Customer, Individual
 
-### Additional Resources
-- [Salesforce REST API Documentation](https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/)
-- [Salesforce OAuth 2.0 Documentation](https://help.salesforce.com/articleView?id=remoteaccess_oauth_web_server_flow.htm)
-- [Troubleshooting Guide](pages/Troubleshooting.md)
-- [Release Notes](pages/ReleaseNotes.md)
+## Need Help?
 
-## Important Notes
-
-> **⚠️ Security**: Always store Client ID and Client Secret securely. Never commit credentials to version control.
-
-> **📝 Sandbox vs Production**: Use the Sandbox flag to connect to Salesforce sandbox environments for testing.
-
-> **💡 Custom Fields**: All custom field names in Salesforce must end with `__c`. The extension validates this requirement.
+1. **Configuration Issues**: Check the [Extension Configuration](pages/ExtensionConfiguration.md) guide
+2. **Authentication Problems**: Review the [Authentication](pages/Authentication.md) documentation
+3. **Request Errors**: Consult the [Troubleshooting](pages/Troubleshooting.md) guide
+4. **API Questions**: Reference the individual catalog request pages
 
 ---
 
-**Need Help?** Check the [Troubleshooting Guide](pages/Troubleshooting.md) for common issues and solutions.
+*This documentation follows Krista Extension Documentation Guidelines to ensure consistency, accuracy, and usability across all extension documentation.*
 

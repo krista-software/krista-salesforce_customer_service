@@ -33,7 +33,7 @@ Before you begin, ensure you have:
 2. Type **"App Manager"** in the search box
 3. Click **App Manager** under **Apps** section
 
-![App Manager](../_media/CreatingSalesforceApp_AppManager.png)
+![App Manager](../_media/CreatingSalesforceApp_Apps.png)
 
 Alternatively:
 - Navigate to **Platform Tools** → **Apps** → **App Manager**
@@ -72,7 +72,7 @@ Fill in the following required fields:
 
 1. Check the box **"Enable OAuth Settings"**
 
-![Enable OAuth Settings](../_media/CreatingSalesforceApp_EnableOAuth.png)
+![Enable OAuth Settings](../_media/CreatingSalesforceApp_ApiOauth.png)
 
 2. Additional OAuth configuration fields will appear
 
@@ -91,7 +91,7 @@ Fill in the following required fields:
 > - Do not include a trailing slash
 > - You can find your exact callback URL in the Krista extension configuration page
 
-![Customer Service Callback URL](../_media/CreatingSalesforceApp_CallbackUrlExample.png)
+![Customer Service Callback URL](../_media/CreatingSalesforceApp_CustomerServiceCallbackUrl.png)
 
 **Multiple Callback URLs** (if needed):
 - If you have multiple Krista environments (dev, test, prod), add each callback URL on a separate line:
@@ -159,7 +159,7 @@ In the **Selected OAuth Scopes** section:
 
 After saving, you'll be redirected to the Connected App detail page.
 
-![Client ID and Client Secret](../_media/CreatingSalesforceApp_ClientCredentials.png)
+![Client ID and Client Secret](../_media/CreatingSalesforceApp_ClientIdClientSecret.png)
 
 1. In the **API (Enable OAuth Settings)** section, you'll see:
    - **Consumer Key**: This is your **Client ID**
@@ -205,6 +205,8 @@ If you're using a service account:
 3. Select the service account user
 4. This ensures the service account can authenticate
 
+![Client Credentials Flow Run As](../_media/CreatingSalesforceApp_ClientCredentialsFlowRunAs.png)
+
 3. Click **Save**
 
 ### Step 13: Assign Permission Sets (If Using "Admin Approved Users")
@@ -214,6 +216,9 @@ If you selected "Admin approved users are pre-authorized":
 1. On the Connected App detail page, click **Manage**
 2. Scroll to **Permission Sets** or **Profiles** section
 3. Click **Manage Permission Sets** or **Manage Profiles**
+
+![Profile Configuration](../_media/CreatingSalesforceApp_Profile.png)
+
 4. Select the permission sets or profiles that should have access
 5. Click **Save**
 

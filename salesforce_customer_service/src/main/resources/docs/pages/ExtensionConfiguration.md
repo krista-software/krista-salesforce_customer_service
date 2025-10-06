@@ -8,7 +8,7 @@ This guide explains how to configure the Krista Salesforce Customer Service Exte
 
 The following table lists all configuration parameters required to set up the extension:
 
-![Customer Service Attributes](../_media/ExtensionConfiguration_Attributes.png)
+![Customer Service Attributes](../_media/ExtensionConfiguration_CustomerServiceAttributes.png)
 
 | Parameter | Type | Required | Description | Example |
 |-----------|------|----------|-------------|---------|
@@ -66,6 +66,8 @@ Sandbox: [true/false]
 Leave Username, Password, and Security Token empty
 ```
 
+![Input Attributes for User Authentication](../_media/ExtensionConfiguration_InputAttributes1.png)
+
 #### Option B: Service Account Authentication (Username-Password Flow)
 - **When to use**: When you want automated workflows using a single service account
 - **Configuration**: Requires Client ID, Client Secret, Username, Password, and Security Token
@@ -82,6 +84,8 @@ Security Token: [Service Account Security Token]
 Instance URL: [Optional]
 Sandbox: [true/false]
 ```
+
+![Input Attributes for Service Account Authentication](../_media/ExtensionConfiguration_InputAttributes2.png)
 
 > **📝 Note**: To obtain your Security Token, go to Salesforce → Settings → Reset My Security Token. Salesforce will email the token to you.
 
@@ -102,6 +106,8 @@ Sandbox: [true/false]
 > **⚠️ Important**: The Sandbox flag determines which Salesforce OAuth endpoint is used. Make sure this matches your environment.
 
 ### Step 7: Save and Test Configuration
+
+![Complete Input Attributes Configuration](../_media/ExtensionConfiguration_InputAttributes3.png)
 
 1. Click **Save** to store your configuration
 2. The extension will validate your credentials
@@ -133,6 +139,28 @@ The extension automatically determines which authentication flow to use based on
 |---------------------|-------------------------|----------|
 | Client ID + Client Secret only | Authorization Code (User Auth) | Interactive user authentication |
 | Client ID + Client Secret + Username + Password + Security Token | Username-Password (Service Account) | Automated service account |
+
+### Configuring Authentication in Krista Conversations
+
+When creating conversations that use Salesforce, you'll configure authentication in the **Ask a System** step:
+
+#### For User Authentication (Authorization Code Flow):
+Check the **"Have people authenticate with their account"** checkbox:
+
+![Ask a System Checked](../_media/ExtensionConfiguration_AskASystemChecked.png)
+
+- Users will be prompted to authenticate with their Salesforce credentials
+- Each user authenticates with their own account
+- Actions are performed as the authenticated user
+
+#### For Service Account Authentication (Username-Password Flow):
+Leave the **"Have people authenticate with their account"** checkbox **unchecked**:
+
+![Ask a System Unchecked](../_media/ExtensionConfiguration_AskASystemUnchecked.png)
+
+- Extension uses the configured service account credentials
+- No user interaction required for authentication
+- All actions are performed as the service account
 
 ## Security Considerations
 

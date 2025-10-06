@@ -230,6 +230,8 @@ grant_type=password
    - User reviews and approves requested permissions
    - Salesforce validates credentials
 
+![Verify Account](../_media/Authentication_VerifyAccount.png)
+
 4. **Authorization Code Exchange**
    - Salesforce redirects to callback URL with authorization code
    - Extension receives callback at `/rest/salesforcecustomerservice/callback`
@@ -345,6 +347,8 @@ grant_type=password
 ### Scenario 4: Password Change
 
 **When**: User changes their Salesforce password
+
+![Change Password](../_media/Authentication_ChangePassword.png)
 
 **What Happens**:
 1. All existing tokens are revoked by Salesforce

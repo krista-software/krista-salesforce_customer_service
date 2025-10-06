@@ -98,7 +98,7 @@ https://krista.mycompany.com/rest/salesforcecustomerservice/casechanged
 1. **Object**: Select **Case**
 2. Click **Next**
 
-![Create Case Outbound Message](../_media/CaseChangeAlert_CreateOutboundMessage.png)
+![Create Case Outbound Message](../_media/CaseChangeAlert_CreateCaseOutboundMessage.png)
 
 3. **Name**: Enter a descriptive name (e.g., "Krista Case Change Notification")
 4. **Unique Name**: Auto-populated (e.g., "Krista_Case_Change_Notification")
@@ -115,7 +115,7 @@ https://krista.mycompany.com/rest/salesforcecustomerservice/casechanged
 
 Select the case fields you want to include in the outbound message. At minimum, select:
 
-![Add Cases Fields](../_media/CaseChangeAlert_AddCaseFields.png)
+![Add Cases Fields](../_media/CaseChangeAlert_AddCasesFields.png)
 
 **Required Fields**:
 - Id
