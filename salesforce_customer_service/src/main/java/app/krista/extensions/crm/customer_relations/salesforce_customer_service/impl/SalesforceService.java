@@ -97,15 +97,24 @@ public class SalesforceService {
      * Retrieves a Salesforce record by ID.
      *
      * @param id the Salesforce record ID
-     * @param sobject the Salesforce object type (e.g., "Case", "Account")
+     * @param subject the Salesforce object type (e.g., "Case", "Account")
      * @return the JSON response as a string
      */
-    public String getRecordById(String id, String sobject) throws IOException, ExecutionException, InterruptedException {
-        if (id == null || id.isBlank() || sobject == null || sobject.isEmpty()) {
-            LOGGER.info("Failed to get record by id. Input is null.");
+    public String getRecordById(String id, String subject) throws IOException, ExecutionException, InterruptedException {
+        if (id == null || id.isBlank() || subject == null || subject.isEmpty()) {
+            String errorMsg = "Cannot retrieve Salesforce record: ";
+            if (id == null || id.isBlank()) {
+                errorMsg += "Record ID is required. ";
+            }
+            if (subject == null || subject.isEmpty()) {
+                errorMsg += "Salesforce object type (e.g., 'Case', 'Account') is required. ";
+            }
+            errorMsg += "Please provide valid parameters and try again.";
+            LOGGER.error(errorMsg);
+            throw new IllegalArgumentException(errorMsg);
         }
         SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
-        String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + sobject + "/" + id;
+        String url = salesforceToken.getInstanceUrl() + Constants.SALESFORCE_SOBJECTS_PATH + subject + "/" + id;
         final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
         return getResponse(salesforceToken, request);
     }
@@ -118,7 +127,16 @@ public class SalesforceService {
      */
     public void deleteRecordById(String id, String sobject) throws IOException, ExecutionException, InterruptedException {
         if (id == null || id.isBlank() || sobject == null || sobject.isBlank()) {
-            LOGGER.info("Failed to delete record by id. Input is null or empty.");
+            String errorMsg = "Cannot delete Salesforce record: ";
+            if (id == null || id.isBlank()) {
+                errorMsg += "Record ID is required. ";
+            }
+            if (sobject == null || sobject.isBlank()) {
+                errorMsg += "Salesforce object type (e.g., 'Case', 'Account') is required. ";
+            }
+            errorMsg += "Please provide valid parameters and try again.";
+            LOGGER.error(errorMsg);
+            throw new IllegalArgumentException(errorMsg);
         }
         SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
         String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + sobject + "/" + id;
@@ -136,10 +154,22 @@ public class SalesforceService {
      */
     public void updateRecord(String id, String body, String sobject) throws IOException, ExecutionException, InterruptedException {
         if (id == null || id.isBlank() || body == null || body.isBlank() || sobject == null || sobject.isEmpty()) {
-            LOGGER.info("Failed to update record by id. Input is null.");
+            String errorMsg = "Cannot update Salesforce record: ";
+            if (id == null || id.isBlank()) {
+                errorMsg += "Record ID is required. ";
+            }
+            if (body == null || body.isBlank()) {
+                errorMsg += "Update data (JSON body) is required. ";
+            }
+            if (sobject == null || sobject.isEmpty()) {
+                errorMsg += "Salesforce object type (e.g., 'Case', 'Account') is required. ";
+            }
+            errorMsg += "Please provide valid parameters and try again.";
+            LOGGER.error(errorMsg);
+            throw new IllegalArgumentException(errorMsg);
         }
         SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
-        String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + sobject + "/" + id + "?_HttpMethod=PATCH";
+        String url = salesforceToken.getInstanceUrl() + Constants.SALESFORCE_SOBJECTS_PATH + sobject + "/" + id + Constants.HTTP_METHOD_PATCH;
         final OAuthRequest request = getOauthRequest(Verb.POST, body, url, salesforceToken);
         getResponse(salesforceToken, request);
     }
@@ -152,10 +182,13 @@ public class SalesforceService {
      */
     public String getRecordByQuery(String query) throws IOException, ExecutionException, InterruptedException {
         if (query == null || query.isBlank()) {
-            LOGGER.info("Failed to get record by query. " + Constants.QUERY_IS_NULL_OR_EMPTY);
+            String errorMsg = "Cannot execute Salesforce query: SOQL query string is required. " +
+                    "Please provide a valid SOQL query (e.g., 'SELECT Id, Name FROM Account LIMIT 10') and try again.";
+            LOGGER.error(errorMsg);
+            throw new IllegalArgumentException(errorMsg);
         }
         SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
-        String url = salesforceToken.getInstanceUrl() + "/services/data/v53.0/query?q=";
+        String url = salesforceToken.getInstanceUrl() + Constants.SALESFORCE_QUERY_PATH;
         assert query != null;
         final String queryEncoded = URLEncoder.encode(query, StandardCharsets.UTF_8);
         final OAuthRequest request = getOauthRequest(Verb.GET, null, url + queryEncoded, salesforceToken);
@@ -171,7 +204,16 @@ public class SalesforceService {
      */
     public String createRecord(String body, String sobject) throws IOException, ExecutionException, InterruptedException {
         if (body == null || body.isBlank() || sobject == null || sobject.isEmpty()) {
-            LOGGER.info("Failed to create record by id. Input is null.");
+            String errorMsg = "Cannot create Salesforce record: ";
+            if (body == null || body.isBlank()) {
+                errorMsg += "Record data (JSON body) is required. ";
+            }
+            if (sobject == null || sobject.isEmpty()) {
+                errorMsg += "Salesforce object type (e.g., 'Case', 'Account') is required. ";
+            }
+            errorMsg += "Please provide valid parameters and try again.";
+            LOGGER.error(errorMsg);
+            throw new IllegalArgumentException(errorMsg);
         }
         SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
         String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + sobject;
@@ -318,7 +360,9 @@ public class SalesforceService {
                 LOGGER.error("Bad Request, Incorrect input is provided. The error is{}", response.getBody());
             }
             if (response.getBody().contains("\"errorCode\":\"STORAGE_LIMIT_EXCEEDED\"")) {
-                throw new IllegalArgumentException("Storage limit exceeded.");
+                throw new IllegalArgumentException("Salesforce storage limit exceeded. " +
+                    "Your organization has reached its data storage limit. " +
+                    "Please contact your Salesforce administrator to increase storage capacity or free up space by deleting unnecessary records.");
             }
             return response.getBody();
         }
@@ -335,7 +379,10 @@ public class SalesforceService {
         customerServiceAttributes.getOauthService().signRequest(salesforceToken, request);
         try (com.github.scribejava.core.model.Response response = customerServiceAttributes.getOauthService().execute(request)) {
             if (response.getCode() >= Bad_Request) {
-                throw new IllegalArgumentException("Bad Request, Please enter correct required data. The error is " + response.getBody());
+                throw new IllegalArgumentException("Salesforce API request failed (HTTP " + response.getCode() + "): " +
+                        "The request was rejected by Salesforce. This typically indicates invalid data, missing required fields, " +
+                        "or insufficient permissions. Error details: " + response.getBody() +
+                        ". Please verify your data and permissions, then try again.");
             }
             return response;
         } catch (IOException | InterruptedException | ExecutionException cause) {

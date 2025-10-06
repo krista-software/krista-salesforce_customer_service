@@ -14,7 +14,7 @@ import java.util.zip.ZipOutputStream;
 @Service
 public class KristaMediaClient {
 
-    private static final String zipDir = "/tmp/";
+    private static final String zipDir = System.getProperty("java.io.tmpdir");
     @Inject
     private FileRepository fileRepository;
 
@@ -28,14 +28,26 @@ public class KristaMediaClient {
      * @throws IOException If an I/O error occurs.
      */
     public app.krista.model.base.File toKristaFile(File file) throws IOException {
+        File fileToUpload = file;
+        File tempZipFile = null;
+
         if (isUnsupportedFileFormat(file.getName())) {
-            String zipFilePath = zipDir + file.getName().substring(0, file.getName().lastIndexOf(".")) + ".zip";
+            String zipFilePath = zipDir + File.separator +
+                file.getName().substring(0, file.getName().lastIndexOf(".")) + ".zip";
             compressFile(zipFilePath, file.getAbsolutePath());
-            file = new File(zipFilePath);
+            tempZipFile = new File(zipFilePath);
+            fileToUpload = tempZipFile;
         }
-        try (final FileHandle fileHandle = fileRepository.createNewFileByName(file.getName())) {
-            fileHandle.setContent(new FileInputStream(file));
+
+        try (final FileHandle fileHandle = fileRepository.createNewFileByName(fileToUpload.getName());
+             final FileInputStream fis = new FileInputStream(fileToUpload)) {
+            fileHandle.setContent(fis);
             return fileHandle.getFile();
+        } finally {
+            // Clean up temporary zip file if created
+            if (tempZipFile != null && tempZipFile.exists()) {
+                tempZipFile.delete();
+            }
         }
     }
 

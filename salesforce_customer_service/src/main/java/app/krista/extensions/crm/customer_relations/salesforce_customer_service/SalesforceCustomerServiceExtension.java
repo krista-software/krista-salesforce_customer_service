@@ -2,7 +2,12 @@ package app.krista.extensions.crm.customer_relations.salesforce_customer_service
 
 import app.krista.extension.authorization.RequestAuthenticator;
 import app.krista.extension.executor.Invoker;
-import app.krista.extension.impl.anno.*;
+import app.krista.extension.impl.anno.Attribute;
+import app.krista.extension.impl.anno.Extension;
+import app.krista.extension.impl.anno.Field;
+import app.krista.extension.impl.anno.InvokerRequest;
+import app.krista.extension.impl.anno.Java;
+import app.krista.extension.impl.anno.StaticResource;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.connectors.SalesforceTokenProviderFactory;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.SalesforceCustomerServiceAttributesStore;
 

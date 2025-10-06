@@ -94,6 +94,7 @@ public final class CustomerStore implements EntityStore<Customer> {
     }
 
     @Override
+    @Deprecated
     public List<Customer> search(List<SearchCondition> list, long l, int i) {
         return Collections.emptyList();
     }

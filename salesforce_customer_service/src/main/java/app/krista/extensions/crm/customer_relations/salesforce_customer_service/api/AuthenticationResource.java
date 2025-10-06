@@ -5,6 +5,7 @@ import app.krista.extensions.crm.customer_relations.salesforce_customer_service.
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.connectors.SalesforceTokenProviderFactory;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.RefreshTokenStore;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.SalesforceCustomerServiceAttributesStore;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.xmlparser.XMlResponseParser;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.xmlparser.case_notification.CaseNotifications;
 import app.krista.extensions.util.EventHandler;
@@ -29,8 +30,6 @@ import static com.github.scribejava.core.model.OAuthConstants.STATE;
 
 @Path("/salesforcecustomerservice")
 public final class AuthenticationResource {
-    public static final String USER_AUTHENTICATED_SUCCESSFULLY = "User authenticated successfully.";
-    public static final String SAVE_THE_CHANGES = " Save the changes.";
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationResource.class);
     private final RefreshTokenStore refreshTokenStore;
     private final SalesforceCustomerServiceAttributesStore attributesStore;
@@ -70,9 +69,9 @@ public final class AuthenticationResource {
                     tokenProvider.getSalesforceCustomerServiceAttributes().getClientSecret(), accessToken.getRefreshToken());
             if (context.isAuthenticated()) {
                 authorizationListener.authorized();
-                return USER_AUTHENTICATED_SUCCESSFULLY;
+                return Constants.USER_AUTHENTICATED_SUCCESSFULLY;
             }
-            return USER_AUTHENTICATED_SUCCESSFULLY + SAVE_THE_CHANGES;
+            return Constants.USER_AUTHENTICATED_SUCCESSFULLY + Constants.SAVE_THE_CHANGES;
         } catch (IOException | ExecutionException cause) {
             LOGGER.error("Exception occurred during authorization", cause);
             throw new IllegalStateException("Error occurred during authorization", cause.getCause());

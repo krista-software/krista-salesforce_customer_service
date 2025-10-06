@@ -1,7 +1,12 @@
 package app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog.entities;
 
 
-import app.krista.extension.impl.anno.*;
+import app.krista.extension.impl.anno.Attribute;
+import app.krista.extension.impl.anno.Domain;
+import app.krista.extension.impl.anno.Entity;
+import app.krista.extension.impl.anno.Field;
+import app.krista.extension.impl.anno.Searchable;
+import app.krista.extension.impl.anno.ToString;
 
 @Searchable
 @Domain(id = "catEntryDomain_a66f83b1-fa58-427f-b8b9-0c83a401bf53", name = "Customer Relations", ecosystemId = "catEntryEcosystem_8a0e8ce7-6289-492f-9202-52284024280c", ecosystemName = "CRM", ecosystemVersion = "02f1a8e5-3d30-4717-89ad-535dce7c1789")
