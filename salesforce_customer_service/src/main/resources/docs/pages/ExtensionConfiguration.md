@@ -10,15 +10,15 @@ The following table lists all configuration parameters required to set up the ex
 
 ![Customer Service Attributes](../_media/ExtensionConfiguration_CustomerServiceAttributes.png)
 
-| Parameter | Type | Required | Description | Example |
-|-----------|------|----------|-------------|---------|
-| Client ID | Text | Yes | OAuth 2.0 client identifier from your Salesforce Connected App | "3MVG9fTLmJ60pJ5..." |
-| Client Secret | Text | Yes | OAuth 2.0 client secret from your Salesforce Connected App | "1234567890ABCDEF..." |
-| Instance URL | Text | No | Your Salesforce instance URL (optional, auto-detected if not provided) | "https://mycompany.my.salesforce.com" |
-| Username | Text | Conditional* | Salesforce username for Username-Password OAuth flow | "user@company.com" |
-| Password | Text | Conditional* | Salesforce password for Username-Password OAuth flow | "MyP@ssw0rd" |
-| Security Token | Text | Conditional* | Salesforce security token for Username-Password OAuth flow | "AbCdEfGhIjKlMnOp" |
-| Sandbox | Boolean | No | Set to `true` to connect to a Salesforce sandbox environment | false |
+| Parameter      | Type    | Required     | Description                                                            | Example                               |
+|----------------|---------|--------------|------------------------------------------------------------------------|---------------------------------------|
+| Client ID      | Text    | Yes          | OAuth 2.0 client identifier from your Salesforce Connected App         | "3MVG9fTLmJ60pJ5..."                  |
+| Client Secret  | Text    | Yes          | OAuth 2.0 client secret from your Salesforce Connected App             | "1234567890ABCDEF..."                 |
+| Instance URL   | Text    | No           | Your Salesforce instance URL (optional, auto-detected if not provided) | "https://mycompany.my.salesforce.com" |
+| Username       | Text    | Conditional* | Salesforce username for Username-Password OAuth flow                   | "user@company.com"                    |
+| Password       | Text    | Conditional* | Salesforce password for Username-Password OAuth flow                   | "MyP@ssw0rd"                          |
+| Security Token | Text    | Conditional* | Salesforce security token for Username-Password OAuth flow             | "AbCdEfGhIjKlMnOp"                    |
+| Sandbox        | Boolean | No           | Set to `true` to connect to a Salesforce sandbox environment           | false                                 |
 
 **Conditional Requirements***: Username, Password, and Security Token are required only when using the Username-Password OAuth flow for service account authentication. They are not needed for the Authorization Code flow (user authentication).
 
@@ -30,7 +30,7 @@ The following table lists all configuration parameters required to set up the ex
 
 Before configuring the extension, you must create a Connected App in Salesforce to obtain the Client ID and Client Secret.
 
-👉 Follow the [Creating Salesforce Connected App](CreatingSalesforceApp.md) guide for detailed instructions.
+👉 Follow the [Creating Salesforce Connected App](/pages/CreatingSalesforceApp.md) guide for detailed instructions.
 
 ### Step 2: Access Extension Configuration in Krista
 
