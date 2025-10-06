@@ -39,7 +39,9 @@ public class ValidationOrchestrator {
         List<ValidationResult> results = new ArrayList<>();
         for (Map.Entry<Validator.ValidationResource, String> entry : resources.entrySet()) {
             Validator validator = validators.get(entry.getKey());
-            assert validator != null;
+            if (validator == null) {
+                throw new IllegalStateException("Validator not found for resource: " + entry.getKey());
+            }
             if (!validator.validate(entry.getValue(), resources)) {
                 results.add(new ValidationResult(validator.getConfirmationStepMessage(entry.getValue(), resources),
                         validator.getFetchFieldName(), validator.getFetchStepMessage(),
