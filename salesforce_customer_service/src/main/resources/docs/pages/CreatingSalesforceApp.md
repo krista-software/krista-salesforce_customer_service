@@ -240,7 +240,7 @@ Users must be assigned to these permission sets to authenticate with the Connect
 ### Test Authentication
 
 1. Configure the Krista extension with your Client ID and Client Secret
-2. Follow the [Extension Configuration](ExtensionConfiguration.md) guide
+2. Follow the [Extension Configuration](pages/ExtensionConfiguration.md) guide
 3. Test the connection using Krista's diagnostics or a simple conversation
 4. Verify you can authenticate successfully
 
@@ -302,10 +302,10 @@ If you're connecting to a Salesforce Sandbox:
 
 After creating your Connected App:
 
-1. **Configure Krista Extension**: Use the Consumer Key and Consumer Secret in [Extension Configuration](ExtensionConfiguration.md)
-2. **Understand Authentication**: Review [Authentication](Authentication.md) modes and flows
+1. **Configure Krista Extension**: Use the Consumer Key and Consumer Secret in [Extension Configuration](pages/ExtensionConfiguration.md)
+2. **Understand Authentication**: Review [Authentication](pages/Authentication.md) modes and flows
 3. **Test Connection**: Create a test conversation to verify connectivity
-4. **Explore Catalog Requests**: Start using [Case Management](GetCaseFeedItemsByCaseId.md) features
+4. **Explore Catalog Requests**: Start using [Case Management](pages/GetCaseFeedItemsByCaseId.md) features
 
 ## Additional Resources
 
@@ -315,7 +315,7 @@ After creating your Connected App:
 
 ## See Also
 
-- [Extension Configuration](ExtensionConfiguration.md)
-- [Authentication](Authentication.md)
-- [Troubleshooting Guide](Troubleshooting.md)
+- [Extension Configuration](pages/ExtensionConfiguration.md)
+- [Authentication](pages/Authentication.md)
+- [Troubleshooting Guide](pages/Troubleshooting.md)
 
