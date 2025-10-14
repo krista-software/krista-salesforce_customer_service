@@ -64,16 +64,19 @@ public class FileValidator implements Validator {
 
     @Override
     public String getFetchStepMessage() {
-        return "Please provide valid file.";
+        return "Please provide a valid file to attach to the case (supported formats: PDF, DOC, DOCX, XLS, XLSX, TXT, PNG, JPG, JPEG).";
     }
 
     @Override
     public String getConfirmationStepMessage(String fileName, Map<ValidationResource, String> context) {
-        return String.format("The provided file %s is not supported", fileName);
+        return String.format("File validation failed because the file '%s' has an unsupported format. " +
+                "Please select a file with a supported format (PDF, DOC, DOCX, XLS, XLSX, TXT, PNG, JPG, JPEG).", fileName);
     }
 
     @Override
     public String getErrMessage(String fileName) {
-        return String.format("The provided file %s is not supported", fileName);
+        return String.format("File attachment failed because the file '%s' has an unsupported format. " +
+                "Only the following file formats are supported: PDF, DOC, DOCX, XLS, XLSX, TXT, PNG, JPG, JPEG. " +
+                "Please select a file with a supported format and try again.", fileName);
     }
 }

@@ -39,17 +39,20 @@ public class NumberOfPostsValidator implements Validator {
 
     @Override
     public String getFetchStepMessage() {
-        return "Please enter the number of posts (1 to 100).";
+        return "Please enter the number of posts to retrieve (must be between 1 and 100).";
     }
 
     @Override
     public String getConfirmationStepMessage(String numberOfPostsInput, Map<ValidationResource, String> context) {
-        return String.format("The provided number of posts: %s is invalid.", numberOfPostsInput);
+        return String.format("Post count validation failed because the provided number '%s' is outside the allowed range. " +
+                "Please enter a number between 1 and 100.", numberOfPostsInput);
     }
 
     @Override
     public String getErrMessage(String numberOfPostsInput) {
-        return String.format(Constants.INVALID + " number of posts: %s. Please enter an integer between 1 and 100.", numberOfPostsInput);
+        return String.format("Post retrieval failed because the number of posts '%s' is invalid. " +
+                "The number of posts must be a positive integer between 1 and 100. " +
+                "Please provide a valid number within the allowed range and try again.", numberOfPostsInput);
     }
 }
 

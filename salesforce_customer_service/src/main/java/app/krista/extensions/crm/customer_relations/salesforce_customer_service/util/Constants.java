@@ -22,34 +22,68 @@ public class Constants {
     // Authentication Error Messages
     public static final String INVALID_CLIENT_ERROR = "invalid_client";
     public static final String INVALID_GRANT_ERROR = "invalid_grant";
-    public static final String INVALID_CLIENT_MESSAGE = "Authentication failed. Please check your Salesforce client credentials.";
-    public static final String INVALID_GRANT_MESSAGE = "Authentication failed. Please check your Salesforce username, password, and security token.";
+    public static final String INVALID_CLIENT_MESSAGE = "Authentication failed due to invalid client credentials. " +
+            "The Client ID or Client Secret provided is incorrect or expired. " +
+            "Please verify your Salesforce Connected App credentials in the extension configuration and ensure they match your Salesforce setup.";
+    public static final String INVALID_GRANT_MESSAGE = "Authentication failed due to invalid user credentials. " +
+            "The username, password, or security token provided is incorrect or expired. " +
+            "Please verify your Salesforce username, password, and security token in the extension configuration. " +
+            "If using a security token, ensure it's current and appended to your password.";
     public static final String AUTHENTICATION_FAILED_PREFIX = "Authentication failed: ";
     public static final String EXPIRED_REFRESH_TOKEN = "expired access/refresh token";
 
     // OAuth Configuration Error Messages
-    public static final String CLIENT_ID_REQUIRED = "Client ID is required for OAuth authentication";
-    public static final String CLIENT_SECRET_REQUIRED = "Client Secret is required for OAuth authentication";
-    public static final String ROUTING_URL_REQUIRED = "Routing URL is required for OAuth authentication. Please configure the routing URL to generate callback URL.";
-    public static final String CALLBACK_URL_REQUIRED = "Callback URL is required for OAuth authentication. Please ensure routing URL is configured.";
-    public static final String CALLBACK_URL_FORMAT_ERROR = "Callback URL must be a valid HTTP or HTTPS URL: ";
-    public static final String DOMAIN_URL_REQUIRED = "Domain URL cannot be null or empty for custom OAuth service";
+    public static final String CLIENT_ID_REQUIRED = "OAuth configuration is incomplete due to missing Client ID. " +
+            "A valid Salesforce Client ID is required for authentication. " +
+            "Please obtain the Client ID from your Salesforce Connected App and enter it in the extension configuration.";
+    public static final String CLIENT_SECRET_REQUIRED = "OAuth configuration is incomplete due to missing Client Secret. " +
+            "A valid Salesforce Client Secret is required for authentication. " +
+            "Please obtain the Client Secret from your Salesforce Connected App and enter it in the extension configuration.";
+    public static final String ROUTING_URL_REQUIRED = "OAuth configuration is incomplete due to missing Routing URL. " +
+            "A routing URL is required to generate the callback URL for OAuth authentication. " +
+            "Please configure the routing URL in your Krista system settings or contact your administrator.";
+    public static final String CALLBACK_URL_REQUIRED = "OAuth configuration is incomplete due to missing Callback URL. " +
+            "A callback URL is required for OAuth authentication flow. " +
+            "Please ensure the routing URL is properly configured in your Krista system settings.";
+    public static final String CALLBACK_URL_FORMAT_ERROR = "OAuth configuration error due to invalid Callback URL format. " +
+            "The callback URL must be a valid HTTP or HTTPS URL. Found: ";
+    public static final String DOMAIN_URL_REQUIRED = "Custom OAuth service configuration is incomplete due to missing Domain URL. " +
+            "A valid domain URL is required when using custom Salesforce domains. " +
+            "Please provide your Salesforce instance URL (e.g., https://yourcompany.my.salesforce.com) in the extension configuration.";
 
     // Domain Validation Messages
-    public static final String DOMAIN_NULL_ERROR = "Domain cannot be null";
-    public static final String DOMAIN_EMPTY_ERROR = "Domain cannot be empty";
-    public static final String DOMAIN_PROTOCOL_ERROR = "Domain must start with http:// or https://";
-    public static final String DOMAIN_TOO_SHORT_ERROR = "Domain appears to be too short to be valid";
+    public static final String DOMAIN_NULL_ERROR = "Domain validation failed because no domain was provided. " +
+            "A valid Salesforce domain URL is required for custom domain authentication. " +
+            "Please provide your Salesforce instance URL (e.g., https://yourcompany.my.salesforce.com) in the extension configuration.";
+    public static final String DOMAIN_EMPTY_ERROR = "Domain validation failed because the domain field is empty. " +
+            "A valid Salesforce domain URL is required for custom domain authentication. " +
+            "Please provide your Salesforce instance URL (e.g., https://yourcompany.my.salesforce.com) in the extension configuration.";
+    public static final String DOMAIN_PROTOCOL_ERROR = "Domain validation failed due to invalid protocol. " +
+            "The domain URL must start with 'http://' or 'https://' (HTTPS is recommended for security). " +
+            "Please update your domain URL to include the proper protocol (e.g., https://yourcompany.my.salesforce.com).";
+    public static final String DOMAIN_TOO_SHORT_ERROR = "Domain validation failed because the provided domain appears to be incomplete. " +
+            "A valid Salesforce domain URL should include the full hostname. " +
+            "Please provide the complete Salesforce instance URL (e.g., https://yourcompany.my.salesforce.com).";
 
     // Instance URL Validation Messages
-    public static final String INSTANCE_URL_PROTOCOL_ERROR = "Instance URL must use HTTP or HTTPS protocol. Found: ";
-    public static final String INSTANCE_URL_HOST_ERROR = "Instance URL must have a valid host";
-    public static final String INSTANCE_URL_FORMAT_ERROR = "Invalid Instance URL format: ";
+    public static final String INSTANCE_URL_PROTOCOL_ERROR = "Instance URL validation failed due to invalid protocol. " +
+            "The Instance URL must use HTTP or HTTPS protocol (HTTPS is recommended for security). Found: ";
+    public static final String INSTANCE_URL_HOST_ERROR = "Instance URL validation failed due to missing or invalid hostname. " +
+            "The Instance URL must include a valid Salesforce hostname. " +
+            "Please provide a complete Salesforce instance URL (e.g., https://yourcompany.my.salesforce.com).";
+    public static final String INSTANCE_URL_FORMAT_ERROR = "Instance URL validation failed due to invalid format. " +
+            "The Instance URL must be a valid URL with proper protocol and hostname. Invalid format: ";
 
     // OAuth Service Creation Error Messages
-    public static final String OAUTH_SERVICE_CREATION_ERROR = "Failed to create OAuth service for standard Salesforce authentication. Please verify your Client ID, Client Secret, and callback configuration.";
-    public static final String OAUTH_SERVICE_CUSTOM_DOMAIN_ERROR = "Failed to create OAuth service for custom domain: ";
-    public static final String OAUTH_SERVICE_VERIFY_CONFIG = ". Please verify your Client ID, Client Secret, callback configuration, and domain URL format.";
+    public static final String OAUTH_SERVICE_CREATION_ERROR = "OAuth service initialization failed for standard Salesforce authentication. " +
+            "The system could not create the OAuth service due to configuration issues. " +
+            "Please verify your Client ID and Client Secret are correct, ensure the callback URL is properly configured, " +
+            "and check that your Salesforce Connected App settings allow the required OAuth flows.";
+    public static final String OAUTH_SERVICE_CUSTOM_DOMAIN_ERROR = "OAuth service initialization failed for custom Salesforce domain. " +
+            "The system could not create the OAuth service for the specified custom domain: ";
+    public static final String OAUTH_SERVICE_VERIFY_CONFIG = ". Please verify your Client ID and Client Secret are correct, " +
+            "ensure the callback URL is properly configured, check that your custom domain URL format is valid, " +
+            "and confirm that your Salesforce Connected App settings allow the required OAuth flows.";
 
     // Authentication Success Messages
     public static final String USER_AUTHENTICATED_SUCCESSFULLY = "User authenticated successfully.";
@@ -76,8 +110,12 @@ public class Constants {
     public static final String CONTACT_NAME = "Contact Name";
     public static final String CONTACT_PHONE = "Contact Phone";
     public static final String CONTACT_EMAIL = "Contact Email";
-    public static final String CONTACT_ID_IS_REQUIRED_TO_ADD_CONTACT_INFORMATION = "Contact Id is required to add Contact Information!";
-    public static final String ACCOUNT_ID_IS_REQUIRED_TO_ADD_ACCOUNT_NAME = "Account Id is required to add Account Name!";
+    public static final String CONTACT_ID_IS_REQUIRED_TO_ADD_CONTACT_INFORMATION = "Contact information cannot be added because no Contact ID was provided. " +
+            "A valid Salesforce Contact ID is required to associate contact information. " +
+            "Please provide a valid Contact ID from your Salesforce system and try again.";
+    public static final String ACCOUNT_ID_IS_REQUIRED_TO_ADD_ACCOUNT_NAME = "Account name cannot be added because no Account ID was provided. " +
+            "A valid Salesforce Account ID is required to associate account information. " +
+            "Please provide a valid Account ID from your Salesforce system and try again.";
     public static final String ACCOUNT_NAME = "Account Name";
     public static final String ACCOUNT_ID = "Account Id";
     public static final String STATUS = "Status";
@@ -119,10 +157,18 @@ public class Constants {
     public static final String SLA_EXPIRATION_DATE = "SLA Expiration Date";
     public static final String OWNERSHIP = "Ownership";
     public static final String INDUSTRY = "Industry";
-    public static final String PRIMARY_KEY_IS_EMPTY = "Primary key is empty";
-    public static final String ACCOUNT_ID_IS_REQUIRED_TO_UPDATE_ACCOUNT_NAME = "Account Id is required to update account name.";
-    public static final String ENTITY_INPUT_IS_NULL_OR_EMPTY = "Entity input is null or empty.";
-    public static final String ID_IS_NULL_OR_EMPTY = "Id is null or empty.";
+    public static final String PRIMARY_KEY_IS_EMPTY = "Record operation failed because the primary key is missing. " +
+            "A valid primary key is required to identify the record. " +
+            "Please provide a valid primary key value and try again.";
+    public static final String ACCOUNT_ID_IS_REQUIRED_TO_UPDATE_ACCOUNT_NAME = "Account name cannot be updated because no Account ID was provided. " +
+            "A valid Salesforce Account ID is required to update account information. " +
+            "Please provide a valid Account ID from your Salesforce system and try again.";
+    public static final String ENTITY_INPUT_IS_NULL_OR_EMPTY = "Entity operation failed because no entity data was provided. " +
+            "Valid entity information is required to perform this operation. " +
+            "Please provide the required entity data and try again.";
+    public static final String ID_IS_NULL_OR_EMPTY = "Record operation failed because no ID was provided. " +
+            "A valid Salesforce record ID is required to perform this operation. " +
+            "Please provide a valid record ID and try again.";
     public static final String STRING = "String";
     public static final String EQUALS = "equals";
     public static final String CASE_NUMBER = "Case Number";
@@ -130,10 +176,18 @@ public class Constants {
     public static final String LONG = "Long";
     public static final String GT = "gt";
     public static final String LT = "lt";
-    public static final String QUERY_IS_NULL_OR_EMPTY = "Query is null or empty.";
-    public static final String CONDITIONS_NOT_FOUND = "Conditions not found.";
-    public static final String ENTITY_MAP_IS_NULL_OR_EMPTY = "Entity map is null or empty. ";
-    public static final String FAILED_TO_SEARCH = "Failed to Search. ";
+    public static final String QUERY_IS_NULL_OR_EMPTY = "Search operation failed because no query was provided. " +
+            "A valid search query is required to perform the search operation. " +
+            "Please provide search criteria and try again.";
+    public static final String CONDITIONS_NOT_FOUND = "Search operation failed because no search conditions were specified. " +
+            "Valid search conditions are required to filter results. " +
+            "Please specify search conditions and try again.";
+    public static final String ENTITY_MAP_IS_NULL_OR_EMPTY = "Entity mapping operation failed because no entity data was provided. " +
+            "A valid entity map with data is required to perform this operation. " +
+            "Please provide the required entity mapping data and try again.";
+    public static final String FAILED_TO_SEARCH = "Search operation failed due to an error during execution. " +
+            "The system encountered an issue while performing the search. " +
+            "Please check your search criteria and try again, or contact support if the issue persists.";
     public static final Gson GSON = new Gson();
     public static final String CREATED = "created";
     public static final String TEXT = "Text";
@@ -141,10 +195,16 @@ public class Constants {
     public static final String ENTERPRISE_SOAP_SFORCE_COM = "urn:sobject.enterprise.soap.sforce.com";
     public static final String COM_2005_09_OUTBOUND = "http://soap.sforce.com/2005/09/outbound";
     public static final String BOOLEAN = "Boolean";
-    public static final String INVALID_CASE_ID = "Invalid case id";
-    public static final String INVALID_NUMBER_OF_POSTS = "Invalid number of posts";
+    public static final String INVALID_CASE_ID = "Case operation failed because the provided Case ID is invalid. " +
+            "A valid Salesforce Case ID is required to perform this operation. " +
+            "Please verify the Case ID exists in your Salesforce system and try again.";
+    public static final String INVALID_NUMBER_OF_POSTS = "Post retrieval failed because the number of posts specified is invalid. " +
+            "The number of posts must be a positive integer between 1 and 100. " +
+            "Please provide a valid number within the allowed range and try again.";
     public static final String INVALID = "Invalid";
-    public static final String ERROR_CASE_CHANGE_ALERT = "This error is for case change alert";
+    public static final String ERROR_CASE_CHANGE_ALERT = "Case change alert processing failed due to an error. " +
+            "The system encountered an issue while processing the case change notification. " +
+            "Please verify the case data and alert configuration, then try again.";
 
     private Constants() {
     }

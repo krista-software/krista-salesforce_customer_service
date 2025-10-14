@@ -33,16 +33,19 @@ public class UpdateMessageValidator implements Validator {
 
     @Override
     public String getFetchStepMessage() {
-        return "Please provide a valid update message.";
+        return "Please provide a valid update message to share with the case.";
     }
 
     @Override
     public String getConfirmationStepMessage(String messageInput, Map<ValidationResource, String> messageContext) {
-        return String.format("The Provided Update message from caseId : %s", messageInput);
+        return String.format("Message validation failed because the update message is empty or invalid. " +
+                "Please provide a meaningful message to share with the case.");
     }
 
     @Override
     public String getErrMessage(String messageInput) {
-        return String.format("Invalid update message: %s", messageInput);
+        return String.format("Case update failed because the message '%s' is invalid or empty. " +
+                "A valid update message is required to share information with the case. " +
+                "Please provide a meaningful message and try again.", messageInput);
     }
 }

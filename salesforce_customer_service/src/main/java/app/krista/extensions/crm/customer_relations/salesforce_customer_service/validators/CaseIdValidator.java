@@ -46,17 +46,20 @@ public class CaseIdValidator implements Validator {
 
     @Override
     public String getFetchStepMessage() {
-        return "Please enter a valid Case ID.";
+        return "Please enter a valid Salesforce Case ID to retrieve case feed items.";
     }
 
     @Override
     public String getConfirmationStepMessage(String caseId, Map<ValidationResource, String> caseContext) {
-        return String.format("The provided Case ID: %s is invalid.", caseId);
+        return String.format("Case validation failed because the provided Case ID '%s' does not exist in Salesforce. " +
+                "Please verify the Case ID is correct and accessible in your Salesforce system.", caseId);
     }
 
     @Override
     public String getErrMessage(String caseId) {
-        return String.format(Constants.INVALID + " case Id : %s", caseId);
+        return String.format("Case operation failed because the Case ID '%s' is invalid or does not exist. " +
+                "A valid Salesforce Case ID is required to perform this operation. " +
+                "Please verify the Case ID exists in your Salesforce system and you have access to it.", caseId);
     }
 
 }

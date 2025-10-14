@@ -402,32 +402,63 @@ grant_type=password
 
 ## Troubleshooting Authentication
 
-### Issue: "Invalid Client ID"
+### Issue: "OAuth configuration is incomplete due to missing Client ID"
 
-**Cause**: Client ID is incorrect or Connected App is not active
-
-**Resolution**:
-1. Verify Client ID matches the Consumer Key in Salesforce Connected App
-2. Ensure Connected App is saved and active
-3. Wait a few minutes after creating Connected App for changes to propagate
-
-### Issue: "Redirect URI Mismatch"
-
-**Cause**: Callback URL in Salesforce doesn't match Krista's redirect URI
+**Cause**: A valid Salesforce Client ID is required for authentication.
 
 **Resolution**:
-1. Copy exact redirect URI from Krista extension configuration
-2. Add to Callback URL in Salesforce Connected App
-3. Ensure exact match including protocol (https://) and path
+1. Obtain the Client ID from your Salesforce Connected App
+2. Enter it in the extension configuration
+3. Refer to [Creating Salesforce App](CreatingSalesforceApp.md) for detailed steps
 
-### Issue: "Invalid Username, Password, or Security Token"
+### Issue: "OAuth configuration is incomplete due to missing Client Secret"
 
-**Cause**: Service account credentials are incorrect
+**Cause**: A valid Salesforce Client Secret is required for authentication.
 
 **Resolution**:
-1. Verify username is correct (usually email format)
-2. Confirm password is current
-3. Reset security token in Salesforce (Settings → Reset My Security Token)
+1. Obtain the Client Secret from your Salesforce Connected App
+2. Enter it in the extension configuration
+3. Ensure the Connected App allows the required OAuth flows
+
+### Issue: "Authentication failed due to invalid client credentials"
+
+**Cause**: The Client ID or Client Secret provided is incorrect or expired.
+
+**Resolution**:
+1. Verify your Salesforce Connected App credentials in the extension configuration
+2. Ensure they match your Salesforce setup exactly
+3. Check that the Connected App is active and not expired
+4. Regenerate Client Secret if necessary
+
+### Issue: "Authentication failed due to invalid user credentials"
+
+**Cause**: The username, password, or security token provided is incorrect or expired.
+
+**Resolution**:
+1. Verify your Salesforce username, password, and security token in the extension configuration
+2. If using a security token, ensure it's current and appended to your password
+3. Reset your security token if it has expired
+4. Ensure the user account is active and has API access
+
+### Issue: "Domain validation failed due to invalid protocol"
+
+**Cause**: The domain URL must start with 'http://' or 'https://' (HTTPS is recommended for security).
+
+**Resolution**:
+1. Update your domain URL to include the proper protocol
+2. Use format: `https://yourcompany.my.salesforce.com`
+3. Avoid using HTTP in production environments
+
+### Issue: "OAuth service initialization failed"
+
+**Cause**: The system could not create the OAuth service due to configuration issues.
+
+**Resolution**:
+1. Verify your Client ID and Client Secret are correct
+2. Ensure the callback URL is properly configured
+3. Check that your Salesforce Connected App settings allow the required OAuth flows
+4. Verify network connectivity to Salesforce
+5. For custom domains, check that your domain URL format is valid
 4. Ensure password and token are entered correctly (password+token concatenated)
 
 ### Issue: "User Not Authorized"

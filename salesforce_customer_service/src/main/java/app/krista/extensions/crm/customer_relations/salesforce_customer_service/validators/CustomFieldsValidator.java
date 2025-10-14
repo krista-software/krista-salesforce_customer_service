@@ -66,17 +66,20 @@ public class CustomFieldsValidator implements Validator {
 
     @Override
     public String getFetchStepMessage() {
-        return "Please enter a list of Salesforce custom field names (each must end with '__c').";
+        return "Please enter a comma-separated list of Salesforce custom field names (each field name must end with '__c').";
     }
 
     @Override
     public String getConfirmationStepMessage(String customFieldsInput, Map<ValidationResource, String> customFieldContext) {
-        return String.format("The provided custom field(s): %s do not exist.", customFieldsInput);
+        return String.format("Custom field validation failed because one or more fields in '%s' do not exist in Salesforce or are not properly formatted. " +
+                "Please verify the field names are correct and each ends with '__c'.", customFieldsInput);
     }
 
     @Override
     public String getErrMessage(String customFieldsInput) {
-        return String.format("One or more custom fields are invalid: [%s]. Please ensure each field name ends with '__c'.", customFieldsInput);
+        return String.format("Custom field operation failed because one or more fields in '%s' are invalid. " +
+                "Custom field names must end with '__c' and exist in the specified Salesforce object. " +
+                "Please verify the field names are correct, properly formatted, and exist in your Salesforce system.", customFieldsInput);
     }
 
 }

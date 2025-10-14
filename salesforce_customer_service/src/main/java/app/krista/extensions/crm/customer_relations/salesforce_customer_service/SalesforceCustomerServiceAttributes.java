@@ -13,6 +13,7 @@ import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.Map;
 
@@ -251,7 +252,7 @@ public final class SalesforceCustomerServiceAttributes {
         }
 
         try {
-            URL url = new URL(instanceUrl.trim());
+            URL url = URI.create(instanceUrl.trim()).toURL();
 
             // Validate protocol
             String protocol = url.getProtocol();
