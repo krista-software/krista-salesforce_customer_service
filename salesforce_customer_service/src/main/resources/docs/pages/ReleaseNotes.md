@@ -4,8 +4,7 @@
 
 ### Release Information
 
-- **Release Date**: October 2025
-- **Developers**: Augment Agent
+- **Release Calendar Month**: October 2025
 - **Krista Service APIs Java**: 1.0.117
 - **Global Catalog Version**: GC-2025.10.1
 - **Java Version**: 21
