@@ -30,7 +30,7 @@ The following table lists all configuration parameters required to set up the ex
 
 Before configuring the extension, you must create a Connected App in Salesforce to obtain the Client ID and Client Secret.
 
-👉 Follow the [Creating Salesforce Connected App](/pages/CreatingSalesforceApp.md) guide for detailed instructions.
+👉 Follow the [Creating Salesforce Connected App](pages/CreatingSalesforceApp.md) guide for detailed instructions.
 
 ### Step 2: Access Extension Configuration in Krista
 

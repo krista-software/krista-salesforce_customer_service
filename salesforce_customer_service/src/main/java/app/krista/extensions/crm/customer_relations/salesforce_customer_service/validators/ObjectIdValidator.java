@@ -138,16 +138,20 @@ public class ObjectIdValidator implements Validator {
 
     @Override
     public String getFetchStepMessage() {
-        return "Please enter the object id for the selected type.";
+        return "Please enter a valid Salesforce object ID for the selected object type.";
     }
 
     @Override
     public String getConfirmationStepMessage(String objectId, Map<ValidationResource, String> objectIdContext) {
-        return String.format("The provided object id: %s is invalid.", objectId);
+        String objectType = objectIdContext.get(ValidationResource.OBJECT_TYPE);
+        return String.format("Object validation failed because the provided %s ID '%s' does not exist in Salesforce. " +
+                "Please verify the ID is correct and accessible in your Salesforce system.", objectType, objectId);
     }
 
     @Override
     public String getErrMessage(String objectId) {
-        return "The provided object id \"" + objectId + "\" is " + Constants.INVALID + " or does not exist in Salesforce.";
+        return String.format("Object operation failed because the object ID '%s' is invalid or does not exist in Salesforce. " +
+                "A valid Salesforce object ID is required to perform this operation. " +
+                "Please verify the object ID exists in your Salesforce system and you have access to it.", objectId);
     }
 }

@@ -430,8 +430,8 @@ Result: Synchronized case management across systems
 
 ## Related Catalog Requests
 
-- [Get Case Feed Items By Case Id](GetCaseFeedItemsByCaseId.md) - Retrieve feed items after receiving a case change alert
-- [Share Update to Case](ShareUpdateToCase.md) - Post updates to cases in response to alerts
+- [Get Case Feed Items By Case Id](pages/GetCaseFeedItemsByCaseId.md) - Retrieve feed items after receiving a case change alert
+- [Share Update to Case](pages/ShareUpdateToCase.md) - Post updates to cases in response to alerts
 
 ## Technical Implementation
 
@@ -499,8 +499,8 @@ Result: Synchronized case management across systems
 
 ## See Also
 
-- [Extension Configuration](ExtensionConfiguration.md)
-- [Get Case Feed Items By Case Id](GetCaseFeedItemsByCaseId.md)
-- [Share Update to Case](ShareUpdateToCase.md)
+- [Extension Configuration](pages/ExtensionConfiguration.md)
+- [Get Case Feed Items By Case Id](pages/GetCaseFeedItemsByCaseId.md)
+- [Share Update to Case](pages/ShareUpdateToCase.md)
 - [Salesforce Outbound Messages Documentation](https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_om_outboundmessaging.htm)
 

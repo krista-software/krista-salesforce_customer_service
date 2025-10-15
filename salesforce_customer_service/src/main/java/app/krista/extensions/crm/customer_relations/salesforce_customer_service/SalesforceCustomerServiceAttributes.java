@@ -13,6 +13,7 @@ import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.Map;
 
@@ -251,7 +252,7 @@ public final class SalesforceCustomerServiceAttributes {
         }
 
         try {
-            URL url = new URL(instanceUrl.trim());
+            URL url = URI.create(instanceUrl.trim()).toURL();
 
             // Validate protocol
             String protocol = url.getProtocol();
@@ -274,7 +275,7 @@ public final class SalesforceCustomerServiceAttributes {
 
             return instanceUrl.trim();
 
-        } catch (MalformedURLException e) {
+        } catch (MalformedURLException | IllegalArgumentException e) {
             throw new IllegalArgumentException(Constants.INSTANCE_URL_FORMAT_ERROR + instanceUrl + ". " + e.getMessage(), e);
         }
     }

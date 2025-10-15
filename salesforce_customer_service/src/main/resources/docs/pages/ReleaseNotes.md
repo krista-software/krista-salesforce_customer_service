@@ -1,5 +1,106 @@
 # Release Notes
 
+## Version 2.0.16
+
+### Release Information
+
+- **Release Calendar Month**: October 2025
+- **Krista Service APIs Java**: 1.0.117
+- **Global Catalog Version**: GC-2025.10.1
+- **Java Version**: 21
+- **Gradle Version**: 8.5
+
+### What's New
+
+This patch release focuses on improving user experience through enhanced error messages, comprehensive testing, technical modernization, and updated documentation.
+
+#### Key Improvements
+
+**Enhanced Error Messages**
+- Completely refactored all error messages to follow a new format that clearly identifies problems, explains requirements, and provides actionable resolution steps
+- Updated error messages in Constants.java, validator classes, DAO implementations, and store classes
+- Improved user guidance for troubleshooting authentication, validation, and data operation issues
+
+**Comprehensive Test Suite**
+- Added extensive test coverage for all utility classes (StringHelper, SFObjectHelper, Validators)
+- Implemented 100% coverage of public static methods with real concrete implementations (no Mockito)
+- Included comprehensive edge case testing: null values, empty inputs, boundary values, special characters, and Unicode support
+- Created detailed test documentation (TEST_RESULTS.md) with execution guidelines
+
+**Technical Modernization**
+- Ensured full Java 21 compatibility with updated build configuration
+- Added Gradle 8.5 wrapper for consistent build environment
+- Fixed deprecated API usage (URL constructor replaced with URI.create().toURL())
+- Verified all code compiles and tests pass with Java 21
+
+**Documentation Updates**
+- Enhanced Troubleshooting.md with comprehensive error scenarios based on new error message format
+- Updated Authentication.md error handling section with detailed resolution steps
+- Improved error message clarity and actionability throughout documentation
+- Added specific guidance for OAuth configuration, domain validation, and data operation issues
+
+### Technical Changes
+
+#### Error Message Improvements
+- **Authentication Errors**: Enhanced messages for invalid client credentials, user credentials, and OAuth service initialization failures
+- **Configuration Errors**: Improved guidance for missing Client ID/Secret, domain validation, and instance URL format issues
+- **Validation Errors**: Better error messages for case ID validation, number of posts validation, file format validation, and custom field validation
+- **Data Operation Errors**: Enhanced messages for missing record IDs, entity data, search queries, and case change alert processing
+
+#### Test Coverage Enhancements
+- **StringHelper**: 45 test cases covering all 6 public static methods including edge cases for null inputs, special characters, and large data sets
+- **Validators**: 25 test cases covering both public static methods with comprehensive type conversion and boundary value testing
+- **SFObjectHelper**: 12 test cases covering the upsertCaseMap method with various data scenarios and error conditions
+
+#### Build and Compatibility
+- **Java 21**: Full compatibility ensured with updated source and target compatibility settings
+- **Gradle 8.5**: Added gradle wrapper for consistent build environment across development teams
+- **Deprecation Fixes**: Resolved URL constructor deprecation warning by using URI.create().toURL()
+
+### Resolved Issues
+
+#### Error Message Enhancement
+- **Improved User Experience**: All error messages now follow a consistent format that helps users understand what went wrong, what is required, and how to fix the issue
+- **Better Troubleshooting**: Enhanced error messages provide specific, actionable steps rather than generic error descriptions
+- **Comprehensive Coverage**: Updated error messages across all extension components including validators, DAOs, and utility classes
+
+#### Test Coverage and Quality
+- **Production-Ready Testing**: Comprehensive test suite ensures reliability and robustness of utility classes
+- **Real Implementation Testing**: Tests use concrete implementations rather than mocks, providing more accurate validation
+- **Edge Case Coverage**: Extensive testing of boundary conditions, null values, and error scenarios
+
+#### Technical Modernization
+- **Future-Proof Compatibility**: Java 21 support ensures the extension works with modern Java environments
+- **Consistent Build Environment**: Gradle 8.5 wrapper ensures consistent builds across different development environments
+- **Clean Code**: Removed deprecated API usage and modernized code patterns
+
+### Migration Notes
+
+This is a patch release with no breaking changes. Existing configurations and integrations will continue to work without modification.
+
+#### For Developers
+- The extension now requires Java 21 for compilation and runtime
+- Use `./gradlew` instead of system gradle for consistent builds
+- New comprehensive test suite can be run with `./gradlew test --tests "*util*"`
+
+#### For Users
+- Error messages are now more helpful and provide specific resolution steps
+- Troubleshooting documentation has been significantly enhanced
+- No configuration changes are required
+
+### Known Issues
+
+None at this time.
+
+### See Also
+
+- [Extension Configuration](pages/ExtensionConfiguration.md)
+- [Authentication Guide](pages/Authentication.md)
+- [Troubleshooting Guide](pages/Troubleshooting.md)
+- [Test Results Documentation](../../TEST_RESULTS.md)
+
+---
+
 ## Version 2.0.15
 
 ### Release Information
@@ -198,7 +299,7 @@ For information about previous versions, please contact Krista support or refer 
 
 If you encounter any issues with this release:
 
-1. Check the [Troubleshooting Guide](Troubleshooting.md) for common solutions
+1. Check the [Troubleshooting Guide](pages/Troubleshooting.md) for common solutions
 2. Review Krista logs for detailed error information
 3. Contact Krista support with:
    - Extension version number
@@ -217,8 +318,8 @@ To request new features or enhancements:
 
 ## See Also
 
-- [Extension Configuration](ExtensionConfiguration.md)
-- [Authentication](Authentication.md)
-- [Troubleshooting](Troubleshooting.md)
-- [Supported Requests](SupportedRequests.md)
+- [Extension Configuration](pages/ExtensionConfiguration.md)
+- [Authentication](pages/Authentication.md)
+- [Troubleshooting](pages/Troubleshooting.md)
+- [Supported Requests](pages/SupportedRequests.md)
 

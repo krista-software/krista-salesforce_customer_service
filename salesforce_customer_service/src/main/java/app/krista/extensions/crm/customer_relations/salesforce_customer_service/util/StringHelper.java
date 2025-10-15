@@ -49,10 +49,12 @@ public final class StringHelper {
      * @param builder the {@link StringBuilder} representing the SOQL query
      */
     public static void setQueryEndIndex(StringBuilder builder) {
-        if (builder.substring(builder.length() - WHERE.length()).equals(WHERE)) {
+        if (builder.length() >= WHERE.length() &&
+            builder.substring(builder.length() - WHERE.length()).equals(WHERE)) {
             builder.setLength(builder.lastIndexOf(WHERE));
         }
-        if (builder.substring(builder.length() - SPACE_AND.length()).equals(SPACE_AND)) {
+        if (builder.length() >= SPACE_AND.length() &&
+            builder.substring(builder.length() - SPACE_AND.length()).equals(SPACE_AND)) {
             builder.setLength(builder.lastIndexOf(SPACE_AND));
         }
     }
@@ -110,11 +112,15 @@ public final class StringHelper {
      * @return a JSON-formatted string for the FeedAttachment link
      */
     public static String createFeedPostBodyForFeedAttachment(String feedId, String recordId, String fileName) {
+        String safeFeedId = feedId != null ? feedId.replace("\"", "") : "null";
+        String safeRecordId = recordId != null ? recordId.replace("\"", "") : "null";
+        String safeFileName = fileName != null ? fileName : "null";
+
         return String.format(
                 "{\"FeedEntityId\":\"%s\",\"RecordId\":\"%s\",\"Title\":\"%s\",\"Type\":\"CONTENT\"}",
-                feedId.replace("\"", ""),
-                recordId.replace("\"", ""),
-                fileName
+                safeFeedId,
+                safeRecordId,
+                safeFileName
         );
     }
 }

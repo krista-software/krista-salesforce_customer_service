@@ -366,9 +366,9 @@ Result: List of all contacts associated with the account
 
 ## See Also
 
-- [Account Entity Operations](AccountEntity.md) - Account records associated with Contacts
-- [Case Entity Operations](CaseEntity.md) - Cases associated with Contacts
-- [Extension Configuration](ExtensionConfiguration.md)
-- [Authentication](Authentication.md)
-- [Troubleshooting](Troubleshooting.md)
+- [Account Entity Operations](pages/AccountEntity.md) - Account records associated with Contacts
+- [Case Entity Operations](pages/CaseEntity.md) - Cases associated with Contacts
+- [Extension Configuration](pages/ExtensionConfiguration.md)
+- [Authentication](pages/Authentication.md)
+- [Troubleshooting](pages/Troubleshooting.md)
 

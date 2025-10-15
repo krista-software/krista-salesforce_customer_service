@@ -24,16 +24,19 @@ public class ObjectTypeValidator implements Validator {
 
     @Override
     public String getFetchStepMessage() {
-        return "Please select the Salesforce object type to validate (e.g., Account, Case, Contact, Customer, Individual).";
+        return "Please select a valid Salesforce object type from the available options (Account, Case, Contact, Customer, Individual).";
     }
 
     @Override
     public String getConfirmationStepMessage(String objectTypeInput, Map<ValidationResource, String> objectTypeContext) {
-        return String.format("You have selected Object Type: %s.", objectTypeInput);
+        return String.format("Object type validation failed because '%s' is not a supported object type. " +
+                "Please select from the available options: Account, Case, Contact, Customer, or Individual.", objectTypeInput);
     }
 
     @Override
     public String getErrMessage(String objectTypeInput) {
-        return "The object type \"" + objectTypeInput + "\" \"" + Constants.INVALID + "\". Please choose from: Account, Case, Contact, Customer, or Individual.";
+        return String.format("Object type validation failed because '%s' is not a supported object type. " +
+                "Only the following object types are supported: Account, Case, Contact, Customer, Individual. " +
+                "Please select a valid object type from the available options.", objectTypeInput);
     }
 }

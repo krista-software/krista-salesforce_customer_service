@@ -26,28 +26,57 @@ This guide provides solutions to common issues you may encounter when using the 
 4. Restart the Krista appliance if recently installed
 5. Check Krista logs for extension loading errors
 
-### Issue: "Invalid Configuration" Error
+### Issue: "OAuth configuration is incomplete due to missing Client ID"
 
 **Symptoms**:
 - Error message when saving extension configuration
-- Extension fails to initialize
+- Extension fails to initialize during OAuth setup
 
-**Possible Causes**:
-- Missing required configuration parameters
-- Invalid parameter values
-- Incorrect Salesforce credentials
+**Cause**: A valid Salesforce Client ID is required for authentication.
 
-**Solutions**:
-1. Verify all required parameters are provided:
-   - Client ID
-   - Client Secret
-   - Instance URL
-   - Username (for Username-Password flow)
-   - Password (for Username-Password flow)
-   - Security Token (for Username-Password flow)
-2. Check that Instance URL is in the correct format (e.g., `https://yourinstance.salesforce.com`)
-3. Verify Client ID and Client Secret from your Salesforce Connected App
-4. Ensure Username and Password are correct
+**Solution**:
+1. Obtain the Client ID from your Salesforce Connected App
+2. Enter it in the extension configuration
+3. Refer to [Creating Salesforce App](pages/CreatingSalesforceApp.md) for detailed steps
+
+### Issue: "OAuth configuration is incomplete due to missing Client Secret"
+
+**Symptoms**:
+- Error message when saving extension configuration
+- Authentication fails during setup
+
+**Cause**: A valid Salesforce Client Secret is required for authentication.
+
+**Solution**:
+1. Obtain the Client Secret from your Salesforce Connected App
+2. Enter it in the extension configuration
+3. Ensure the Connected App allows the required OAuth flows
+
+### Issue: "Domain validation failed due to invalid protocol"
+
+**Symptoms**:
+- Error when configuring custom Salesforce domain
+- Domain URL validation fails
+
+**Cause**: The domain URL must start with 'http://' or 'https://' (HTTPS is recommended for security).
+
+**Solution**:
+1. Update your domain URL to include the proper protocol
+2. Use format: `https://yourcompany.my.salesforce.com`
+3. Avoid using HTTP in production environments
+
+### Issue: "Instance URL validation failed due to invalid format"
+
+**Symptoms**:
+- Instance URL configuration fails
+- Invalid format error during setup
+
+**Cause**: The Instance URL must be a valid URL with proper protocol and hostname.
+
+**Solution**:
+1. Use the correct format: `https://yourinstance.salesforce.com`
+2. Ensure the hostname is valid and accessible
+3. Verify the URL works in a web browser
 5. Verify Security Token is current (reset if necessary)
 6. Check the "Sandbox" checkbox if using a Salesforce sandbox environment
 
@@ -135,70 +164,226 @@ This guide provides solutions to common issues you may encounter when using the 
 4. Check that the user's profile hasn't been changed to restrict API access
 5. Ensure the Connected App hasn't been revoked or disabled
 
+### Issue: "Authentication failed due to invalid client credentials"
+
+**Symptoms**:
+- Authentication fails with client credential errors
+- "invalid_client" error messages
+
+**Cause**: The Client ID or Client Secret provided is incorrect or expired.
+
+**Solution**:
+1. Verify your Salesforce Connected App credentials in the extension configuration
+2. Ensure they match your Salesforce setup exactly
+3. Check that the Connected App is active and not expired
+4. Regenerate Client Secret if necessary
+
+### Issue: "Authentication failed due to invalid user credentials"
+
+**Symptoms**:
+- Username/password authentication fails
+- "invalid_grant" error with user credentials
+
+**Cause**: The username, password, or security token provided is incorrect or expired.
+
+**Solution**:
+1. Verify your Salesforce username, password, and security token in the extension configuration
+2. If using a security token, ensure it's current and appended to your password
+3. Reset your security token if it has expired
+4. Ensure the user account is active and has API access
+
+### Issue: "OAuth service initialization failed"
+
+**Symptoms**:
+- OAuth service cannot be created
+- Extension fails to initialize authentication
+
+**Cause**: The system could not create the OAuth service due to configuration issues.
+
+**Solution**:
+1. Verify your Client ID and Client Secret are correct
+2. Ensure the callback URL is properly configured
+3. Check that your Salesforce Connected App settings allow the required OAuth flows
+4. Verify network connectivity to Salesforce
+5. For custom domains, check that your domain URL format is valid
+
 ---
 
 ## Catalog Request Issues
 
-### Issue: "Invalid Case ID" Error
+### Issue: "Case operation failed because the Case ID is invalid or does not exist"
 
 **Symptoms**:
 - Error when trying to retrieve case feed items or share updates
-- "The provided Case ID: [id] is invalid"
+- Case validation fails during catalog request execution
 
-**Possible Causes**:
-- Case ID is incorrect or malformed
-- Case doesn't exist in Salesforce
-- User lacks access to the case
+**Cause**: The Case ID is invalid or does not exist in Salesforce, or you don't have access to it.
 
-**Solutions**:
-1. Verify the Case ID is correct (15 or 18 characters)
-2. Check that the case exists in Salesforce
-3. Ensure the user has read access to the case
-4. Verify case sharing rules allow the user to access the case
-5. Check that you're using the correct Salesforce environment (production vs sandbox)
+**Solution**:
+1. Verify the Case ID exists in your Salesforce system and you have access to it
+2. Check that the Case ID is correctly formatted (15 or 18 characters)
+3. Ensure you have read access to the case through sharing rules or ownership
+4. Verify you're using the correct Salesforce environment (production vs sandbox)
+5. Check that the case hasn't been deleted or archived
 
-### Issue: "File Not Supported" Error
+### Issue: "Post retrieval failed because the number of posts specified is invalid"
+
+**Symptoms**:
+- Error when trying to retrieve case feed items
+- Number of posts validation fails
+
+**Cause**: The number of posts must be a positive integer between 1 and 100.
+
+**Solution**:
+1. Provide a valid number within the allowed range (1-100)
+2. Ensure the value is a positive integer
+3. Do not use decimal numbers or negative values
+
+### Issue: "Case update failed because the message is invalid or empty"
+
+**Symptoms**:
+- Error when trying to share an update to a case
+- Message validation fails
+
+**Cause**: A valid update message is required to share information with the case.
+
+**Solution**:
+1. Provide a meaningful message to share with the case
+2. Ensure the message is not empty or contains only whitespace
+3. Check that the message doesn't exceed Salesforce's character limits
+
+### Issue: "File attachment failed because the file has an unsupported format"
 
 **Symptoms**:
 - Error when trying to upload a file to a case
-- "The provided file [filename] is not supported"
+- File validation fails during attachment
 
-**Possible Causes**:
-- File has an unsupported extension
-- File has no extension
-- File type is restricted for security reasons
+**Cause**: Only specific file formats are supported for security and compatibility reasons.
 
-**Solutions**:
-1. Check the file extension against the supported types list:
-   - Documents: pdf, doc, docx, rtf, txt
-   - Spreadsheets: xls, xlsx, csv
-   - Presentations: ppt, pptx
-   - Images: png, jpg, jpeg, gif, bmp, tif, tiff
-   - Archives: zip, rar
-2. Convert the file to a supported format (e.g., convert .html to .pdf)
-3. Ensure the file name includes a valid extension
-4. Avoid using restricted formats (HTML, XML, executable files)
+**Solution**:
+1. Select a file with a supported format from the following list:
+   - **Documents**: PDF, DOC, DOCX, TXT
+   - **Spreadsheets**: XLS, XLSX
+   - **Images**: PNG, JPG, JPEG
+2. Convert unsupported files to a supported format
+3. Ensure the file has the correct extension
+4. Check that the file is not corrupted
 
-### Issue: "Invalid Number of Posts" Error
+### Issue: "Object operation failed because the object ID is invalid or does not exist"
 
 **Symptoms**:
-- Error when retrieving case feed items
-- "Invalid number of posts: [number]"
+- Error when trying to retrieve custom fields for an object
+- Object ID validation fails
 
-**Possible Causes**:
-- Number of posts is outside the valid range (1-100)
-- Non-integer value provided
+**Cause**: The object ID is invalid or does not exist in Salesforce, or you don't have access to it.
 
-**Solutions**:
-1. Ensure the number of posts is between 1 and 100
-2. Provide an integer value (no decimals)
-3. If no value is provided, the default (10) will be used
+**Solution**:
+1. Verify the object ID exists in your Salesforce system and you have access to it
+2. Check that the object ID is correctly formatted for the specified object type
+3. Ensure you have read access to the object through permissions
+4. Verify the object type matches the provided ID
 
-### Issue: "Custom Field Not Found" Error
+### Issue: "Object type validation failed because the type is not supported"
+
+**Symptoms**:
+- Error when selecting object type for custom field retrieval
+- Object type validation fails
+
+**Cause**: Only specific Salesforce object types are supported.
+
+**Solution**:
+1. Select a valid object type from the available options:
+   - Account
+   - Case
+   - Contact
+   - Customer
+   - Individual
+2. Ensure the object type exists in your Salesforce org
+3. Verify you have access to the selected object type
+
+### Issue: "Custom field operation failed because one or more fields are invalid"
 
 **Symptoms**:
 - Error when retrieving custom fields
-- "The provided custom field(s): [field] do not exist"
+- Custom field validation fails
+
+**Cause**: Custom field names must end with '__c' and exist in the specified Salesforce object.
+
+**Solution**:
+1. Verify the field names are correct and properly formatted
+2. Ensure each custom field name ends with '__c'
+3. Check that the fields exist in your Salesforce system for the specified object
+4. Verify you have access to the custom fields through field-level security
+
+---
+
+## Data Operation Issues
+
+### Issue: "Record operation failed because no ID was provided"
+
+**Symptoms**:
+- Error when trying to retrieve or update records
+- Operations fail due to missing record ID
+
+**Cause**: A valid Salesforce record ID is required to perform this operation.
+
+**Solution**:
+1. Provide a valid record ID and try again
+2. Ensure the ID is correctly formatted (15 or 18 characters)
+3. Verify the record exists in your Salesforce system
+
+### Issue: "Entity operation failed because no entity data was provided"
+
+**Symptoms**:
+- Error when trying to perform entity operations
+- Missing entity information
+
+**Cause**: Valid entity information is required to perform this operation.
+
+**Solution**:
+1. Provide the required entity data and try again
+2. Ensure all mandatory fields are included
+3. Verify the data format matches expected structure
+
+### Issue: "Search operation failed because no query was provided"
+
+**Symptoms**:
+- Error when trying to search records
+- Search fails due to missing criteria
+
+**Cause**: A valid search query is required to perform the search operation.
+
+**Solution**:
+1. Provide search criteria and try again
+2. Ensure the query is properly formatted
+3. Include at least one search condition
+
+### Issue: "Search operation failed because no search conditions were specified"
+
+**Symptoms**:
+- Error when trying to filter search results
+- Missing search conditions
+
+**Cause**: Valid search conditions are required to filter results.
+
+**Solution**:
+1. Specify search conditions and try again
+2. Include field names and values for filtering
+3. Use proper comparison operators (equals, contains, etc.)
+
+### Issue: "Case change alert processing failed due to an error"
+
+**Symptoms**:
+- Error when processing case change notifications
+- Alert system fails to process updates
+
+**Cause**: The system encountered an issue while processing the case change notification.
+
+**Solution**:
+1. Verify the case data and alert configuration
+2. Check that the case change workflow is properly set up in Salesforce
+3. Ensure the outbound message configuration is correct
+4. Review Salesforce and Krista logs for detailed error information
 
 **Possible Causes**:
 - Custom field doesn't exist on the object
@@ -466,8 +651,8 @@ If you continue to experience issues after trying these troubleshooting steps:
 
 ## See Also
 
-- [Extension Configuration](ExtensionConfiguration.md)
-- [Authentication](Authentication.md)
-- [Supported Requests](SupportedRequests.md)
+- [Extension Configuration](pages/ExtensionConfiguration.md)
+- [Authentication](pages/Authentication.md)
+- [Supported Requests](pages/SupportedRequests.md)
 - [Salesforce Status](https://status.salesforce.com)
 
