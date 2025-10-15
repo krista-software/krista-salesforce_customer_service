@@ -372,12 +372,12 @@ Result: Case is marked as resolved and closed
 
 ## See Also
 
-- [Get Case Feed Items By Case Id](GetCaseFeedItemsByCaseId.md) - Retrieve feed items from cases
-- [Share Update to Case](ShareUpdateToCase.md) - Add updates to case feeds
-- [Case Change Alert](CaseChangeAlert.md) - Receive notifications for case changes
-- [Contact Entity Operations](ContactEntity.md) - Contact records associated with Cases
-- [Account Entity Operations](AccountEntity.md) - Account records associated with Cases
-- [Extension Configuration](ExtensionConfiguration.md)
-- [Authentication](Authentication.md)
-- [Troubleshooting](Troubleshooting.md)
+- [Get Case Feed Items By Case Id](pages/GetCaseFeedItemsByCaseId.md) - Retrieve feed items from cases
+- [Share Update to Case](pages/ShareUpdateToCase.md) - Add updates to case feeds
+- [Case Change Alert](pages/CaseChangeAlert.md) - Receive notifications for case changes
+- [Contact Entity Operations](pages/ContactEntity.md) - Contact records associated with Cases
+- [Account Entity Operations](pages/AccountEntity.md) - Account records associated with Cases
+- [Extension Configuration](pages/ExtensionConfiguration.md)
+- [Authentication](pages/Authentication.md)
+- [Troubleshooting](pages/Troubleshooting.md)
 

@@ -30,7 +30,7 @@ The following table lists all configuration parameters required to set up the ex
 
 Before configuring the extension, you must create a Connected App in Salesforce to obtain the Client ID and Client Secret.
 
-👉 Follow the [Creating Salesforce Connected App](CreatingSalesforceApp.md) guide for detailed instructions.
+👉 Follow the [Creating Salesforce Connected App](pages/CreatingSalesforceApp.md) guide for detailed instructions.
 
 ### Step 2: Access Extension Configuration in Krista
 
@@ -266,13 +266,13 @@ The service account or authenticated users must have the following Salesforce pe
 After configuring the extension:
 
 1. **Test Authentication**: Create a simple conversation using a catalog request to verify connectivity
-2. **Review Authentication Modes**: Read the [Authentication](Authentication.md) guide to understand OAuth flows
-3. **Explore Catalog Requests**: Check available [Case Management](GetCaseFeedItemsByCaseId.md) and [Content Operations](RetrieveCustomFieldsForGivenObject.md)
-4. **Set Up Alerts**: Configure [Case Change Alert](CaseChangeAlert.md) for real-time notifications
+2. **Review Authentication Modes**: Read the [Authentication](pages/Authentication.md) guide to understand OAuth flows
+3. **Explore Catalog Requests**: Check available [Case Management](pages/GetCaseFeedItemsByCaseId.md) and [Content Operations](pages/RetrieveCustomFieldsForGivenObject.md)
+4. **Set Up Alerts**: Configure [Case Change Alert](pages/CaseChangeAlert.md) for real-time notifications
 
 ## See Also
 
-- [Creating Salesforce Connected App](CreatingSalesforceApp.md)
-- [Authentication](Authentication.md)
-- [Troubleshooting Guide](Troubleshooting.md)
+- [Creating Salesforce Connected App](pages/CreatingSalesforceApp.md)
+- [Authentication](pages/Authentication.md)
+- [Troubleshooting Guide](pages/Troubleshooting.md)
 

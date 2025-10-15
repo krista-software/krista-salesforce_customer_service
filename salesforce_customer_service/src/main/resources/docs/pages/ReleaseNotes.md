@@ -94,9 +94,9 @@ None at this time.
 
 ### See Also
 
-- [Extension Configuration](ExtensionConfiguration.md)
-- [Authentication Guide](Authentication.md)
-- [Troubleshooting Guide](Troubleshooting.md)
+- [Extension Configuration](pages/ExtensionConfiguration.md)
+- [Authentication Guide](pages/Authentication.md)
+- [Troubleshooting Guide](pages/Troubleshooting.md)
 - [Test Results Documentation](../../TEST_RESULTS.md)
 
 ---
@@ -299,7 +299,7 @@ For information about previous versions, please contact Krista support or refer 
 
 If you encounter any issues with this release:
 
-1. Check the [Troubleshooting Guide](Troubleshooting.md) for common solutions
+1. Check the [Troubleshooting Guide](pages/Troubleshooting.md) for common solutions
 2. Review Krista logs for detailed error information
 3. Contact Krista support with:
    - Extension version number
@@ -318,8 +318,8 @@ To request new features or enhancements:
 
 ## See Also
 
-- [Extension Configuration](ExtensionConfiguration.md)
-- [Authentication](Authentication.md)
-- [Troubleshooting](Troubleshooting.md)
-- [Supported Requests](SupportedRequests.md)
+- [Extension Configuration](pages/ExtensionConfiguration.md)
+- [Authentication](pages/Authentication.md)
+- [Troubleshooting](pages/Troubleshooting.md)
+- [Supported Requests](pages/SupportedRequests.md)
 

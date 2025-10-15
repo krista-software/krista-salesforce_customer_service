@@ -357,8 +357,8 @@ Result: Personal data is removed from the system
 
 ## See Also
 
-- [Customer Entity Operations](CustomerEntity.md) - Customer records that reference Individuals
-- [Extension Configuration](ExtensionConfiguration.md)
-- [Authentication](Authentication.md)
-- [Troubleshooting](Troubleshooting.md)
+- [Customer Entity Operations](pages/CustomerEntity.md) - Customer records that reference Individuals
+- [Extension Configuration](pages/ExtensionConfiguration.md)
+- [Authentication](pages/Authentication.md)
+- [Troubleshooting](pages/Troubleshooting.md)
 

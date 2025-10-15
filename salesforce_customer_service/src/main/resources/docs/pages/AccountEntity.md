@@ -340,10 +340,10 @@ Result: Organized account hierarchy for enterprise customers
 
 ## See Also
 
-- [Contact Entity Operations](ContactEntity.md) - Contact records associated with Accounts
-- [Case Entity Operations](CaseEntity.md) - Cases associated with Accounts
-- [Customer Entity Operations](CustomerEntity.md) - Customer records
-- [Extension Configuration](ExtensionConfiguration.md)
-- [Authentication](Authentication.md)
-- [Troubleshooting](Troubleshooting.md)
+- [Contact Entity Operations](pages/ContactEntity.md) - Contact records associated with Accounts
+- [Case Entity Operations](pages/CaseEntity.md) - Cases associated with Accounts
+- [Customer Entity Operations](pages/CustomerEntity.md) - Customer records
+- [Extension Configuration](pages/ExtensionConfiguration.md)
+- [Authentication](pages/Authentication.md)
+- [Troubleshooting](pages/Troubleshooting.md)
 

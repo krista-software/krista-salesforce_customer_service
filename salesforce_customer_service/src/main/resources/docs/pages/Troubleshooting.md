@@ -37,7 +37,7 @@ This guide provides solutions to common issues you may encounter when using the 
 **Solution**:
 1. Obtain the Client ID from your Salesforce Connected App
 2. Enter it in the extension configuration
-3. Refer to [Creating Salesforce App](CreatingSalesforceApp.md) for detailed steps
+3. Refer to [Creating Salesforce App](pages/CreatingSalesforceApp.md) for detailed steps
 
 ### Issue: "OAuth configuration is incomplete due to missing Client Secret"
 
@@ -651,8 +651,8 @@ If you continue to experience issues after trying these troubleshooting steps:
 
 ## See Also
 
-- [Extension Configuration](ExtensionConfiguration.md)
-- [Authentication](Authentication.md)
-- [Supported Requests](SupportedRequests.md)
+- [Extension Configuration](pages/ExtensionConfiguration.md)
+- [Authentication](pages/Authentication.md)
+- [Supported Requests](pages/SupportedRequests.md)
 - [Salesforce Status](https://status.salesforce.com)
 

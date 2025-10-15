@@ -393,10 +393,10 @@ Result: Quick access to customer records
 
 ## See Also
 
-- [Individual Entity Operations](IndividualEntity.md) - Individual records referenced by Customers
-- [Account Entity Operations](AccountEntity.md) - Business account records
-- [Case Entity Operations](CaseEntity.md) - Customer service cases
-- [Extension Configuration](ExtensionConfiguration.md)
-- [Authentication](Authentication.md)
-- [Troubleshooting](Troubleshooting.md)
+- [Individual Entity Operations](pages/IndividualEntity.md) - Individual records referenced by Customers
+- [Account Entity Operations](pages/AccountEntity.md) - Business account records
+- [Case Entity Operations](pages/CaseEntity.md) - Customer service cases
+- [Extension Configuration](pages/ExtensionConfiguration.md)
+- [Authentication](pages/Authentication.md)
+- [Troubleshooting](pages/Troubleshooting.md)
 

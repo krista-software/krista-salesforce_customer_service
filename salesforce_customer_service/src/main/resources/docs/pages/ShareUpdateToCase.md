@@ -311,8 +311,8 @@ Result: Senior support has full context and documentation
 
 ## Related Catalog Requests
 
-- [Get Case Feed Items By Case Id](GetCaseFeedItemsByCaseId.md) - Retrieve existing feed items from a case
-- [Case Change Alert](CaseChangeAlert.md) - Receive notifications when cases are updated
+- [Get Case Feed Items By Case Id](pages/GetCaseFeedItemsByCaseId.md) - Retrieve existing feed items from a case
+- [Case Change Alert](pages/CaseChangeAlert.md) - Receive notifications when cases are updated
 
 ## Technical Implementation
 
@@ -395,8 +395,8 @@ Result: Senior support has full context and documentation
 
 ## See Also
 
-- [Extension Configuration](ExtensionConfiguration.md)
-- [Authentication](Authentication.md)
-- [Get Case Feed Items By Case Id](GetCaseFeedItemsByCaseId.md)
-- [Case Change Alert](CaseChangeAlert.md)
+- [Extension Configuration](pages/ExtensionConfiguration.md)
+- [Authentication](pages/Authentication.md)
+- [Get Case Feed Items By Case Id](pages/GetCaseFeedItemsByCaseId.md)
+- [Case Change Alert](pages/CaseChangeAlert.md)
 

@@ -8,7 +8,7 @@ The Krista Salesforce Customer Service Extension supports full CRUD (Create, Rea
 
 The extension supports the following Salesforce entities. Click on each entity name to view detailed documentation:
 
-### 1. [Individual Entity](IndividualEntity.md)
+### 1. [Individual Entity](pages/IndividualEntity.md)
 Person records for GDPR and privacy compliance. Individual records store personal information and are commonly used in conjunction with Customer records.
 
 **Supported Operations**: Search, Get, Create, Update, Delete
@@ -19,7 +19,7 @@ Person records for GDPR and privacy compliance. Individual records store persona
 
 ---
 
-### 2. [Customer Entity](CustomerEntity.md)
+### 2. [Customer Entity](pages/CustomerEntity.md)
 Customer account records that represent business relationships. Customer records reference Individual records via Party Id for privacy-compliant data management.
 
 **Supported Operations**: Search, Get, Create, Update, Delete
@@ -30,7 +30,7 @@ Customer account records that represent business relationships. Customer records
 
 ---
 
-### 3. [Account Entity](AccountEntity.md)
+### 3. [Account Entity](pages/AccountEntity.md)
 Business account records representing organizations or companies. Accounts serve as the central hub for managing customer relationships, contacts, cases, and opportunities.
 
 **Supported Operations**: Search, Get, Create, Update, Delete
@@ -41,7 +41,7 @@ Business account records representing organizations or companies. Accounts serve
 
 ---
 
-### 4. [Case Entity](CaseEntity.md)
+### 4. [Case Entity](pages/CaseEntity.md)
 Customer service case records for tracking issues, questions, and requests. Cases provide a complete history of customer interactions and problem resolution.
 
 **Supported Operations**: Search, Get, Create, Update, Delete
@@ -52,7 +52,7 @@ Customer service case records for tracking issues, questions, and requests. Case
 
 ---
 
-### 5. [Contact Entity](ContactEntity.md)
+### 5. [Contact Entity](pages/ContactEntity.md)
 Individual people associated with accounts. Contacts are typically customers, partners, or stakeholders who interact with your organization.
 
 **Supported Operations**: Search, Get, Create, Update, Delete
@@ -121,32 +121,32 @@ Understanding entity relationships is crucial for proper data management:
 
 | Entity | Primary Use | Key Required Fields | Common Search Fields |
 |--------|-------------|---------------------|---------------------|
-| [Individual](IndividualEntity.md) | GDPR compliance, personal data | Last Name | Id, Last Name |
-| [Customer](CustomerEntity.md) | Business relationships | Name, Party Id | Id, Party Id, Name |
-| [Account](AccountEntity.md) | Organizations/companies | Name | ID, Name, Account Number, Phone |
-| [Case](CaseEntity.md) | Support tickets | None (all optional) | ID, Contact ID, Account ID, Status |
-| [Contact](ContactEntity.md) | People at accounts | Name | Name, Account ID, Email, Phone |
+| [Individual](pages/IndividualEntity.md) | GDPR compliance, personal data | Last Name | Id, Last Name |
+| [Customer](pages/CustomerEntity.md) | Business relationships | Name, Party Id | Id, Party Id, Name |
+| [Account](pages/AccountEntity.md) | Organizations/companies | Name | ID, Name, Account Number, Phone |
+| [Case](pages/CaseEntity.md) | Support tickets | None (all optional) | ID, Contact ID, Account ID, Status |
+| [Contact](pages/ContactEntity.md) | People at accounts | Name | Name, Account ID, Email, Phone |
 
 ---
 
 ## See Also
 
 ### Entity Documentation
-- [Individual Entity Operations](IndividualEntity.md)
-- [Customer Entity Operations](CustomerEntity.md)
-- [Account Entity Operations](AccountEntity.md)
-- [Case Entity Operations](CaseEntity.md)
-- [Contact Entity Operations](ContactEntity.md)
+- [Individual Entity Operations](pages/IndividualEntity.md)
+- [Customer Entity Operations](pages/CustomerEntity.md)
+- [Account Entity Operations](pages/AccountEntity.md)
+- [Case Entity Operations](pages/CaseEntity.md)
+- [Contact Entity Operations](pages/ContactEntity.md)
 
 ### Catalog Requests
-- [Get Case Feed Items By Case Id](GetCaseFeedItemsByCaseId.md)
-- [Share Update to Case](ShareUpdateToCase.md)
-- [Case Change Alert](CaseChangeAlert.md)
-- [Retrieve Custom Fields For Given Object](RetrieveCustomFieldsForGivenObject.md)
+- [Get Case Feed Items By Case Id](pages/GetCaseFeedItemsByCaseId.md)
+- [Share Update to Case](pages/ShareUpdateToCase.md)
+- [Case Change Alert](pages/CaseChangeAlert.md)
+- [Retrieve Custom Fields For Given Object](pages/RetrieveCustomFieldsForGivenObject.md)
 
 ### Configuration and Support
-- [Extension Configuration](ExtensionConfiguration.md)
-- [Authentication](Authentication.md)
-- [Troubleshooting](Troubleshooting.md)
-- [Release Notes](ReleaseNotes.md)
+- [Extension Configuration](pages/ExtensionConfiguration.md)
+- [Authentication](pages/Authentication.md)
+- [Troubleshooting](pages/Troubleshooting.md)
+- [Release Notes](pages/ReleaseNotes.md)
 
