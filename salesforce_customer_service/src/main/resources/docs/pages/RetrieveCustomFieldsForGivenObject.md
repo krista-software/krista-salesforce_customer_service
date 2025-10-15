@@ -317,8 +317,8 @@ Result: Workflow can branch based on custom field values
 
 ## Related Catalog Requests
 
-- [Get Case Feed Items By Case Id](pages/GetCaseFeedItemsByCaseId.md) - Retrieve case feed items
-- [Share Update to Case](pages/ShareUpdateToCase.md) - Add updates to cases
+- [Get Case Feed Items By Case Id](GetCaseFeedItemsByCaseId.md) - Retrieve case feed items
+- [Share Update to Case](ShareUpdateToCase.md) - Add updates to cases
 
 ## Technical Implementation
 
@@ -403,7 +403,7 @@ WHERE Id = '[ObjectId]'
 
 ## See Also
 
-- [Extension Configuration](pages/ExtensionConfiguration.md)
-- [Authentication](pages/Authentication.md)
+- [Extension Configuration](ExtensionConfiguration.md)
+- [Authentication](Authentication.md)
 - [Salesforce Custom Fields Documentation](https://help.salesforce.com/articleView?id=adding_fields.htm)
 

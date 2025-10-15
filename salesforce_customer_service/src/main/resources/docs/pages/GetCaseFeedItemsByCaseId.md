@@ -304,8 +304,8 @@ Result: Real-time awareness of case developments
 
 ## Related Catalog Requests
 
-- [Share Update to Case](pages/ShareUpdateToCase.md) - Add new feed items to a case
-- [Case Change Alert](pages/CaseChangeAlert.md) - Receive notifications when cases are updated
+- [Share Update to Case](ShareUpdateToCase.md) - Add new feed items to a case
+- [Case Change Alert](CaseChangeAlert.md) - Receive notifications when cases are updated
 
 ## Technical Implementation
 
@@ -370,8 +370,8 @@ Result: Real-time awareness of case developments
 
 ## See Also
 
-- [Extension Configuration](pages/ExtensionConfiguration.md)
-- [Authentication](pages/Authentication.md)
-- [Share Update to Case](pages/ShareUpdateToCase.md)
-- [Case Change Alert](pages/CaseChangeAlert.md)
+- [Extension Configuration](ExtensionConfiguration.md)
+- [Authentication](Authentication.md)
+- [Share Update to Case](ShareUpdateToCase.md)
+- [Case Change Alert](CaseChangeAlert.md)
 

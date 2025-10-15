@@ -275,7 +275,7 @@ public final class SalesforceCustomerServiceAttributes {
 
             return instanceUrl.trim();
 
-        } catch (MalformedURLException e) {
+        } catch (MalformedURLException | IllegalArgumentException e) {
             throw new IllegalArgumentException(Constants.INSTANCE_URL_FORMAT_ERROR + instanceUrl + ". " + e.getMessage(), e);
         }
     }

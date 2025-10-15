@@ -289,7 +289,9 @@ public class SalesforceCustomerServiceAttributesTest {
                     CLIENT_ID, CLIENT_SECRET, "not-a-url", USERNAME, PASSWORD, SECURITY_TOKEN, false, ROUTING_URL);
             fail("Should throw IllegalArgumentException for malformed URL");
         } catch (IllegalArgumentException e) {
-            assertTrue("Error message should mention invalid format", e.getMessage().contains("Invalid Instance URL format"));
+            // Check for the actual error message format from Constants.INSTANCE_URL_FORMAT_ERROR
+            assertTrue("Error message should mention invalid format. Actual message: " + e.getMessage(),
+                e.getMessage().contains("Instance URL validation failed due to invalid format"));
         }
 
         // Test URL without host
@@ -359,7 +361,8 @@ public class SalesforceCustomerServiceAttributesTest {
             attributes.update(invalidUpdate);
             fail("Should throw IllegalArgumentException for invalid URL in update");
         } catch (IllegalArgumentException e) {
-            assertTrue("Error message should mention invalid format", e.getMessage().contains("Invalid Instance URL format"));
+            assertTrue("Error message should mention invalid format. Actual message: " + e.getMessage(),
+                e.getMessage().contains("Instance URL validation failed due to invalid format"));
         }
     }
 

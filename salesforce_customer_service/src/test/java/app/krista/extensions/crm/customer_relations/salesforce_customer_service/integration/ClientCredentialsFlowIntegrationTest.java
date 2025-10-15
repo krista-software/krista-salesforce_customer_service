@@ -133,8 +133,8 @@ public class ClientCredentialsFlowIntegrationTest {
                     CLIENT_ID, CLIENT_SECRET, "invalid-url", null, null, null, false, ROUTING_URL);
             fail("Should throw exception for invalid Instance URL");
         } catch (IllegalArgumentException e) {
-            assertTrue("Error should mention invalid URL format", 
-                    e.getMessage().contains("Invalid Instance URL format"));
+            assertTrue("Error should mention invalid URL format. Actual message: " + e.getMessage(),
+                    e.getMessage().contains("Instance URL validation failed due to invalid format"));
         }
     }
 
@@ -224,8 +224,8 @@ public class ClientCredentialsFlowIntegrationTest {
                     CLIENT_ID, CLIENT_SECRET, "not-a-valid-url", null, null, null, false, ROUTING_URL);
             fail("Should throw exception for invalid Instance URL");
         } catch (IllegalArgumentException e) {
-            assertTrue("Should mention invalid URL format", 
-                    e.getMessage().contains("Invalid Instance URL format"));
+            assertTrue("Should mention invalid URL format. Actual message: " + e.getMessage(),
+                    e.getMessage().contains("Instance URL validation failed due to invalid format"));
         }
     }
 

@@ -161,27 +161,35 @@ public class ErrorHandlingTest {
             "https:// ",
             "javascript:alert('xss')"
         };
-        
+
+        boolean atLeastOneExceptionThrown = false;
+
         for (String invalidUrl : invalidUrls) {
             try {
                 // Arrange
                 Map<String, Object> attributes = new HashMap<>();
                 attributes.put(SalesforceCustomerServiceAttributes.INSTANCE_URL, invalidUrl);
-                
+
                 // Act
                 new SalesforceCustomerServiceAttributes("https://test-routing.com", attributes);
-                
-                // If we get here without exception, that's also valid behavior
-                // as long as the validation catches it later
-                
+
+                // If we get here without exception, that's valid behavior
+                // The validation might happen later during actual usage
+
             } catch (IllegalArgumentException e) {
                 // Assert - This is expected behavior for invalid URLs
+                atLeastOneExceptionThrown = true;
                 assertNotNull("Exception message should not be null", e.getMessage());
-                assertTrue("Exception should mention URL validation", 
-                    e.getMessage().toLowerCase().contains("url") || 
-                    e.getMessage().toLowerCase().contains("format"));
+                assertTrue("Exception should mention URL validation for URL: " + invalidUrl,
+                    e.getMessage().toLowerCase().contains("url") ||
+                    e.getMessage().toLowerCase().contains("format") ||
+                    e.getMessage().toLowerCase().contains("protocol") ||
+                    e.getMessage().toLowerCase().contains("host"));
             }
         }
+
+        // At least some of the invalid URLs should trigger validation errors
+        assertTrue("At least one invalid URL should trigger a validation exception", atLeastOneExceptionThrown);
     }
 
     /**

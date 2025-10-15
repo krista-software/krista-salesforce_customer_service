@@ -473,7 +473,7 @@ grant_type=password
 
 ## See Also
 
-- [Extension Configuration](pages/ExtensionConfiguration.md)
-- [Creating Salesforce Connected App](pages/CreatingSalesforceApp.md)
-- [Troubleshooting Guide](pages/Troubleshooting.md)
+- [Extension Configuration](ExtensionConfiguration.md)
+- [Creating Salesforce Connected App](CreatingSalesforceApp.md)
+- [Troubleshooting Guide](Troubleshooting.md)
 
