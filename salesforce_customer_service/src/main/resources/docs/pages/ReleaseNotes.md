@@ -12,81 +12,94 @@
 
 ### What's New
 
-This patch release focuses on improving user experience through enhanced error messages, comprehensive testing, technical modernization, and updated documentation.
+This patch release adds comprehensive test coverage and updates dependencies to the latest Krista platform version.
 
 #### Key Improvements
 
-**Enhanced Error Messages**
-- Completely refactored all error messages to follow a new format that clearly identifies problems, explains requirements, and provides actionable resolution steps
-- Updated error messages in Constants.java, validator classes, DAO implementations, and store classes
-- Improved user guidance for troubleshooting authentication, validation, and data operation issues
-
 **Comprehensive Test Suite**
-- Added extensive test coverage for all utility classes (StringHelper, SFObjectHelper, Validators)
-- Implemented 100% coverage of public static methods with real concrete implementations (no Mockito)
-- Included comprehensive edge case testing: null values, empty inputs, boundary values, special characters, and Unicode support
-- Created detailed test documentation (TEST_RESULTS.md) with execution guidelines
+- Added 32 new test classes with extensive coverage of all major components
+- Implemented unit tests for:
+  - Extension core (SalesforceCustomerServiceExtension, Authenticator)
+  - Validators (CaseIdValidator, NumberOfPostsValidator, etc.)
+  - Utilities (StringHelper, DatePlus, Constants)
+  - Models (SFAccount, SFCase, SFContact, SFCustomer, etc.)
+  - Catalog entities (Account, Case, Contact, Customer, Individual)
+  - Error handlers and response factories
+- Tests follow AAA (Arrange-Act-Assert) pattern with comprehensive edge case coverage
+- Includes tests for null values, empty inputs, boundary values, and error scenarios
+- All tests include clear JavaDoc documentation and meaningful assertion messages
+- Uses Mockito for proper unit test isolation
 
-**Technical Modernization**
-- Ensured full Java 21 compatibility with updated build configuration
-- Added Gradle 8.5 wrapper for consistent build environment
-- Fixed deprecated API usage (URL constructor replaced with URI.create().toURL())
-- Verified all code compiles and tests pass with Java 21
+**Dependency Updates**
+- Updated Krista APIs from 1.0.117 to 1.0.118
+- Updated extension-impl-anno-processors to 1.0.118
+- Ensures compatibility with latest Krista platform features and improvements
 
-**Documentation Updates**
-- Enhanced Troubleshooting.md with comprehensive error scenarios based on new error message format
-- Updated Authentication.md error handling section with detailed resolution steps
-- Improved error message clarity and actionability throughout documentation
-- Added specific guidance for OAuth configuration, domain validation, and data operation issues
+**Documentation Enhancements**
+- Added comprehensive Architecture.md with detailed system design documentation
+- Added complete extension documentation in DOCX format
+- Updated release notes with accurate change information
 
 ### Technical Changes
 
-#### Error Message Improvements
-- **Authentication Errors**: Enhanced messages for invalid client credentials, user credentials, and OAuth service initialization failures
-- **Configuration Errors**: Improved guidance for missing Client ID/Secret, domain validation, and instance URL format issues
-- **Validation Errors**: Better error messages for case ID validation, number of posts validation, file format validation, and custom field validation
-- **Data Operation Errors**: Enhanced messages for missing record IDs, entity data, search queries, and case change alert processing
+#### Test Coverage Details
+- **Core Extension Tests**:
+  - SalesforceCustomerServiceExtension (1,064 lines) - Tests constructors, authenticator, connection validation, custom tabs
+  - SalesforceCustomerServiceAuthenticator (380 lines) - Tests OAuth2 authentication flow with comprehensive mocking
 
-#### Test Coverage Enhancements
-- **StringHelper**: 45 test cases covering all 6 public static methods including edge cases for null inputs, special characters, and large data sets
-- **Validators**: 25 test cases covering both public static methods with comprehensive type conversion and boundary value testing
-- **SFObjectHelper**: 12 test cases covering the upsertCaseMap method with various data scenarios and error conditions
+- **Validator Tests**:
+  - CaseIdValidator (331 lines) - Tests case ID validation with valid/invalid cases
+  - NumberOfPostsValidator - Tests post count validation
+  - Other validator classes with edge case coverage
 
-#### Build and Compatibility
-- **Java 21**: Full compatibility ensured with updated source and target compatibility settings
-- **Gradle 8.5**: Added gradle wrapper for consistent build environment across development teams
-- **Deprecation Fixes**: Resolved URL constructor deprecation warning by using URI.create().toURL()
+- **Utility Tests**:
+  - StringHelper (274 lines) - Tests all string manipulation methods
+  - DatePlus - Tests date handling utilities
+  - Constants - Tests constant values and configurations
 
-### Resolved Issues
+- **Model Tests**:
+  - SFAccount, SFCase, SFContact, SFCustomer, SFIndividual - Tests all getter/setter methods
+  - AccountImpl (204 lines) - Tests account implementation with 40+ test cases
 
-#### Error Message Enhancement
-- **Improved User Experience**: All error messages now follow a consistent format that helps users understand what went wrong, what is required, and how to fix the issue
-- **Better Troubleshooting**: Enhanced error messages provide specific, actionable steps rather than generic error descriptions
-- **Comprehensive Coverage**: Updated error messages across all extension components including validators, DAOs, and utility classes
+- **Catalog Entity Tests**:
+  - Account, Case, Contact, Customer, Individual - Tests entity operations
+
+- **Error Handler Tests**:
+  - ErrorHandlingStateManager - Tests error state management
+  - RemediationActionFactory - Tests remediation action creation
+
+#### Dependency Updates
+- **Krista APIs**: Updated from 1.0.117 to 1.0.118 for latest platform features
+- **Annotation Processors**: Updated to 1.0.118 for consistency
+
+### Improvements
 
 #### Test Coverage and Quality
-- **Production-Ready Testing**: Comprehensive test suite ensures reliability and robustness of utility classes
-- **Real Implementation Testing**: Tests use concrete implementations rather than mocks, providing more accurate validation
-- **Edge Case Coverage**: Extensive testing of boundary conditions, null values, and error scenarios
+- **Comprehensive Testing**: 32 new test classes with 6,200+ lines of test code
+- **High-Quality Tests**: All tests follow AAA (Arrange-Act-Assert) pattern with clear documentation
+- **Proper Isolation**: Tests use Mockito for proper unit test isolation and mocking
+- **Edge Case Coverage**: Extensive testing of boundary conditions, null values, empty inputs, and error scenarios
+- **Maintainability**: Well-documented tests with meaningful names and assertion messages
 
-#### Technical Modernization
-- **Future-Proof Compatibility**: Java 21 support ensures the extension works with modern Java environments
-- **Consistent Build Environment**: Gradle 8.5 wrapper ensures consistent builds across different development environments
-- **Clean Code**: Removed deprecated API usage and modernized code patterns
+#### Platform Compatibility
+- **Latest Krista APIs**: Updated to version 1.0.118 for latest features and bug fixes
+- **Consistent Dependencies**: All Krista dependencies updated to matching versions
+- **Java 21 Ready**: Extension continues to support Java 21 runtime environment
 
 ### Migration Notes
 
 This is a patch release with no breaking changes. Existing configurations and integrations will continue to work without modification.
 
 #### For Developers
-- The extension now requires Java 21 for compilation and runtime
-- Use `./gradlew` instead of system gradle for consistent builds
-- New comprehensive test suite can be run with `./gradlew test --tests "*util*"`
+- Extension continues to support Java 21 for compilation and runtime
+- New comprehensive test suite can be run with `./gradlew test`
+- Run specific test suites: `./gradlew test --tests "*validators*"` or `./gradlew test --tests "*util*"`
+- All tests follow AAA pattern and include comprehensive documentation
 
 #### For Users
-- Error messages are now more helpful and provide specific resolution steps
-- Troubleshooting documentation has been significantly enhanced
 - No configuration changes are required
+- All existing functionality remains unchanged
+- This release focuses on internal quality improvements through testing
 
 ### Known Issues
 
@@ -97,7 +110,7 @@ None at this time.
 - [Extension Configuration](pages/ExtensionConfiguration.md)
 - [Authentication Guide](pages/Authentication.md)
 - [Troubleshooting Guide](pages/Troubleshooting.md)
-- [Test Results Documentation](../../TEST_RESULTS.md)
+- [Architecture Documentation](../../docs/Architecture.md)
 
 ---
 
