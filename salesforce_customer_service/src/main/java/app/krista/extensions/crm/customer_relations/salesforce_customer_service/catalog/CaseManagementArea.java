@@ -66,6 +66,11 @@ public class CaseManagementArea {
      * {@link KristaMediaClient} to handle files,
      * and uses {@link ValidationOrchestrator}, {@link ExtensionResponseGenerator},
      * and {@link ErrorHandlingStateManager} for validation and error handling.
+     *
+     * @param caseId                The ID of the Salesforce Case.
+     * @param numberOfPosts         The number of posts to retrieve (optional).
+     * @param allowRetry            If true, triggers error handling flow when validation fails; if false, returns error directly.
+     * @return An ExtensionResponse with feed items or error messages.
      */
     @CatalogRequest(
             id = "localDomainRequest_4adceae0-923e-4163-bcc0-1c0fd9cf8b19",
@@ -76,7 +81,8 @@ public class CaseManagementArea {
     @Field.Desc(name = "Feed Items", type = "[ { Actor Name: Text, Post Message: Text, File: File } ]", required = false)
     public ExtensionResponse getCaseFeedItemsByCaseId(
             @Field.Text(name = "Case Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String caseId,
-            @Field(name = "Number Of Posts", type = "Number", required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) Double numberOfPosts) {
+            @Field(name = "Number Of Posts", type = "Number", required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) Double numberOfPosts,
+            @Field.Boolean(name = "Allow Retry", required = true) Boolean allowRetry) {
 
         try {
             // Validate both caseId and numberOfPosts together
@@ -92,16 +98,34 @@ public class CaseManagementArea {
                     return new ExtensionResponseBuilder().success(Map.of("The Feed Items is empty because the entries do not exist", List.of())).build();
                 } else {
                     return new ExtensionResponseBuilder().success(Map.of("Feed Items", feeds)).build();
-
                 }
 
             } else {
-                String stateId = UUID.randomUUID().toString();
-                internalStateManager.put(stateId, Constants.GSON.toJson(Map.of(SubCatalogConstants.VALIDATION_RESULTS, validationResults)));
+                // Check if retry is allowed
+                if (Boolean.TRUE.equals(allowRetry)) {
+                    // Go to error handling flow
+                    String stateId = UUID.randomUUID().toString();
+                    internalStateManager.put(stateId, Constants.GSON.toJson(Map.of(SubCatalogConstants.VALIDATION_RESULTS, validationResults)));
 
-                return responseGenerator.generateConfirmationResponse(ExtensionResponse.Error.ExceptionType.INPUT_ERROR, validationResults, SubCatalogConstants.CONFIRM_REENTER_GET_CASE_FEED_ITEMS_BY_CASE_ID,
-                        StateMapperUtil.addGetCaseFeedItemsByCaseIdMetaToMap(caseId, numberOfPosts, stateId)
-                );
+                    return responseGenerator.generateConfirmationResponse(ExtensionResponse.Error.ExceptionType.INPUT_ERROR, validationResults, SubCatalogConstants.CONFIRM_REENTER_GET_CASE_FEED_ITEMS_BY_CASE_ID,
+                            StateMapperUtil.addGetCaseFeedItemsByCaseIdMetaToMap(caseId, numberOfPosts, stateId)
+                    );
+                } else {
+                    // Return error directly without going to error handling flow
+                    LOGGER.info("Retry disabled. Returning validation errors directly: {}", validationResults);
+                    StringBuilder errorMessage = new StringBuilder("Validation failed:\n");
+                    for (ValidationOrchestrator.ValidationResult result : validationResults) {
+                        errorMessage.append(result.errMessage()).append("\n");
+                    }
+                    return ExtensionResponseFactory.create(
+                            errorMessage.toString(),
+                            ExtensionResponse.Error.ExceptionType.INPUT_ERROR,
+                            List.of(RemediationActionFactory.createInformActionALLParticipants(
+                                    "Please correct the validation errors and try again.", List.of())),
+                            null,
+                            Map.of()
+                    );
+                }
             }
 
         } catch (MustAuthorizeException cause) {
@@ -109,13 +133,23 @@ public class CaseManagementArea {
             throw cause;
         } catch (Exception cause) {
             LOGGER.error("Error Occurred while fetching the list of post items for the given case {}", cause.getMessage(), cause);
-            RemediationActions remediationActions = new RemediationActions(List.of(RemediationActionFactory
-                    .createInformActionALLParticipants("Error Occurred while fetching the list of post items for the given case", List.of())),
-                    null);
-            ExtensionResponse.Error error = new ExtensionResponse.Error(
-                    "Error occurred while fetching post items from case.", System.currentTimeMillis(),
-                    ExtensionResponse.Error.ExceptionType.SYSTEM_ERROR, "");
-            return new ExtensionResponseBuilder().failure(error, remediationActions, null).build();
+
+            // Check if retry is allowed for exceptions as well
+            if (Boolean.TRUE.equals(allowRetry)) {
+                RemediationActions remediationActions = new RemediationActions(List.of(RemediationActionFactory
+                        .createInformActionALLParticipants("Error Occurred while fetching the list of post items for the given case", List.of())),
+                        null);
+                ExtensionResponse.Error error = new ExtensionResponse.Error(
+                        "Error occurred while fetching post items from case.", System.currentTimeMillis(),
+                        ExtensionResponse.Error.ExceptionType.SYSTEM_ERROR, "");
+                return new ExtensionResponseBuilder().failure(error, remediationActions, null).build();
+            } else {
+                // Return error directly without remediation actions
+                return ExtensionResponseFactory.create(
+                        "An unexpected error occurred: " + cause.getMessage(),
+                        ExtensionResponse.Error.ExceptionType.SYSTEM_ERROR
+                );
+            }
         }
     }
 
@@ -168,9 +202,10 @@ public class CaseManagementArea {
      * If validation fails, it returns a response requesting the user to re-enter the data.
      * If an error occurs, it returns a system error response.</p>
      *
-     * @param caseId        the ID of the Salesforce Case to update (required)
-     * @param updateMessage the update message text to add to the case feed (required)
-     * @param file          an optional file to attach to the update (can be null)
+     * @param caseId                the ID of the Salesforce Case to update (required)
+     * @param updateMessage         the update message text to add to the case feed (required)
+     * @param file                  an optional file to attach to the update (can be null)
+     * @param allowRetry            If true, triggers error handling flow when validation fails; if false, returns error directly.
      * @return an {@link ExtensionResponse} indicating success or failure of the operation,
      * including validation errors if any
      */
@@ -184,7 +219,8 @@ public class CaseManagementArea {
     public ExtensionResponse shareUpdateToCase(
             @Field.Text(name = "Case Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String caseId,
             @Field(name = "Update Message", type = "Paragraph", required = true, attributes = {@Attribute(name = "visualWidth", value = "L")}, options = {}) String updateMessage,
-            @Field.File(name = "File", multipleFileUpload = false, required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) File file) {
+            @Field.File(name = "File", multipleFileUpload = false, required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) File file,
+            @Field.Boolean(name = "Allow Retry", required = true) Boolean allowRetry) {
         try {
             Map<Validator.ValidationResource, String> validationParams = new HashMap<>();
             validationParams.put(Validator.ValidationResource.CASE_ID, caseId);
@@ -194,7 +230,7 @@ public class CaseManagementArea {
             }
             List<ValidationOrchestrator.ValidationResult> validationResults =
                     validationOrchestrator.validate(validationParams);
-            System.out.println("Validation results: " + validationResults);
+            LOGGER.info("Validation results: {}", validationResults);
             if (validationResults.isEmpty()) {
                 if (file != null) {
                     LOGGER.info("file is not null ...");
@@ -210,23 +246,52 @@ public class CaseManagementArea {
                     return new ExtensionResponseBuilder().success(Map.of("Is Updated", isUpdated)).build();
                 }
             } else {
-                String stateId = UUID.randomUUID().toString();
-                internalStateManager.put(stateId, Constants.GSON.toJson(Map.of(SubCatalogConstants.VALIDATION_RESULTS, validationResults)));
+                // Check if retry is allowed
+                if (Boolean.TRUE.equals(allowRetry)) {
+                    // Go to error handling flow
+                    String stateId = UUID.randomUUID().toString();
+                    internalStateManager.put(stateId, Constants.GSON.toJson(Map.of(SubCatalogConstants.VALIDATION_RESULTS, validationResults)));
 
-                return responseGenerator.generateConfirmationResponse(ExtensionResponse.Error.ExceptionType.INPUT_ERROR, validationResults,
-                        SubCatalogConstants.CONFIRM_REENTER_SHARE_UPDATE_TO_CASE,
-                        StateMapperUtil.addShareUpdateToCaseMetaToMap(caseId, updateMessage, file, stateId));
+                    return responseGenerator.generateConfirmationResponse(ExtensionResponse.Error.ExceptionType.INPUT_ERROR, validationResults,
+                            SubCatalogConstants.CONFIRM_REENTER_SHARE_UPDATE_TO_CASE,
+                            StateMapperUtil.addShareUpdateToCaseMetaToMap(caseId, updateMessage, file, stateId));
+                } else {
+                    // Return error directly without going to error handling flow
+                    LOGGER.info("Retry disabled. Returning validation errors directly: {}", validationResults);
+                    StringBuilder errorMessage = new StringBuilder("Validation failed:\n");
+                    for (ValidationOrchestrator.ValidationResult result : validationResults) {
+                        errorMessage.append(result.errMessage()).append("\n");
+                    }
+                    return ExtensionResponseFactory.create(
+                            errorMessage.toString(),
+                            ExtensionResponse.Error.ExceptionType.INPUT_ERROR,
+                            List.of(RemediationActionFactory.createInformActionALLParticipants(
+                                    "Please correct the validation errors and try again.", List.of())),
+                            null,
+                            Map.of()
+                    );
+                }
             }
 
         } catch (Exception cause) {
             LOGGER.error("Error occurred while sharing the update to case : {}", cause.getMessage(), cause);
-            RemediationActions remediationActions = new RemediationActions(List.of(RemediationActionFactory
-                    .createInformActionALLParticipants("Error occurred while  updating to the Feed of the Case", List.of())),
-                    null);
-            ExtensionResponse.Error error = new ExtensionResponse.Error(
-                    "Error occurred while sharing update to case.", System.currentTimeMillis(),
-                    ExtensionResponse.Error.ExceptionType.SYSTEM_ERROR, "");
-            return new ExtensionResponseBuilder().failure(error, remediationActions, null).build();
+
+            // Check if retry is allowed for exceptions as well
+            if (Boolean.TRUE.equals(allowRetry)) {
+                RemediationActions remediationActions = new RemediationActions(List.of(RemediationActionFactory
+                        .createInformActionALLParticipants("Error occurred while  updating to the Feed of the Case", List.of())),
+                        null);
+                ExtensionResponse.Error error = new ExtensionResponse.Error(
+                        "Error occurred while sharing update to case.", System.currentTimeMillis(),
+                        ExtensionResponse.Error.ExceptionType.SYSTEM_ERROR, "");
+                return new ExtensionResponseBuilder().failure(error, remediationActions, null).build();
+            } else {
+                // Return error directly without remediation actions
+                return ExtensionResponseFactory.create(
+                        "An unexpected error occurred: " + cause.getMessage(),
+                        ExtensionResponse.Error.ExceptionType.SYSTEM_ERROR
+                );
+            }
         }
     }
 

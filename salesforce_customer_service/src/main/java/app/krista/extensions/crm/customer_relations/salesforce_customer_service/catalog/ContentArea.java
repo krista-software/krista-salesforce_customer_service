@@ -54,9 +54,10 @@ public class ContentArea {
      * - If no, it asks for confirmation or fixes.
      * Custom fields must end with "__c".
      *
-     * @param objectId     The ID of the object (like Account or Case).
-     * @param objectType   The type of the object (Account, Case, Contact, Customer, or Individual).
-     * @param customFields A list of custom field names to get.
+     * @param objectId              The ID of the object (like Account or Case).
+     * @param objectType            The type of the object (Account, Case, Contact, Customer, or Individual).
+     * @param customFields          A list of custom field names to get.
+     * @param allowRetry            If true, triggers error handling flow when validation fails; if false, returns error directly.
      * @return A response with the custom fields or a message asking to fix inputs.
      */
     @CatalogRequest(
@@ -70,7 +71,8 @@ public class ContentArea {
     public ExtensionResponse RetrieveCustomFieldsForGivenObject(
             @Field.Text(name = "Object Id", required = true) String objectId,
             @Field.PickOne(name = "Object Type", values = {"Account", "Case", "Contact", "Customer", "Individual"}, required = true) String objectType,
-            @Field.Desc(name = "Custom Fields", type = "[ Text ]", required = true) List<String> customFields) {
+            @Field.Desc(name = "Custom Fields", type = "[ Text ]", required = true) List<String> customFields,
+            @Field.Boolean(name = "Allow Retry", required = true) Boolean allowRetry) {
 
         try {
 
@@ -90,16 +92,35 @@ public class ContentArea {
 
 
             } else {
-                String stateId = UUID.randomUUID().toString();
-                internalStateManager.put(stateId,
-                        Constants.GSON.toJson(Map.of(SalesforceErrorHandlingResource.OBJECT_TYPE, objectType, SubCatalogConstants.VALIDATION_RESULTS, validationResults)));
-                System.out.println("$Validation Result :  " + validationResults);
-                return responseGenerator.generateConfirmationResponse(
-                        ExtensionResponse.Error.ExceptionType.INPUT_ERROR,
-                        validationResults,
-                        SubCatalogConstants.CONFIRM_RETRIEVE_CUSTOM_FIELDS_FOR_GIVEN_OBJECT,
-                        StateMapperUtil.addCustomFieldsMetaToMap(objectId, objectType, customFields, stateId)
-                );
+                // Check if retry is allowed
+                if (Boolean.TRUE.equals(allowRetry)) {
+                    // Go to error handling flow
+                    String stateId = UUID.randomUUID().toString();
+                    internalStateManager.put(stateId,
+                            Constants.GSON.toJson(Map.of(SalesforceErrorHandlingResource.OBJECT_TYPE, objectType, SubCatalogConstants.VALIDATION_RESULTS, validationResults)));
+                    LOGGER.info("Validation Result: {}", validationResults);
+                    return responseGenerator.generateConfirmationResponse(
+                            ExtensionResponse.Error.ExceptionType.INPUT_ERROR,
+                            validationResults,
+                            SubCatalogConstants.CONFIRM_RETRIEVE_CUSTOM_FIELDS_FOR_GIVEN_OBJECT,
+                            StateMapperUtil.addCustomFieldsMetaToMap(objectId, objectType, customFields, stateId)
+                    );
+                } else {
+                    // Return error directly without going to error handling flow
+                    LOGGER.info("Retry disabled. Returning validation errors directly: {}", validationResults);
+                    StringBuilder errorMessage = new StringBuilder("Validation failed:\n");
+                    for (ValidationOrchestrator.ValidationResult result : validationResults) {
+                        errorMessage.append(result.errMessage()).append("\n");
+                    }
+                    return ExtensionResponseFactory.create(
+                            errorMessage.toString(),
+                            ExtensionResponse.Error.ExceptionType.INPUT_ERROR,
+                            List.of(RemediationActionFactory.createInformActionALLParticipants(
+                                    "Please correct the validation errors and try again.", List.of())),
+                            null,
+                            Map.of()
+                    );
+                }
             }
         } catch (MustAuthorizeException cause) {
             LOGGER.error("Authorization failed: {}", cause.getMessage());
@@ -107,13 +128,22 @@ public class ContentArea {
         } catch (Exception cause) {
             LOGGER.error("Unexpected error while retrieving custom fields: {}", cause.getMessage(), cause);
 
-            RemediationActions remediationActions = new RemediationActions(List.of(RemediationActionFactory.createInformActionALLParticipants(
-                    "An unexpected error occurred while retrieving custom fields.", List.of())), null);
+            // Check if retry is allowed for exceptions as well
+            if (Boolean.TRUE.equals(allowRetry)) {
+                RemediationActions remediationActions = new RemediationActions(List.of(RemediationActionFactory.createInformActionALLParticipants(
+                        "An unexpected error occurred while retrieving custom fields.", List.of())), null);
 
-            ExtensionResponse.Error error = new ExtensionResponse.Error("An unexpected error occurred. Please try again later.",
-                    System.currentTimeMillis(), ExtensionResponse.Error.ExceptionType.SYSTEM_ERROR, "");
+                ExtensionResponse.Error error = new ExtensionResponse.Error("An unexpected error occurred. Please try again later.",
+                        System.currentTimeMillis(), ExtensionResponse.Error.ExceptionType.SYSTEM_ERROR, "");
 
-            return new ExtensionResponseBuilder().failure(error, remediationActions, null).build();
+                return new ExtensionResponseBuilder().failure(error, remediationActions, null).build();
+            } else {
+                // Return error directly without remediation actions
+                return ExtensionResponseFactory.create(
+                        "An unexpected error occurred: " + cause.getMessage(),
+                        ExtensionResponse.Error.ExceptionType.SYSTEM_ERROR
+                );
+            }
         }
 
     }
