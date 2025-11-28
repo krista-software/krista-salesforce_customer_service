@@ -1,14 +1,14 @@
 # Release Notes
 
-## Version 2.0.16
+## Version 2.0.17
 
 ### Release Information
 
 - **Release Calendar Month**: October 2025
-- **Krista Service APIs Java**: 1.0.117
-- **Global Catalog Version**: GC-2025.10.1
+- **Krista Service APIs Java**: 1.0.118
+- **Global Catalog Version**: GC-2025.11.5
 - **Java Version**: 21
-- **Gradle Version**: 8.5
+- **Gradle Version**: 8.10
 
 ### What's New
 

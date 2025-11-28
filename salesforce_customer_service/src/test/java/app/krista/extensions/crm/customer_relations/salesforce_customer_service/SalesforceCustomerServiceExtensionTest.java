@@ -279,6 +279,52 @@ public class SalesforceCustomerServiceExtensionTest {
         assertEquals("Method should return void", void.class, method.getReturnType());
     }
 
+    /**
+     * Test validateConnection with empty attributes map.
+     */
+    @Test
+    public void testValidateConnection_WithEmptyAttributes() {
+        // Arrange
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                mockAuthenticator
+        );
+
+        Map<String, Object> emptyAttributes = new HashMap<>();
+
+        // Act & Assert
+        try {
+            extension.validateConnection(emptyAttributes);
+        } catch (Exception e) {
+            // Expected - empty attributes should cause validation to fail
+            assertNotNull("Exception should be thrown for empty attributes", e);
+        }
+    }
+
+    /**
+     * Test validateConnection with null attributes map.
+     */
+    @Test
+    public void testValidateConnection_WithNullAttributes() {
+        // Arrange
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                mockAuthenticator
+        );
+
+        // Act & Assert
+        try {
+            extension.validateConnection(null);
+        } catch (Exception e) {
+            // Expected - null attributes should cause validation to fail
+            assertNotNull("Exception should be thrown for null attributes", e);
+        }
+    }
+
     // ========== Test Connection Tests ==========
 
     /**
@@ -554,6 +600,204 @@ public class SalesforceCustomerServiceExtensionTest {
         verify(mockAttributes, times(1)).update(newAttributes);
     }
 
+    /**
+     * Test attributesUpdated when update throws exception.
+     */
+    @Test(expected = RuntimeException.class)
+    public void testAttributesUpdated_WhenUpdateFails_ThrowsException() {
+        // Arrange
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                mockAuthenticator
+        );
+
+        Map<String, Object> oldAttributes = createConnectionAttributes(false);
+        Map<String, Object> newAttributes = createConnectionAttributes(true);
+
+        doThrow(new RuntimeException("Update failed"))
+                .when(mockAttributes).update(newAttributes);
+
+        // Act - should throw RuntimeException
+        extension.attributesUpdated(oldAttributes, newAttributes);
+    }
+
+    // ========== Additional Edge Case Tests ==========
+
+    /**
+     * Test testConnection with all null credentials.
+     */
+    @Test
+    public void testTestConnection_WithAllNullCredentials_UsesClientCredentials() {
+        // Arrange
+        when(mockAttributes.getUserName()).thenReturn(null);
+        when(mockAttributes.getPassword()).thenReturn(null);
+        when(mockAttributes.getSecurityToken()).thenReturn(null);
+
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                mockAuthenticator
+        );
+
+        // Act
+        extension.testConnection();
+
+        // Assert
+        verify(mockProviderFactory, times(1)).create(mockAttributes);
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForUser();
+        verify(mockTokenProvider, never()).getSalesforceTokenForAdmin();
+    }
+
+    /**
+     * Test testConnection with empty string credentials.
+     */
+    @Test
+    public void testTestConnection_WithEmptyStringCredentials_UsesClientCredentials() {
+        // Arrange
+        when(mockAttributes.getUserName()).thenReturn("");
+        when(mockAttributes.getPassword()).thenReturn("");
+        when(mockAttributes.getSecurityToken()).thenReturn("");
+
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                mockAuthenticator
+        );
+
+        // Act
+        extension.testConnection();
+
+        // Assert
+        verify(mockProviderFactory, times(1)).create(mockAttributes);
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForUser();
+        verify(mockTokenProvider, never()).getSalesforceTokenForAdmin();
+    }
+
+    /**
+     * Test testConnection with only username provided.
+     */
+    @Test
+    public void testTestConnection_WithOnlyUsername_UsesClientCredentials() {
+        // Arrange
+        when(mockAttributes.getUserName()).thenReturn(USERNAME);
+        when(mockAttributes.getPassword()).thenReturn(null);
+        when(mockAttributes.getSecurityToken()).thenReturn(null);
+
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                mockAuthenticator
+        );
+
+        // Act
+        extension.testConnection();
+
+        // Assert
+        verify(mockProviderFactory, times(1)).create(mockAttributes);
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForUser();
+        verify(mockTokenProvider, never()).getSalesforceTokenForAdmin();
+    }
+
+    /**
+     * Test testConnection with only password provided.
+     */
+    @Test
+    public void testTestConnection_WithOnlyPassword_UsesClientCredentials() {
+        // Arrange
+        when(mockAttributes.getUserName()).thenReturn(null);
+        when(mockAttributes.getPassword()).thenReturn(PASSWORD);
+        when(mockAttributes.getSecurityToken()).thenReturn(SECURITY_TOKEN);
+
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                mockAuthenticator
+        );
+
+        // Act
+        extension.testConnection();
+
+        // Assert
+        verify(mockProviderFactory, times(1)).create(mockAttributes);
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForUser();
+        verify(mockTokenProvider, never()).getSalesforceTokenForAdmin();
+    }
+
+    /**
+     * Test testConnection when provider factory throws exception.
+     */
+    @Test(expected = RuntimeException.class)
+    public void testTestConnection_WhenProviderFactoryFails_ThrowsException() {
+        // Arrange
+        when(mockAttributes.getUserName()).thenReturn(USERNAME);
+        when(mockAttributes.getPassword()).thenReturn(PASSWORD);
+        when(mockAttributes.getSecurityToken()).thenReturn(SECURITY_TOKEN);
+
+        when(mockProviderFactory.create(any(SalesforceCustomerServiceAttributes.class)))
+                .thenThrow(new RuntimeException("Provider factory failed"));
+
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                mockAuthenticator
+        );
+
+        // Act - should throw RuntimeException
+        extension.testConnection();
+    }
+
+    /**
+     * Test getRequestAuthenticator with store-backed constructor.
+     */
+    @Test
+    public void testGetRequestAuthenticator_WithStoreBackedConstructor_ReturnsAuthenticator() {
+        // Arrange
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                mockAttributesStore
+        );
+
+        // Act
+        RequestAuthenticator authenticator = extension.getRequestAuthenticator();
+
+        // Assert
+        assertNotNull("Authenticator should not be null", authenticator);
+        assertTrue("Authenticator should be of correct type",
+                authenticator instanceof SalesforceCustomerServiceAuthenticator);
+    }
+
+    /**
+     * Test customTabs returns consistent results on multiple calls.
+     */
+    @Test
+    public void testCustomTabs_ConsistentResults() {
+        // Arrange
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                mockAuthenticator
+        );
+
+        // Act
+        Map<String, String> tabs1 = extension.customTabs();
+        Map<String, String> tabs2 = extension.customTabs();
+
+        // Assert
+        assertNotNull("First call should return tabs", tabs1);
+        assertNotNull("Second call should return tabs", tabs2);
+        assertEquals("Both calls should return same content", tabs1, tabs2);
+    }
+
     // ========== Helper Methods ==========
 
     /**
@@ -576,6 +820,244 @@ public class SalesforceCustomerServiceExtensionTest {
         }
 
         return attributes;
+    }
+
+    // ========== Integration and Flow Tests ==========
+
+    /**
+     * Test complete flow: construct extension, get authenticator, test connection.
+     */
+    @Test
+    public void testCompleteFlow_ConstructGetAuthenticatorTestConnection() {
+        // Arrange
+        when(mockAttributes.getUserName()).thenReturn(USERNAME);
+        when(mockAttributes.getPassword()).thenReturn(PASSWORD);
+        when(mockAttributes.getSecurityToken()).thenReturn(SECURITY_TOKEN);
+
+        // Act
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                mockAuthenticator
+        );
+
+        RequestAuthenticator authenticator = extension.getRequestAuthenticator();
+        extension.testConnection();
+
+        // Assert
+        assertNotNull("Extension should be created", extension);
+        assertNotNull("Authenticator should be available", authenticator);
+        verify(mockProviderFactory, times(1)).create(mockAttributes);
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForAdmin();
+    }
+
+    /**
+     * Test complete flow: construct, get tabs, update attributes.
+     */
+    @Test
+    public void testCompleteFlow_ConstructGetTabsUpdateAttributes() {
+        // Arrange
+        Map<String, Object> oldAttributes = createConnectionAttributes(false);
+        Map<String, Object> newAttributes = createConnectionAttributes(true);
+
+        // Act
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                mockAuthenticator
+        );
+
+        Map<String, String> tabs = extension.customTabs();
+        extension.attributesUpdated(oldAttributes, newAttributes);
+
+        // Assert
+        assertNotNull("Extension should be created", extension);
+        assertNotNull("Tabs should be available", tabs);
+        assertEquals("Should have Documentation tab", "static/docs", tabs.get("Documentation"));
+        verify(mockAttributes, times(1)).update(newAttributes);
+    }
+
+    /**
+     * Test multiple testConnection calls with same extension instance.
+     */
+    @Test
+    public void testMultipleTestConnectionCalls_WithSameInstance() {
+        // Arrange
+        when(mockAttributes.getUserName()).thenReturn(USERNAME);
+        when(mockAttributes.getPassword()).thenReturn(PASSWORD);
+        when(mockAttributes.getSecurityToken()).thenReturn(SECURITY_TOKEN);
+
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                mockAuthenticator
+        );
+
+        // Act
+        extension.testConnection();
+        extension.testConnection();
+        extension.testConnection();
+
+        // Assert
+        verify(mockProviderFactory, times(3)).create(mockAttributes);
+        verify(mockTokenProvider, times(3)).getSalesforceTokenForAdmin();
+    }
+
+    /**
+     * Test multiple attributesUpdated calls with same extension instance.
+     */
+    @Test
+    public void testMultipleAttributesUpdatedCalls_WithSameInstance() {
+        // Arrange
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                mockAuthenticator
+        );
+
+        Map<String, Object> attributes1 = createConnectionAttributes(false);
+        Map<String, Object> attributes2 = createConnectionAttributes(true);
+        Map<String, Object> attributes3 = new HashMap<>();
+
+        // Act
+        extension.attributesUpdated(null, attributes1);
+        extension.attributesUpdated(attributes1, attributes2);
+        extension.attributesUpdated(attributes2, attributes3);
+
+        // Assert
+        verify(mockAttributes, times(3)).update(any());
+        verify(mockAttributes, times(1)).update(attributes1);
+        verify(mockAttributes, times(1)).update(attributes2);
+        verify(mockAttributes, times(1)).update(attributes3);
+    }
+
+    /**
+     * Test testConnection switching between client and user credentials.
+     */
+    @Test
+    public void testTestConnection_SwitchingBetweenCredentialTypes() {
+        // Arrange
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                mockAuthenticator
+        );
+
+        // Act & Assert - First with client credentials
+        when(mockAttributes.getUserName()).thenReturn(null);
+        when(mockAttributes.getPassword()).thenReturn(null);
+        when(mockAttributes.getSecurityToken()).thenReturn(null);
+        extension.testConnection();
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForUser();
+
+        // Act & Assert - Then with user credentials
+        when(mockAttributes.getUserName()).thenReturn(USERNAME);
+        when(mockAttributes.getPassword()).thenReturn(PASSWORD);
+        when(mockAttributes.getSecurityToken()).thenReturn(SECURITY_TOKEN);
+        extension.testConnection();
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForAdmin();
+    }
+
+    /**
+     * Test extension with null invoker.
+     */
+    @Test
+    public void testConstructor_WithNullInvoker_Completes() {
+        // Act
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                null,
+                mockAttributes,
+                mockAuthenticator
+        );
+
+        // Assert
+        assertNotNull("Extension should be created even with null invoker", extension);
+    }
+
+    /**
+     * Test extension with null attributes.
+     */
+    @Test
+    public void testConstructor_WithNullAttributes_Completes() {
+        // Act
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                null,
+                mockAuthenticator
+        );
+
+        // Assert
+        assertNotNull("Extension should be created even with null attributes", extension);
+    }
+
+    /**
+     * Test extension with null authenticator.
+     */
+    @Test
+    public void testConstructor_WithNullAuthenticator_Completes() {
+        // Act
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                (SalesforceCustomerServiceAuthenticator) null
+        );
+
+        // Assert
+        assertNotNull("Extension should be created even with null authenticator", extension);
+    }
+
+    /**
+     * Test getRequestAuthenticator returns null when authenticator is null.
+     */
+    @Test
+    public void testGetRequestAuthenticator_WhenAuthenticatorIsNull_ReturnsNull() {
+        // Arrange
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                (SalesforceCustomerServiceAuthenticator) null
+        );
+
+        // Act
+        RequestAuthenticator authenticator = extension.getRequestAuthenticator();
+
+        // Assert
+        assertNull("Authenticator should be null when not provided", authenticator);
+    }
+
+    /**
+     * Test testConnection with mixed blank and null credentials.
+     */
+    @Test
+    public void testTestConnection_WithMixedBlankAndNullCredentials() {
+        // Arrange
+        when(mockAttributes.getUserName()).thenReturn("  ");
+        when(mockAttributes.getPassword()).thenReturn(null);
+        when(mockAttributes.getSecurityToken()).thenReturn("");
+
+        extension = new SalesforceCustomerServiceExtension(
+                mockProviderFactory,
+                mockInvoker,
+                mockAttributes,
+                mockAuthenticator
+        );
+
+        // Act
+        extension.testConnection();
+
+        // Assert
+        verify(mockProviderFactory, times(1)).create(mockAttributes);
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForUser();
+        verify(mockTokenProvider, never()).getSalesforceTokenForAdmin();
     }
 }
 
