@@ -29,7 +29,7 @@ import java.util.Map;
 @Field.Text(value = SalesforceCustomerServiceAttributes.PASS_WORD, isSecured = true, required = false)
 @Field.Text(value = SalesforceCustomerServiceAttributes.SECURITY_TOKEN, isSecured = true, required = false)
 @Field.Boolean(value = SalesforceCustomerServiceAttributes.SANDBOX, required = false)
-@Extension(version = "2.0.16", name = "Salesforce Customer Service", description = "Integrating Salesforce with Krista")
+@Extension(version = "2.0.17", name = "Salesforce Customer Service", description = "Integrating Salesforce with Krista")
 @Java(version = Java.Version.JAVA_21)
 @StaticResource(path = "docs", file = "docs")
 public final class SalesforceCustomerServiceExtension {
