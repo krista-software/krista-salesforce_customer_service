@@ -1,10 +1,22 @@
 # Creating Salesforce Connected App
 
+> **💡 Skip this step if you're using Quick Setup.** Starting with extension version **2.0.18**, Krista ships a managed Salesforce Connected App for the **Quick Setup** authentication flow. If Quick Setup meets your needs (one-click OAuth consent backed by Krista's own Connected App, no Salesforce-side setup required), you can go directly to the [Authentication](pages/Authentication.md) guide and select **Quick Setup**. This page is only needed for the **User Sign-In (Authorization Code)**, **Server-to-Server (Client Credentials)**, **Password Grant**, and **JWT Bearer** flows, which require you to bring your own Connected App.
+
 ## Overview
 
-To integrate Krista with Salesforce, you must create a Connected App in Salesforce. A Connected App provides the OAuth 2.0 credentials (Client ID and Client Secret) required for secure authentication between Krista and Salesforce.
+To use the **Authorization Code**, **Client Credentials**, **Password Grant**, or **JWT Bearer** authentication flows, you must create a Connected App in Salesforce. A Connected App provides the OAuth 2.0 credentials (Client ID and Client Secret) required for secure authentication between Krista and Salesforce.
 
 This guide provides step-by-step instructions for creating and configuring a Salesforce Connected App for use with the Krista Salesforce Customer Service Extension.
+
+### Which flow needs this guide?
+
+| Flow | Requires this guide? |
+|---|---|
+| Quick Setup | **No** — Krista provides the Connected App |
+| User Sign-In (Authorization Code) | **Yes** |
+| Server-to-Server (Client Credentials) | **Yes** — and the Connected App must have a "Run As User" configured |
+| Password Grant | **Yes** |
+| JWT Bearer | **Yes** — and you also upload your public certificate to the Connected App |
 
 ## Prerequisites
 

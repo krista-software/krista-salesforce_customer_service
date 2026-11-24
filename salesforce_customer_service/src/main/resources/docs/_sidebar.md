@@ -8,6 +8,7 @@
   * [Creating Salesforce Connected App](pages/CreatingSalesforceApp.md)
 
 * **Case Management**
+  * [Get Case By Id](pages/GetCaseById.md)
   * [Get Case Feed Items By Case Id](pages/GetCaseFeedItemsByCaseId.md)
   * [Share Update to Case](pages/ShareUpdateToCase.md)
   * [Case Change Alert](pages/CaseChangeAlert.md)
@@ -24,6 +25,7 @@
   * [Contact Entity](pages/ContactEntity.md)
 
 * **Additional Resources**
+  * [Audit Dashboard](pages/AuditDashboard.md)
   * [Troubleshooting](pages/Troubleshooting.md)
   * [Release Notes](pages/ReleaseNotes.md)
 

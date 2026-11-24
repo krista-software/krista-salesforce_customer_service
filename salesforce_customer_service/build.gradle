@@ -1,4 +1,24 @@
-apply plugin: 'java-library'
+plugins {
+    id 'java-library'
+    id 'jacoco'
+    id("org.sonarqube") version "6.3.1.5724"
+}
+
+// SonarQube Configuration
+sonar {
+    properties {
+        property("sonar.projectName", "SonarScanner for Krista Global Catalog (Salesforce Customer Service with JaCoCo code coverage)")
+        property("sonar.projectKey", "sonar-scanner-salesforce-customer-service")
+        property("sonar.organization", "syncappinc")
+        property("sonar.sources", "src/main/java")
+        property("sonar.tests", "src/test/java")
+        property("sonar.java.binaries", "build/classes/java/main")
+        property("sonar.java.test.binaries", "build/classes/java/test")
+        property("sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml")
+        property("sonar.junit.reportPaths", "build/test-results/test")
+    }
+}
+
 jar.archiveBaseName = "salesforce_customer_service-extension"
 group = 'app.krista.extensions.crm.customer_relations'
 
@@ -84,20 +104,72 @@ configurations {
         canBeConsumed = false
         canBeResolved = true
     }
+    // Resolvable configuration for extracting the SDK's pre-built OAuth UI assets.
+    // Extends implementation so it resolves the same SDK JAR without re-declaring the
+    // version; canBeResolved = true so Gradle can walk the dependency graph to find the JAR.
+    sdkUi {
+        extendsFrom implementation
+        canBeConsumed = false
+        canBeResolved = true
+    }
 }
 
 dependencies {
-    annotationProcessor 'app.krista:extension-impl-anno-processors:1.0.118'
-    implementation 'app.krista:krista-apis:1.0.118'
+    annotationProcessor 'app.krista:extension-impl-anno-processors:1.0.125-sp1'
+    // The Krista ExtensionAnnotationProcessor reflectively loads every annotation on
+    // annotated classes. @SalesforceExtension lives in salesforce-auth-sdk, so it must
+    // be on the annotation-processor classpath in addition to the compile classpath.
+    annotationProcessor 'app.krista.sdk:salesforce-auth-sdk:1.1.1'
+    implementation 'app.krista:krista-apis:1.0.125-sp1'
 
     implementation 'org.glassfish.hk2:hk2-api:3.0.3'
     implementation 'com.github.scribejava:scribejava-apis:8.3.3'
     implementation 'commons-io:commons-io:2.15.1'
     implementation 'org.json:json:20231013'
+    implementation 'app.krista.sdk:salesforce-auth-sdk:1.1.1'
+
+    // Needed only to compile against the SDK's RequestLogCapture (extends Log4j2 AbstractAppender),
+    // used by SalesforceCustomerServiceAuditService for per-request execution-log capture. Log4j2
+    // is provided by the Krista runtime, so this is compileOnly (mirrors the SDK's own build).
+    compileOnly 'org.apache.logging.log4j:log4j-core:2.20.0'
+    // Bundle the slf4j→log4j2 binding INSIDE the extension jar (mirrors outlook-4's build.gradle).
+    // Without it, the extension's slf4j log events flow through the runtime's logging backend and
+    // never reach the log4j2 LoggerContext where RequestLogCapture installs its appender — so the
+    // audit dashboard's per-request execution logs stay empty. With the binding bundled, extension
+    // logging dispatches inside the extension's own classloader/context and capture works.
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.20.0'
 
     testImplementation 'com.kristasoft.common:common-test:1.0.48-rc1'
-    testImplementation 'app.krista:krista-apis:1.0.118'
+    testImplementation 'app.krista:krista-apis:1.0.125-sp1'
 }
+
+// ── extractSDKResources ───────────────────────────────────────────────────────────────
+// Extracts the SDK's pre-built themed OAuth UI and audit dashboard from the SDK JAR into
+// build/resources/main/ so the extension's JAR bundles them.
+//
+// oauth/**  — Authentication tab: oauth/index.html, oauth/styles.css, oauth/app.js,
+//             oauth/themes/salesforce-platform.json + logo.svg,
+//             oauth/themes/microsoft.json + logo.svg, oauth/themes/_default/logo.png.
+//
+// audit/**  — Audit Dashboard tab: audit/index.html (pre-built; MS-themed in v1.1.0;
+//             a Salesforce-themed variant is deferred to post-v1.1.0 SDK work).
+//             AbstractOAuth2AuditResource.getAuditHtmlPath() returns "audit/index.html"
+//             and loads it from the classpath via ClassLoader.getResourceAsStream().
+//
+// Idempotent: re-running refreshes the copy without side effects.
+tasks.register('extractSDKResources', Copy) {
+    description = 'Extracts the SDK\'s pre-built OAuth UI + audit dashboard assets from the SDK JAR ' +
+            'into build/resources/main/ for classpath bundling'
+    group = 'build'
+
+    from(configurations.sdkUi.collect { zipTree(it) }) {
+        include 'oauth/**'
+        include 'audit/**'
+    }
+    into "${buildDir}/resources/main"
+}
+
+processResources.dependsOn extractSDKResources
 
 tasks.register('createSourceDir', Exec) {
     dependsOn processResources
@@ -255,4 +327,35 @@ jar {
     }
     exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
     duplicatesStrategy = "exclude"
+}
+
+// ── JaCoCo coverage + SonarQube wiring ───────────────────────────────────────
+// Report generation only (no hard coverage gate). Sonar consumes the JaCoCo XML
+// report; the build never fails on low coverage.
+//
+//   ./gradlew clean test jacocoTestReport   → HTML at build/reports/jacoco/test/html/
+//   ./gradlew sonar                          → runs the SonarQube scan (after JaCoCo)
+//
+// NOTE: tests are JUnit 4 (org.junit.Test), so the default test framework is used —
+// do NOT add useJUnitPlatform() here (that is for JUnit 5/Jupiter).
+test {
+    finalizedBy jacocoTestReport // Generate coverage report after tests run
+}
+
+jacoco {
+    toolVersion = "0.8.12"
+}
+
+jacocoTestReport {
+    dependsOn test // Tests must run before generating the report
+    reports {
+        xml.required = true   // Required for SonarQube
+        html.required = true  // Useful for local viewing
+        csv.required = false
+    }
+}
+
+// Ensure Sonar runs only after the JaCoCo report has been generated.
+tasks.named("sonar") {
+    dependsOn jacocoTestReport
 }

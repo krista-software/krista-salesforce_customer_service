@@ -2,13 +2,44 @@
 
 ## Overview
 
-The Krista Salesforce Customer Service Extension uses OAuth 2.0 for secure authentication with Salesforce. The extension supports multiple authentication modes to accommodate different use cases, from interactive user authentication to automated service account workflows.
+The Krista Salesforce Customer Service Extension uses OAuth 2.0 for secure authentication with Salesforce. The extension supports four authentication flows to accommodate different use cases, from one-click Quick Setup to interactive user sign-in to fully automated service-account workflows.
+
+> **🆕 What changed in 2.0.18.** Authentication is now powered by Krista's centralized OAuth substrate. The Authentication tab UI is the **SDK-bundled themed form** (replacing the legacy Invoker form), and **Quick Setup** is a new flow that lets you connect without creating a Salesforce Connected App at all. Existing refresh tokens are preserved across the upgrade — no re-authorization required. PKCE remains intentionally off (preserves compatibility with classic Connected Apps); see the [Changelog](../../docs/CHANGELOG.md) for the migration path when Salesforce mandates PKCE for new ISV apps.
+
+## Authentication tab
+
+The Authentication tab in Krista Studio surfaces a flow picker. Pick the flow that matches your use case, fill in the (flow-specific) fields, click **Test Connection** to verify, then **Save Changes** to persist. Krista will use the saved flow for every subsequent catalog request from this invoker.
 
 ## Authentication Modes
 
-The extension automatically selects the appropriate authentication mode based on the configuration parameters you provide.
+The extension supports four authentication flows. Pick one based on how you want users to identify themselves and whether you have a Connected App.
 
-### User Account Authentication (Authorization Code Flow)
+### Quick Setup (Krista-managed Connected App)
+
+**When to Use**:
+- You want the fastest possible path to a working connection
+- You don't want to create or manage a Salesforce Connected App
+- You're fine with the operator's identity being represented by their email address rather than a service account
+
+**How It Works**:
+1. Operator opens the Authentication tab and selects **Quick Setup**
+2. Operator enters their admin email and the Sandbox toggle, clicks **Authorize**
+3. Krista's central platform handler opens the Salesforce OAuth consent popup, signed by Krista's managed Connected App
+4. Operator approves the OAuth consent
+5. Salesforce redirects to the central Krista callback URL; the platform forwards the response to this extension's `/v3/oauth/callback` endpoint
+6. Refresh token is stored under a per-admin-email key (`sfv1/{email}/...`) — multiple admins can coexist without overwriting each other
+
+**Configuration Required**:
+- Admin email (used as the per-admin identity)
+- Sandbox toggle (use `test.salesforce.com` instead of `login.salesforce.com`)
+
+No Client ID, Client Secret, or Connected App configuration is needed — Krista provides those.
+
+**Best for**: Greenfield deployments, demos, organizations without a dedicated Salesforce admin.
+
+---
+
+### User Sign-In (Authorization Code Flow)
 
 **When to Use:**
 - Interactive conversations where actions should be performed as the authenticated user
@@ -34,7 +65,36 @@ The extension automatically selects the appropriate authentication mode based on
 - Users will be prompted to authenticate on first use
 - Subsequent requests use the stored tokens automatically
 
-### Service Account Authentication (Username-Password Flow)
+### Server-to-Server (Client Credentials Flow)
+
+**When to Use**:
+- Automated workflows that run without any user interaction
+- A single shared service-account identity is acceptable
+- You can configure a "Run As User" on your Salesforce Connected App
+
+**How It Works**:
+1. Extension sends `grant_type=client_credentials` to the org's **My Domain** token endpoint
+2. Salesforce returns an access token bound to the Connected App's configured Run-As user
+3. Extension uses the access token directly — no refresh tokens are issued for this flow (Salesforce returns a fresh token on each call)
+
+**Configuration Required**:
+- Client ID
+- Client Secret
+- **Instance URL** — your Salesforce My Domain (e.g. `https://mycompany.my.salesforce.com`)
+- Sandbox toggle
+
+> **⚠️ Important Salesforce-specific behaviour.** Unlike Authorization Code, the Client Credentials token request must be sent to your org's **My Domain URL**, *not* `login.salesforce.com`. Hitting `login.salesforce.com` returns `invalid_grant: request not supported on this domain`. The extension handles this correctly when you fill in the Instance URL — make sure that field is set.
+
+**Salesforce Connected App requirements for this flow**:
+- "Enable Client Credentials Flow" must be checked in the Connected App's OAuth Policies
+- A "Run As User" must be assigned in the Connected App's OAuth Policies
+- The Run-As user must have all the object/field permissions the catalog requests need
+
+**Best for**: Background jobs, scheduled flows, server-to-server integrations.
+
+---
+
+### Username + Password Flow (Legacy)
 
 **When to Use:**
 - Automated workflows that run without user interaction
@@ -59,6 +119,19 @@ The extension automatically selects the appropriate authentication mode based on
 - Leave the **"Have people authenticate with their account"** checkbox **unchecked** in the **Ask a System** step
 - All requests execute automatically using the service account
 - No user interaction required
+
+> **ℹ️ Note**: Username + Password is a legacy flow that Salesforce is gradually phasing out for new ISV apps. Use **Server-to-Server** (Client Credentials) instead when possible — it doesn't require a stored user password and is the Salesforce-recommended pattern for service accounts.
+
+---
+
+## Quick reference — picking a flow
+
+| Flow | User Interaction | Requires Connected App | Required fields | Best for |
+|---|---|---|---|---|
+| **Quick Setup** | Once, per admin | ❌ No (Krista-provided) | Email, Sandbox | Demos, greenfield, no Salesforce admin |
+| **User Sign-In** | Each user, once | ✅ Yes | Client ID, Client Secret | Audit trails per real user |
+| **Server-to-Server** | None | ✅ Yes (with Run-As user) | Client ID, Client Secret, Instance URL | Automation, background jobs |
+| **Username + Password** | None | ✅ Yes | Client ID, Client Secret, Username, Password, Security Token | Legacy compatibility only |
 
 ## OAuth 2.0 Scopes and Permissions
 
@@ -126,8 +199,8 @@ grant_type=authorization_code
 **Response Example**:
 ```json
 {
-  "access_token": "REDACTED_SECRET_2q6y8PIW4eWze9JksNEkWUl.Cju7m4",
-  "refresh_token": "REDACTED_SECRET_1H8qGOQqvJQ",
+  "access_token": "00D5w000000abcd!AR8AQP0jITN80ESEsj5EbaZTFG0RNBaT1cyWk7TrqoDjoNIWQ2ME_sTZzBjfmOE6zMHq6y8PIW4eWze9JksNEkWUl.Cju7m4",
+  "refresh_token": "REDACTED_SECRET",
   "instance_url": "https://mycompany.my.salesforce.com",
   "id": "https://login.salesforce.com/id/00D5w000000abcdEAA/0055w000000abcdAAA",
   "token_type": "Bearer",
@@ -155,7 +228,7 @@ Host: login.salesforce.com
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=refresh_token
-&refresh_token=REDACTED_SECRET_4
+&refresh_token=5Aep861TSESvWeug_xvFHRBTTbf_YrTWgEyjBJo7Xr34...
 &client_id=3MVG9fTLmJ60pJ5...
 &client_secret=1234567890ABCDEF...
 ```
@@ -203,7 +276,7 @@ grant_type=password
 **Response Example**:
 ```json
 {
-  "access_token": "REDACTED_SECRET_5",
+  "access_token": "00D5w000000abcd!AR8AQServiceAccountToken...",
   "instance_url": "https://mycompany.my.salesforce.com",
   "id": "https://login.salesforce.com/id/00D5w000000abcdEAA/0055w000000serviceAAA",
   "token_type": "Bearer",

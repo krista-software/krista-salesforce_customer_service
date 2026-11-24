@@ -19,7 +19,8 @@
 package app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.connectors;
 
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.SalesforceCustomerServiceAttributes;
-import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.RefreshTokenStore;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.SalesforceCustomerServiceAuditService;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.SalesforceCustomerServiceSdkFactory;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.SalesforceCustomerServiceAttributesStore;
 import app.krista.ksdk.context.AuthorizationContext;
 import app.krista.ksdk.context.RequestContext;
@@ -28,84 +29,115 @@ import org.jvnet.hk2.annotations.Service;
 import javax.inject.Inject;
 
 /**
- * Factory class for creating SalesforceTokenProvider instances.
- * <p>
- * This factory is responsible for creating and configuring SalesforceTokenProvider
- * objects with the appropriate dependencies and settings. It centralizes the creation
- * logic and ensures that token providers are properly initialized with the necessary
- * components for Salesforce authentication.
+ * Factory class for creating {@link SalesforceTokenProvider} instances.
+ *
+ * <p>Each provider is constructed with the resolved per-request
+ * {@link SalesforceCustomerServiceAttributes} and a reference to the
+ * {@link SalesforceCustomerServiceSdkFactory} so that token-acquisition calls
+ * can build a correctly-keyed {@link app.krista.oauth.providers.salesforce.SalesforceOAuth2Sdk}
+ * backed by a {@link app.krista.extensions.crm.customer_relations.salesforce_customer_service.LegacyKeyedSalesforceTokenStore}
+ * for each request.</p>
  */
 @Service
 public final class SalesforceTokenProviderFactory {
 
     private final RequestContext requestContext;
-    private final RefreshTokenStore refreshTokenStore;
     private final SalesforceTokenProvider defaultSalesforceTokenProvider;
     private final SalesforceCustomerServiceAttributesStore attributesStore;
     private final AuthorizationContext authorizationContext;
+    private final SalesforceCustomerServiceSdkFactory sdkFactory;
+    /** CRIT-008: forwarded into each TokenProvider so the runtime path can call
+     *  {@code sdk.acquireForUser(invokerId)} for the AUTH_CODE-only setup case. */
+    private final String invokerId;
+    /** Audit recorder attached to every provider this factory builds — mirrors outlook-4's
+     *  {@code GraphServiceClientProviderFactory.setAuditService(...)}. Non-final: set by the
+     *  {@code @Inject} constructor after delegation; {@code null} on the test-seam path. */
+    private SalesforceCustomerServiceAuditService auditService;
 
     /**
-     * Constructs a SalesforceTokenProviderFactory with the required dependencies.
+     * Production constructor injected by HK2.
      *
-     * @param refreshTokenStore The store used to persist refresh tokens
-     * @param requestContext The context of the current request
-     * @param salesforceCustomerServiceAttributes The default Salesforce service attributes
-     * @param attributesStore The store for Salesforce service configuration attributes
-     * @param authorizationContext The authorization context for the current request
+     * @param requestContext                      context of the current request
+     * @param salesforceCustomerServiceAttributes operator-default Salesforce attributes
+     * @param attributesStore                     per-request attribute store
+     * @param authorizationContext                authorization context for the current request
+     * @param sdkFactory                          factory that builds per-request SDK instances
      */
     @Inject
-    public SalesforceTokenProviderFactory(RefreshTokenStore refreshTokenStore, RequestContext requestContext,
+    public SalesforceTokenProviderFactory(RequestContext requestContext,
                                           SalesforceCustomerServiceAttributes salesforceCustomerServiceAttributes,
                                           SalesforceCustomerServiceAttributesStore attributesStore,
-                                          AuthorizationContext authorizationContext) {
-        this(refreshTokenStore, requestContext, authorizationContext,
-                new SalesforceTokenProvider(refreshTokenStore, requestContext,
-                        salesforceCustomerServiceAttributes, authorizationContext, null),
-                attributesStore);
+                                          AuthorizationContext authorizationContext,
+                                          SalesforceCustomerServiceSdkFactory sdkFactory,
+                                          app.krista.extension.executor.Invoker invoker,
+                                          SalesforceCustomerServiceAuditService auditService) {
+        this(requestContext, authorizationContext,
+                buildDefault(requestContext, salesforceCustomerServiceAttributes,
+                        authorizationContext, sdkFactory, invoker, attributesStore, auditService),
+                attributesStore, sdkFactory,
+                invoker != null ? invoker.getInvokerId() : null);
+        this.auditService = auditService;
+    }
+
+    private static SalesforceTokenProvider buildDefault(RequestContext rc,
+                                                        SalesforceCustomerServiceAttributes attrs,
+                                                        AuthorizationContext ac,
+                                                        SalesforceCustomerServiceSdkFactory sdkFactory,
+                                                        app.krista.extension.executor.Invoker invoker,
+                                                        SalesforceCustomerServiceAttributesStore attributesStore,
+                                                        SalesforceCustomerServiceAuditService auditService) {
+        SalesforceTokenProvider p = new SalesforceTokenProvider(rc, attrs, ac, null, sdkFactory, attributesStore);
+        if (invoker != null) p.setInvokerId(invoker.getInvokerId());
+        p.setAuditService(auditService);
+        return p;
     }
 
     /**
-     * Constructs a SalesforceTokenProviderFactory with the required dependencies and a pre-configured token provider.
-     *
-     * @param refreshTokenStore The store used to persist refresh tokens
-     * @param requestContext The context of the current request
-     * @param authorizationContext The authorization context for the current request
-     * @param salesforceTokenProvider The pre-configured token provider to use as default
-     * @param attributesStore The store for Salesforce service configuration attributes
+     * Full constructor — supports test seams and the overloaded factory wiring path.
      */
-    public SalesforceTokenProviderFactory(RefreshTokenStore refreshTokenStore, RequestContext requestContext,
+    public SalesforceTokenProviderFactory(RequestContext requestContext,
                                           AuthorizationContext authorizationContext,
                                           SalesforceTokenProvider salesforceTokenProvider,
-                                          SalesforceCustomerServiceAttributesStore attributesStore) {
-        this.refreshTokenStore = refreshTokenStore;
+                                          SalesforceCustomerServiceAttributesStore attributesStore,
+                                          SalesforceCustomerServiceSdkFactory sdkFactory,
+                                          String invokerId) {
         this.requestContext = requestContext;
         this.authorizationContext = authorizationContext;
         this.defaultSalesforceTokenProvider = salesforceTokenProvider;
         this.attributesStore = attributesStore;
+        this.sdkFactory = sdkFactory;
+        this.invokerId = invokerId;
     }
 
     /**
-     * Creates a SalesforceTokenProvider with the specified Salesforce attributes.
+     * Creates a {@link SalesforceTokenProvider} with the specified Salesforce attributes.
      *
-     * @param salesforceSalesAttributes The Salesforce service attributes to use for configuration
-     * @return A configured SalesforceTokenProvider instance
-     * @throws IllegalArgumentException if salesforceSalesAttributes is null
+     * <p>Saves the attributes under a new authContextId in the attribute store (for
+     * multi-tenant OAuth callback routing), then builds a provider bound to those attrs
+     * and the shared {@link SalesforceCustomerServiceSdkFactory}.</p>
+     *
+     * @param salesforceSalesAttributes the Salesforce service attributes for this request
+     * @return a configured {@link SalesforceTokenProvider} instance
+     * @throws IllegalArgumentException if {@code salesforceSalesAttributes} is null
      */
     public SalesforceTokenProvider create(SalesforceCustomerServiceAttributes salesforceSalesAttributes) {
         if (salesforceSalesAttributes == null) {
             throw new IllegalArgumentException("Attributes not found");
         }
         String authContextId = attributesStore.save(salesforceSalesAttributes);
-        return new SalesforceTokenProvider(refreshTokenStore, requestContext, salesforceSalesAttributes, authorizationContext, authContextId);
+        SalesforceTokenProvider p = new SalesforceTokenProvider(requestContext, salesforceSalesAttributes,
+                authorizationContext, authContextId, sdkFactory, attributesStore);
+        p.setInvokerId(invokerId);
+        p.setAuditService(auditService);
+        return p;
     }
 
     /**
-     * Creates a SalesforceTokenProvider using the default configuration.
+     * Creates a {@link SalesforceTokenProvider} using the operator-default configuration.
      *
-     * @return The default SalesforceTokenProvider instance
+     * @return the default {@link SalesforceTokenProvider} instance
      */
     public SalesforceTokenProvider create() {
         return defaultSalesforceTokenProvider;
     }
-
 }

@@ -9,6 +9,7 @@ Retrieves a list of feed items (posts, comments, and updates) from a Salesforce 
 - **Area**: Case Management
 - **Type**: QUERY_SYSTEM
 - **Retry Support**: ✅ Yes - If validation fails, the user is prompted to re-enter the Case ID and/or Number of Posts
+- **Ask Agent (MCP)**: ✅ Enabled - callable by the Krista AI agent
 
 ## Input Parameters
 

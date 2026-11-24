@@ -26,19 +26,25 @@ import static org.junit.Assert.*;
 
 /**
  * Unit tests for {@link SalesforceCustomerRelationsApplication}.
+ *
+ * <p>As of Chunk M3 (v2.0.18) the Application registers two JAX-RS resource classes:
+ * {@link AuthenticationResource} and {@link SalesforceCustomerServiceAuditResource}.</p>
  */
 public class SalesforceCustomerRelationsApplicationTest {
 
     @Test
-    public void testGetClasses_ReturnsAuthenticationResource() {
+    public void testGetClasses_ContainsExpectedResources() {
         SalesforceCustomerRelationsApplication app = new SalesforceCustomerRelationsApplication();
-        
+
         Set<Class<?>> classes = app.getClasses();
-        
+
         assertNotNull("Classes should not be null", classes);
-        assertEquals("Should have one class", 1, classes.size());
-        assertTrue("Should contain AuthenticationResource", 
-            classes.contains(AuthenticationResource.class));
+        assertEquals("Should have two classes (AuthenticationResource + AuditResource)",
+                2, classes.size());
+        assertTrue("Should contain AuthenticationResource",
+                classes.contains(AuthenticationResource.class));
+        assertTrue("Should contain SalesforceCustomerServiceAuditResource",
+                classes.contains(SalesforceCustomerServiceAuditResource.class));
     }
 
     @Test

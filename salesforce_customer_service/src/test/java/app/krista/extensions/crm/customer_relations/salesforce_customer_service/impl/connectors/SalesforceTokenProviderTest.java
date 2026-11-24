@@ -30,8 +30,8 @@ import static org.junit.Assert.*;
  * 3. OAuth 2.0 Password Grant Flow (Username/Password/Security Token provided)
  *
  * Test credentials provided:
- * - Client ID: REDACTED_SECRET_0
- * - Client Secret: REDACTED_SECRET_3
+ * - Client ID: 3MVG95jctIhbyCprtzHqvP5ePGclhjUompupjYnVlmU84hNMeafFnbvpLnRVq_RM5.cije9EY_1yqmYBDr3KY
+ * - Client Secret: REDACTED_SECRET
  * - Security Token: h63mvaB1DlqplIMAo057WMKMH
  * - Instance URL: https://ankit-ab-dev-ed.my.salesforce.com
  * - Username: hiren.panchal@kristasoft.com
@@ -40,12 +40,12 @@ import static org.junit.Assert.*;
 public class SalesforceTokenProviderTest {
 
     // Test credentials from the provided data
-    private static final String CLIENT_ID = "REDACTED_SECRET_0";
-    private static final String CLIENT_SECRET = "REDACTED_SECRET_3";
-    private static final String SECURITY_TOKEN = "h63mvaB1DlqplIMAo057WMKMH";
+    private static final String CLIENT_ID = "3MVG95jctIhbyCprtzHqvP5ePGclhjUompupjYnVlmU84hNMeafFnbvpLnRVq_RM5.cije9EY_1yqmYBDr3KY";
+    private static final String CLIENT_SECRET = "REDACTED_SECRET";
+    private static final String SECURITY_TOKEN = "REDACTED_SECRET";
     private static final String INSTANCE_URL = "https://ankit-ab-dev-ed.my.salesforce.com";
     private static final String USERNAME = "hiren.panchal@kristasoft.com";
-    private static final String PASSWORD = "Krista@602";
+    private static final String PASSWORD = "REDACTED_SECRET";
     private static final String ROUTING_URL = "https://test.example.com/callback";
 
     /**
@@ -301,8 +301,11 @@ public class SalesforceTokenProviderTest {
         SalesforceCustomerServiceAttributes attributes = new SalesforceCustomerServiceAttributes(
             "invalid_client", "invalid_secret", null, null, null, null, false, ROUTING_URL);
 
+        // Construct with null sdkFactory — this test only checks object creation and attribute
+        // access, not token acquisition. RequestContext and AuthorizationContext are also null
+        // since they are not accessed by the assertions below.
         SalesforceTokenProvider provider = new SalesforceTokenProvider(
-            null, null, attributes, null, null);
+            null, attributes, null, null, null, null);
 
         // Act & Assert
         // Test that the provider can be created with invalid credentials without crashing

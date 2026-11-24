@@ -21,11 +21,13 @@ package app.krista.extensions.crm.customer_relations.salesforce_customer_service
 import app.krista.extension.authorization.MustAuthorizeException;
 import app.krista.extension.executor.ExtensionResponse;
 import app.krista.extension.executor.ExtensionResponseBuilder;
+import app.krista.extension.executor.Invoker;
 import app.krista.extension.executor.RemediationActions;
 import app.krista.extension.impl.anno.Attribute;
 import app.krista.extension.impl.anno.CatalogRequest;
 import app.krista.extension.impl.anno.Domain;
 import app.krista.extension.impl.anno.Field;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.SalesforceCustomerServiceAuditService;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog.errorhandlers.ErrorHandlingStateManager;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog.errorhandlers.ExtensionResponseGenerator;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog.extresp.*;
@@ -63,17 +65,104 @@ public class CaseManagementArea {
     private final ValidationOrchestrator validationOrchestrator;
     private final ExtensionResponseGenerator responseGenerator;
     private final ErrorHandlingStateManager internalStateManager;
+    private final SalesforceCustomerServiceAuditService auditService;
+    private final Invoker invoker;
 
     @Inject
     private CaseManagementArea(CaseDaoImpl caseDao, KristaMediaClient kristaMediaClient,
                                ValidationOrchestrator validationOrchestrator,
                                ExtensionResponseGenerator responseGenerator,
-                               ErrorHandlingStateManager internalStateManager) {
+                               ErrorHandlingStateManager internalStateManager,
+                               SalesforceCustomerServiceAuditService auditService,
+                               Invoker invoker) {
         this.caseDao = caseDao;
         this.kristaMediaClient = kristaMediaClient;
         this.validationOrchestrator = validationOrchestrator;
         this.responseGenerator = responseGenerator;
         this.internalStateManager = internalStateManager;
+        this.auditService = auditService;
+        this.invoker = invoker;
+    }
+
+    /**
+     * Wraps a catalog request body with audit recording, mirroring the outlook extension's
+     * {@code audited()} pattern: {@code startRequest()} for duration + execution-log capture,
+     * then a terminal {@code CATALOG_REQUEST_SUCCESS}/{@code FAILURE} record chosen by the
+     * request's OUTCOME. A handler that catches its own error and returns a FAILURE
+     * {@link ExtensionResponse} (instead of throwing) is still recorded as a failure — this is
+     * why we no longer rely on {@code executeCatalog}'s throw-only detection.
+     *
+     * <p>{@link MustAuthorizeException} is recorded as a failure and re-thrown so the platform
+     * can redirect the user to the consent URL.</p>
+     */
+    private ExtensionResponse audited(String catalogName,
+                                      java.util.function.Supplier<ExtensionResponse> body) {
+        String invokerId = invoker.getInvokerId();
+        auditService.startRequest();
+        // Logged AFTER startRequest() so these lines are captured into the record's execution
+        // logs — guarantees the dashboard's "Logs" view is never empty, even for quiet requests.
+        LOGGER.info("Catalog request '{}' started", catalogName);
+        try {
+            ExtensionResponse response = body.get();
+            if (response != null && response.getResult() == ExtensionResponse.Result.FAILURE) {
+                String reason = failureReason(response);
+                LOGGER.info("Catalog request '{}' completed with FAILURE response: {}", catalogName, reason);
+                auditService.record(invokerId, "CATALOG_REQUEST_FAILURE", "failure", catalogName, reason, null, null);
+            } else {
+                LOGGER.info("Catalog request '{}' completed successfully", catalogName);
+                auditService.record(invokerId, "CATALOG_REQUEST_SUCCESS", "success", catalogName, null, null, null);
+            }
+            return response;
+        } catch (MustAuthorizeException e) {
+            auditService.record(invokerId, "CATALOG_REQUEST_FAILURE", "failure", catalogName,
+                    e.getMessage(), e.getClass().getSimpleName(), null);
+            throw e;
+        } catch (RuntimeException e) {
+            auditService.record(invokerId, "CATALOG_REQUEST_FAILURE", "failure", catalogName,
+                    e.getMessage(), e.getClass().getSimpleName(), null);
+            throw e;
+        } catch (Exception e) {
+            auditService.record(invokerId, "CATALOG_REQUEST_FAILURE", "failure", catalogName,
+                    e.getMessage(), e.getClass().getSimpleName(), null);
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
+     * Best-effort extraction of the error message from a FAILURE {@link ExtensionResponse}.
+     * The {@code ExtensionResponse.Error} message accessor differs across krista-apis versions,
+     * so this resolves it reflectively (method named like get/getMessage/getErrorMessage, else a
+     * String field containing "message"). Returns {@code null} when nothing can be extracted.
+     */
+    static String failureReason(ExtensionResponse response) {
+        try {
+            ExtensionResponse.Error err = response.getError();
+            if (err == null) {
+                return null;
+            }
+            for (String name : new String[]{"getMessage", "getErrorMessage", "getReason", "message"}) {
+                try {
+                    Object v = err.getClass().getMethod(name).invoke(err);
+                    if (v instanceof String s && !s.isBlank()) {
+                        return s;
+                    }
+                } catch (NoSuchMethodException ignored) {
+                    // try the next candidate accessor
+                }
+            }
+            for (java.lang.reflect.Field f : err.getClass().getDeclaredFields()) {
+                if (f.getType() == String.class && f.getName().toLowerCase().contains("message")) {
+                    f.setAccessible(true);
+                    Object v = f.get(err);
+                    if (v instanceof String s && !s.isBlank()) {
+                        return s;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // reason extraction is best-effort; never break the request for it
+        }
+        return null;
     }
 
     /**
@@ -95,12 +184,17 @@ public class CaseManagementArea {
             name = "Get Case Feed Items By Case Id",
             description = "This request will fetch the list of post items for the given case Id",
             area = "Case management",
-            type = CatalogRequest.Type.QUERY_SYSTEM)
+            type = CatalogRequest.Type.QUERY_SYSTEM , tool = true)
     @Field.Desc(name = "Feed Items", type = "[ { Actor Name: Text, Post Message: Text, File: File } ]", required = false)
     public ExtensionResponse getCaseFeedItemsByCaseId(
             @Field.Text(name = "Case Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String caseId,
             @Field(name = "Number Of Posts", type = "Number", required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) Double numberOfPosts,
             @Field.Boolean(name = "Allow Retry", required = true) Boolean allowRetry) {
+        return audited("Get Case Feed Items By Case Id",
+                () -> getCaseFeedItemsByCaseIdImpl(caseId, numberOfPosts, allowRetry));
+    }
+
+    private ExtensionResponse getCaseFeedItemsByCaseIdImpl(String caseId, Double numberOfPosts, Boolean allowRetry) {
 
         try {
             // Validate both caseId and numberOfPosts together
@@ -171,6 +265,59 @@ public class CaseManagementArea {
         }
     }
 
+
+    /**
+     * Fetches a single Salesforce Case by its id and returns it as the typed {@code Case} entity.
+     *
+     * <p>Issues {@code GET /services/data/v53.0/sobjects/Case/{caseID}} via {@link CaseDaoImpl},
+     * then converts the service-layer record to the catalog-layer {@code Case} entity declared
+     * by the {@code @Field.Desc(type = "Entity(Case)")} return type.</p>
+     *
+     * @param caseID the Salesforce Case Id (e.g. {@code 500xx000000XXXXX})
+     * @return {@link ExtensionResponse} with the fetched case under the {@code "Case"} output key
+     */
+    @CatalogRequest(
+            id = "localDomainRequest_894682d8-3410-458b-a6d2-1008815b182e",
+            name = "Get Case By Id",
+            description = "Get Case By Id",
+            area = "Case management",
+            type = CatalogRequest.Type.CHANGE_SYSTEM , tool = true)
+    @Field.Desc(name = "Case", type = "Entity(Case)", required = false)
+    public ExtensionResponse getCaseById(
+            @Field.Text(name = "Case ID", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String caseID) {
+        return audited("Get Case By Id", () -> getCaseByIdImpl(caseID));
+    }
+
+    private ExtensionResponse getCaseByIdImpl(String caseID) {
+        try {
+            if (caseID == null || caseID.isBlank()) {
+                return ExtensionResponseFactory.create(
+                        "Case ID is required.",
+                        ExtensionResponse.Error.ExceptionType.INPUT_ERROR
+                );
+            }
+
+            Case serviceCase = caseDao.getCaseById(caseID);
+            app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog.entities.Case entityCase =
+                    CatalogTypes.fromSFCase(serviceCase);
+
+            return new ExtensionResponseBuilder()
+                    .success(Map.of("Case", entityCase))
+                    .build();
+
+        } catch (MustAuthorizeException cause) {
+            // Rule 3: rethrow BEFORE broader catch — MAE must propagate to the runtime
+            // so the platform can redirect the user to the consent URL.
+            LOGGER.error("Authorization required while fetching case {}: {}", caseID, cause.getMessage());
+            throw cause;
+        } catch (Exception cause) {
+            LOGGER.error("Error occurred while fetching case {}: {}", caseID, cause.getMessage(), cause);
+            return ExtensionResponseFactory.create(
+                    "An unexpected error occurred while fetching the case: " + cause.getMessage(),
+                    ExtensionResponse.Error.ExceptionType.SYSTEM_ERROR
+            );
+        }
+    }
     /**
      * Validates the number of posts requested and returns the allowed maximum.
      *
@@ -209,6 +356,9 @@ public class CaseManagementArea {
 
         try {
             return caseDao.getCaseById(caseId);
+        } catch (MustAuthorizeException cause) {
+            // Rule 3: rethrow BEFORE broader catch — MAE must propagate to the runtime.
+            throw cause;
         } catch (Exception cause) {
             throw new RuntimeException("Invalid Case ID: " + caseId);
         }
@@ -232,13 +382,18 @@ public class CaseManagementArea {
             name = "Share Update to Case",
             description = "This request will add update to the Feed of the Case.",
             area = "Case management",
-            type = CatalogRequest.Type.CHANGE_SYSTEM)
+            type = CatalogRequest.Type.CHANGE_SYSTEM , tool = true)
     @Field.Boolean(name = "Is Updated", required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {})
     public ExtensionResponse shareUpdateToCase(
             @Field.Text(name = "Case Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String caseId,
             @Field(name = "Update Message", type = "Paragraph", required = true, attributes = {@Attribute(name = "visualWidth", value = "L")}, options = {}) String updateMessage,
             @Field.File(name = "File", multipleFileUpload = false, required = false, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) File file,
             @Field.Boolean(name = "Allow Retry", required = true) Boolean allowRetry) {
+        return audited("Share Update to Case",
+                () -> shareUpdateToCaseImpl(caseId, updateMessage, file, allowRetry));
+    }
+
+    private ExtensionResponse shareUpdateToCaseImpl(String caseId, String updateMessage, File file, Boolean allowRetry) {
         try {
             Map<Validator.ValidationResource, String> validationParams = new HashMap<>();
             validationParams.put(Validator.ValidationResource.CASE_ID, caseId);
@@ -291,6 +446,11 @@ public class CaseManagementArea {
                 }
             }
 
+        } catch (MustAuthorizeException cause) {
+            // Rule 3: rethrow BEFORE broader catch — MAE must propagate to the runtime
+            // so the platform can redirect the user to the consent URL.
+            LOGGER.error("Authorization required while sharing update to case: {}", cause.getMessage());
+            throw cause;
         } catch (Exception cause) {
             LOGGER.error("Error occurred while sharing the update to case : {}", cause.getMessage(), cause);
 
@@ -388,6 +548,10 @@ public class CaseManagementArea {
     public ExtensionResponse caseChangeAlert(
             @Field(name = "eventName", type = "Text") String eventName,
             @Field(name = "eventData", type = "FreeForm") FreeForm eventData) {
+        return audited("Case Change Alert", () -> caseChangeAlertImpl(eventName, eventData));
+    }
+
+    private ExtensionResponse caseChangeAlertImpl(String eventName, FreeForm eventData) {
         Map<String, Object> caseMap = new HashMap<>();
         try {
             if (!"Case Change Alert".equals(eventName)) {

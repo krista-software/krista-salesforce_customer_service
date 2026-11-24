@@ -21,10 +21,12 @@ package app.krista.extensions.crm.customer_relations.salesforce_customer_service
 import app.krista.extension.authorization.MustAuthorizeException;
 import app.krista.extension.executor.ExtensionResponse;
 import app.krista.extension.executor.ExtensionResponseBuilder;
+import app.krista.extension.executor.Invoker;
 import app.krista.extension.executor.RemediationActions;
 import app.krista.extension.impl.anno.CatalogRequest;
 import app.krista.extension.impl.anno.Domain;
 import app.krista.extension.impl.anno.Field;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.SalesforceCustomerServiceAuditService;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog.errorhandlers.ErrorHandlingStateManager;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog.errorhandlers.ExtensionResponseGenerator;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.catalog.extresp.*;
@@ -54,15 +56,63 @@ public class ContentArea {
     private final ValidationOrchestrator validationOrchestrator;
     private final ExtensionResponseGenerator responseGenerator;
     private final ErrorHandlingStateManager internalStateManager;
+    private final SalesforceCustomerServiceAuditService auditService;
+    private final Invoker invoker;
 
 
     @Inject
-    public ContentArea(SalesforceService salesforceService, ContentDaoImpl contentDao, ValidationOrchestrator validationOrchestrator, ExtensionResponseGenerator responseGenerator, ErrorHandlingStateManager internalStateManager, CaseDaoImpl caseDao) {
+    public ContentArea(SalesforceService salesforceService, ContentDaoImpl contentDao, ValidationOrchestrator validationOrchestrator, ExtensionResponseGenerator responseGenerator, ErrorHandlingStateManager internalStateManager, CaseDaoImpl caseDao, SalesforceCustomerServiceAuditService auditService, Invoker invoker) {
         this.salesforceService = salesforceService;
         this.contentDao = contentDao;
         this.validationOrchestrator = validationOrchestrator;
         this.responseGenerator = responseGenerator;
         this.internalStateManager = internalStateManager;
+        this.auditService = auditService;
+        this.invoker = invoker;
+    }
+
+    /**
+     * Wraps a catalog request body with audit recording, mirroring the outlook extension's
+     * {@code audited()} pattern: {@code startRequest()} for duration + execution-log capture,
+     * then a terminal {@code CATALOG_REQUEST_SUCCESS}/{@code FAILURE} record chosen by the
+     * request's OUTCOME. A handler that catches its own error and returns a FAILURE
+     * {@link ExtensionResponse} (instead of throwing) is still recorded as a failure — this is
+     * why we no longer rely on {@code executeCatalog}'s throw-only detection.
+     *
+     * <p>{@link MustAuthorizeException} is recorded as a failure and re-thrown so the platform
+     * can redirect the user to the consent URL.</p>
+     */
+    private ExtensionResponse audited(String catalogName,
+                                      java.util.function.Supplier<ExtensionResponse> body) {
+        String invokerId = invoker.getInvokerId();
+        auditService.startRequest();
+        // Logged AFTER startRequest() so these lines are captured into the record's execution
+        // logs — guarantees the dashboard's "Logs" view is never empty, even for quiet requests.
+        LOGGER.info("Catalog request '{}' started", catalogName);
+        try {
+            ExtensionResponse response = body.get();
+            if (response != null && response.getResult() == ExtensionResponse.Result.FAILURE) {
+                String reason = CaseManagementArea.failureReason(response);
+                LOGGER.info("Catalog request '{}' completed with FAILURE response: {}", catalogName, reason);
+                auditService.record(invokerId, "CATALOG_REQUEST_FAILURE", "failure", catalogName, reason, null, null);
+            } else {
+                LOGGER.info("Catalog request '{}' completed successfully", catalogName);
+                auditService.record(invokerId, "CATALOG_REQUEST_SUCCESS", "success", catalogName, null, null, null);
+            }
+            return response;
+        } catch (MustAuthorizeException e) {
+            auditService.record(invokerId, "CATALOG_REQUEST_FAILURE", "failure", catalogName,
+                    e.getMessage(), e.getClass().getSimpleName(), null);
+            throw e;
+        } catch (RuntimeException e) {
+            auditService.record(invokerId, "CATALOG_REQUEST_FAILURE", "failure", catalogName,
+                    e.getMessage(), e.getClass().getSimpleName(), null);
+            throw e;
+        } catch (Exception e) {
+            auditService.record(invokerId, "CATALOG_REQUEST_FAILURE", "failure", catalogName,
+                    e.getMessage(), e.getClass().getSimpleName(), null);
+            throw new IllegalStateException(e);
+        }
     }
 
     /**
@@ -91,6 +141,11 @@ public class ContentArea {
             @Field.PickOne(name = "Object Type", values = {"Account", "Case", "Contact", "Customer", "Individual"}, required = true) String objectType,
             @Field.Desc(name = "Custom Fields", type = "[ Text ]", required = true) List<String> customFields,
             @Field.Boolean(name = "Allow Retry", required = true) Boolean allowRetry) {
+        return audited("Retrieve Custom Fields For Given Object",
+                () -> RetrieveCustomFieldsForGivenObjectImpl(objectId, objectType, customFields, allowRetry));
+    }
+
+    private ExtensionResponse RetrieveCustomFieldsForGivenObjectImpl(String objectId, String objectType, List<String> customFields, Boolean allowRetry) {
 
         try {
 
@@ -225,6 +280,9 @@ public class ContentArea {
                 LOGGER.warn("No records found for query: {}", query);
                 return new FreeForm();
             }
+        } catch (MustAuthorizeException cause) {
+            // Rule 3: rethrow BEFORE broader catch — MAE must propagate to the runtime.
+            throw cause;
         } catch (Exception cause) {
             LOGGER.error("Error retrieving or parsing record for objectType={}, objectId={}", objectType, objectId, cause);
             throw new IOException("Failed to retrieve custom fields for object " + objectType, cause);

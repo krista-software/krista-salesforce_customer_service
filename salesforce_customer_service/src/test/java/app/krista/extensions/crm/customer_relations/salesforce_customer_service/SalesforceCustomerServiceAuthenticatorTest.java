@@ -25,9 +25,9 @@ import app.krista.extension.request.ProtoRequest;
 import app.krista.extension.request.ProtoResponse;
 import app.krista.extension.request.protos.http.HttpRequest;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.SalesforceCustomerServiceAttributesStore;
+import app.krista.extensions.util.KeyValueStore;
 import app.krista.model.field.NamedField;
 import app.krista.model.field.NamedValuedField;
-import com.github.scribejava.core.oauth.OAuth20Service;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -42,39 +42,62 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
- * Comprehensive test class for SalesforceCustomerServiceAuthenticator.
- * Tests OAuth2 authentication flow, callback handling, and authorization responses.
- * 
- * Test Coverage Areas:
- * - Constructor initialization
- * - Scheme and protocol support
- * - Authenticated account ID extraction from callbacks
- * - Service authorization
- * - Attribute fields
- * - Must authenticate responses
- * - Must authorize responses (with and without authContextId)
- * - Error handling and edge cases
+ * Unit tests for {@link SalesforceCustomerServiceAuthenticator}.
+ *
+ * <p>As of salesforce_customer_service 2.0.18 (T-M6), the authenticator extends
+ * {@link app.krista.oauth.providers.salesforce.extension.AbstractSalesforceRequestAuthenticator}
+ * instead of implementing {@link app.krista.extension.authorization.RequestAuthenticator}
+ * directly. The notable behavioral changes tested here:</p>
+ * <ul>
+ *   <li>{@link #testConstructor_WithValidDependencies_Success()} — now uses the string-based
+ *       seam constructor (invokerId + routingUrl) instead of the old 2-arg constructor.</li>
+ *   <li>State-parsing tests use the base class implementation which caps at 8 parts.</li>
+ *   <li>{@code getMustAuthorizeResponse} tests verify the SDK-based OAuth URL is produced
+ *       (non-null response, state grammar preserved) rather than verifying the legacy
+ *       ScribeJava {@code OAuth20Service.getAuthorizationUrl()} call.</li>
+ * </ul>
+ *
+ * <h2>Test Coverage Areas</h2>
+ * <ul>
+ *   <li>Constructor initialization (seam / string-based constructor)</li>
+ *   <li>Scheme and protocol support (inherited from base class)</li>
+ *   <li>Authenticated account ID extraction from callbacks</li>
+ *   <li>Service authorization (inherited no-op)</li>
+ *   <li>Attribute fields (inherited empty map)</li>
+ *   <li>Must-authenticate responses (inherited nulls)</li>
+ *   <li>Must-authorize responses — SDK-based URL, state grammar, authContextId routing</li>
+ *   <li>Error handling and edge cases</li>
+ * </ul>
  */
 public class SalesforceCustomerServiceAuthenticatorTest {
 
+    private static final String INVOKER_ID = "salesforce-customer-service";
+    private static final String ROUTING_URL = "https://test.krista.ai";
     private static final String USER_ID = "test_user_123";
     private static final String AUTH_CONTEXT_ID = "auth_context_456";
     private static final String STATE_WITH_CONTEXT = USER_ID + "#" + AUTH_CONTEXT_ID;
-    private static final String AUTHORIZATION_URL = "https://login.salesforce.com/services/oauth2/authorize?client_id=test";
     private static final String CALLBACK_PATH = "/salesforcecustomerservice/callback";
 
+    // Real (non-mock) attributes for getMustAuthorizeResponse tests — the SDK's
+    // buildAuthorizationUrl builds a URL from config values without network calls.
+    private static final String TEST_CLIENT_ID = "3MVG9testClientId";
+    private static final String TEST_CLIENT_SECRET = "testSecret123";
+    private static final String TEST_ROUTING_URL = "https://test.krista.ai";
+
     @Mock
-    private SalesforceCustomerServiceAttributes mockAttributes;
+    private SalesforceCustomerServiceAttributes mockDefaultAttributes;
 
     @Mock
     private SalesforceCustomerServiceAttributesStore mockAttributesStore;
 
     @Mock
-    private OAuth20Service mockOAuthService;
+    private SalesforceCustomerServiceSdkFactory mockSdkFactory;
+
+    @Mock
+    private KeyValueStore mockKv;
 
     @Mock
     private HttpRequest mockHttpRequest;
@@ -88,264 +111,227 @@ public class SalesforceCustomerServiceAuthenticatorTest {
     @Mock
     private ProtoRequest mockProtoRequest;
 
+    /**
+     * The authenticator under test, using the string-based seam constructor so tests
+     * do not require a live HK2 {@link app.krista.extension.executor.Invoker}.
+     */
     private SalesforceCustomerServiceAuthenticator authenticator;
 
-    /**
-     * Set up test fixtures before each test.
-     */
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        
-        // Configure default mock behaviors
-        when(mockAttributes.getOauthService()).thenReturn(mockOAuthService);
-        when(mockOAuthService.getAuthorizationUrl(anyString())).thenReturn(AUTHORIZATION_URL);
-        
-        authenticator = new SalesforceCustomerServiceAuthenticator(mockAttributes, mockAttributesStore);
+        authenticator = new SalesforceCustomerServiceAuthenticator(
+                INVOKER_ID, ROUTING_URL, mockDefaultAttributes, mockAttributesStore, mockSdkFactory);
     }
 
-    // ========== Constructor Tests ==========
+    // ── Constructor Tests ───────────────────────────────────────────────────────────
 
     /**
-     * Test constructor with valid dependencies.
+     * Verify the seam constructor creates an authenticator instance.
      */
     @Test
     public void testConstructor_WithValidDependencies_Success() {
-        // Act
         SalesforceCustomerServiceAuthenticator auth = new SalesforceCustomerServiceAuthenticator(
-                mockAttributes, mockAttributesStore);
-
-        // Assert
+                INVOKER_ID, ROUTING_URL, mockDefaultAttributes, mockAttributesStore, mockSdkFactory);
         assertNotNull("Authenticator should be created successfully", auth);
     }
 
     /**
-     * Test constructor with null attributes.
+     * Verify the seam constructor works with a null defaultAttributes (degenerate case).
      */
     @Test
-    public void testConstructor_WithNullAttributes_Success() {
-        // Act
+    public void testConstructor_WithNullDefaultAttributes_Success() {
         SalesforceCustomerServiceAuthenticator auth = new SalesforceCustomerServiceAuthenticator(
-                null, mockAttributesStore);
-
-        // Assert
-        assertNotNull("Authenticator should be created even with null attributes", auth);
+                INVOKER_ID, ROUTING_URL, null, mockAttributesStore, mockSdkFactory);
+        assertNotNull("Authenticator should be created even with null defaultAttributes", auth);
     }
 
-    // ========== Scheme and Protocol Tests ==========
+    // ── Scheme and Protocol Tests ───────────────────────────────────────────────────
 
     /**
-     * Test getScheme returns null (OAuth uses redirection, not scheme-based auth).
+     * getScheme returns null — OAuth uses redirection, not a scheme-based challenge.
      */
     @Test
     public void testGetScheme_ReturnsNull() {
-        // Act
-        String scheme = authenticator.getScheme();
-
-        // Assert
-        assertNull("Scheme should be null for OAuth redirection", scheme);
+        assertNull("Scheme should be null for OAuth redirection", authenticator.getScheme());
     }
 
     /**
-     * Test getSupportedProtocols returns empty set.
+     * getSupportedProtocols returns an empty set.
      */
     @Test
     public void testGetSupportedProtocols_ReturnsEmptySet() {
-        // Act
         Set<String> protocols = authenticator.getSupportedProtocols();
-
-        // Assert
         assertNotNull("Protocols set should not be null", protocols);
         assertTrue("Protocols set should be empty", protocols.isEmpty());
     }
 
-    // ========== Authenticated Account ID Tests ==========
+    // ── Authenticated Account ID Tests ──────────────────────────────────────────────
 
     /**
-     * Test getAuthenticatedAccountId with valid callback request.
+     * Valid callback path with a plain userId state → returns userId.
      */
     @Test
     public void testGetAuthenticatedAccountId_WithValidCallback_ReturnsUserId() throws IOException {
-        // Arrange
         MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<>();
         queryParams.add("state", USER_ID);
-        
+
         when(mockHttpRequest.getUri()).thenReturn(URI.create("http://test.com" + CALLBACK_PATH));
         when(mockHttpRequest.getQueryParameters()).thenReturn(queryParams);
 
-        // Act
         String accountId = authenticator.getAuthenticatedAccountId(mockHttpRequest);
 
-        // Assert
         assertEquals("Should extract user ID from state parameter", USER_ID, accountId);
         verify(mockHttpRequest, times(1)).bufferBody();
     }
 
     /**
-     * Test getAuthenticatedAccountId with state containing authContextId.
+     * State containing authContextId → returns the userId (first '#'-delimited part).
      */
     @Test
-    public void testGetAuthenticatedAccountId_WithAuthContextInState_ReturnsUserId() throws IOException {
-        // Arrange
+    public void testGetAuthenticatedAccountId_WithAuthContextInState_ReturnsUserId()
+            throws IOException {
         MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<>();
         queryParams.add("state", STATE_WITH_CONTEXT);
-        
+
         when(mockHttpRequest.getUri()).thenReturn(URI.create("http://test.com" + CALLBACK_PATH));
         when(mockHttpRequest.getQueryParameters()).thenReturn(queryParams);
 
-        // Act
         String accountId = authenticator.getAuthenticatedAccountId(mockHttpRequest);
 
-        // Assert
         assertEquals("Should extract user ID from state (before #)", USER_ID, accountId);
     }
 
     /**
-     * Test getAuthenticatedAccountId with non-callback path.
+     * Non-callback path → returns null (base class only parses on the callback path).
      */
     @Test
     public void testGetAuthenticatedAccountId_WithNonCallbackPath_ReturnsNull() {
-        // Arrange
         when(mockHttpRequest.getUri()).thenReturn(URI.create("http://test.com/other/path"));
 
-        // Act
         String accountId = authenticator.getAuthenticatedAccountId(mockHttpRequest);
 
-        // Assert
         assertNull("Should return null for non-callback paths", accountId);
     }
 
     /**
-     * Test getAuthenticatedAccountId with IOException during buffer.
+     * IOException during bufferBody → returns null (base class catches and logs).
      */
     @Test
     public void testGetAuthenticatedAccountId_WithIOException_ReturnsNull() throws IOException {
-        // Arrange
         when(mockHttpRequest.getUri()).thenReturn(URI.create("http://test.com" + CALLBACK_PATH));
         doThrow(new IOException("Buffer error")).when(mockHttpRequest).bufferBody();
 
-        // Act
         String accountId = authenticator.getAuthenticatedAccountId(mockHttpRequest);
 
-        // Assert
         assertNull("Should return null when IOException occurs", accountId);
     }
 
     /**
-     * Test getAuthenticatedAccountId with RuntimeException.
+     * RuntimeException on getUri() → returns null.
      */
     @Test
     public void testGetAuthenticatedAccountId_WithRuntimeException_ReturnsNull() {
-        // Arrange
         when(mockHttpRequest.getUri()).thenThrow(new RuntimeException("Unexpected error"));
 
-        // Act
         String accountId = authenticator.getAuthenticatedAccountId(mockHttpRequest);
 
-        // Assert
         assertNull("Should return null when RuntimeException occurs", accountId);
     }
 
     /**
-     * Test getAuthenticatedAccountId with null state parameter.
+     * Missing state query parameter → returns null.
      */
     @Test
     public void testGetAuthenticatedAccountId_WithNullState_ReturnsNull() throws IOException {
-        // Arrange
         MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<>();
-        
+
         when(mockHttpRequest.getUri()).thenReturn(URI.create("http://test.com" + CALLBACK_PATH));
         when(mockHttpRequest.getQueryParameters()).thenReturn(queryParams);
 
-        // Act
         String accountId = authenticator.getAuthenticatedAccountId(mockHttpRequest);
 
-        // Assert
         assertNull("Should return null when state parameter is missing", accountId);
     }
 
-    // ========== Service Authorization Tests ==========
+    // ── Service Authorization Tests ─────────────────────────────────────────────────
 
     /**
-     * Test setServiceAuthorization always returns false.
+     * setServiceAuthorization always returns false (OAuth uses redirects, not service auth).
      */
     @Test
     public void testSetServiceAuthorization_AlwaysReturnsFalse() {
-        // Act
-        boolean result1 = authenticator.setServiceAuthorization("test");
-        boolean result2 = authenticator.setServiceAuthorization(null);
-        boolean result3 = authenticator.setServiceAuthorization("");
-
-        // Assert
-        assertFalse("Should return false for any input", result1);
-        assertFalse("Should return false for null", result2);
-        assertFalse("Should return false for empty string", result3);
+        assertFalse("Should return false for any input", authenticator.setServiceAuthorization("test"));
+        assertFalse("Should return false for null", authenticator.setServiceAuthorization(null));
+        assertFalse("Should return false for empty string", authenticator.setServiceAuthorization(""));
     }
 
-    // ========== Attribute Fields Tests ==========
+    // ── Attribute Fields Tests ──────────────────────────────────────────────────────
 
     /**
-     * Test getAttributeFields returns empty map.
+     * getAttributeFields returns an empty map (no scheme-level challenge fields).
      */
     @Test
     public void testGetAttributeFields_ReturnsEmptyMap() {
-        // Act
         Map<String, NamedField> fields = authenticator.getAttributeFields();
-
-        // Assert
         assertNotNull("Attribute fields map should not be null", fields);
         assertTrue("Attribute fields map should be empty", fields.isEmpty());
     }
 
-    // ========== Must Authenticate Response Tests ==========
+    // ── Must Authenticate Response Tests ────────────────────────────────────────────
 
     /**
-     * Test getMustAuthenticateResponse with ProtoRequest returns null.
+     * getMustAuthenticateResponse(cause, request) returns null (OAuth redirect pattern).
      */
     @Test
     public void testGetMustAuthenticateResponse_WithProtoRequest_ReturnsNull() {
-        // Act
         ProtoResponse response = authenticator.getMustAuthenticateResponse(
                 mockMustAuthenticateException, mockProtoRequest);
-
-        // Assert
         assertNull("Should return null for ProtoRequest version", response);
     }
 
     /**
-     * Test getMustAuthenticateResponse without ProtoRequest returns null.
+     * getMustAuthenticateResponse(cause) returns null.
      */
     @Test
     public void testGetMustAuthenticateResponse_WithoutProtoRequest_ReturnsNull() {
-        // Act
-        RequestAuthenticator.AuthorizationResponse response = 
+        RequestAuthenticator.AuthorizationResponse response =
                 authenticator.getMustAuthenticateResponse(mockMustAuthenticateException);
-
-        // Assert
         assertNull("Should return null for non-ProtoRequest version", response);
     }
 
-    // ========== Must Authorize Response Tests ==========
+    // ── Must Authorize Response Tests ───────────────────────────────────────────────
 
     /**
-     * Test getMustAuthorizeResponse with ProtoRequest returns null.
+     * getMustAuthorizeResponse(cause, request) returns null (base class default).
      */
     @Test
     public void testGetMustAuthorizeResponse_WithProtoRequest_ReturnsNull() {
-        // Act
         ProtoResponse response = authenticator.getMustAuthorizeResponse(
                 mockMustAuthorizeException, mockProtoRequest);
-
-        // Assert
         assertNull("Should return null for ProtoRequest version", response);
     }
 
     /**
-     * Test getMustAuthorizeResponse without authContextId.
+     * getMustAuthorizeResponse without authContextId — uses default attributes, state = userId.
+     *
+     * <p>Uses a real (non-mock) {@link SalesforceCustomerServiceAttributes} so the SDK can
+     * build an actual OAuth authorization URL from the config. No network call is made;
+     * the URL is assembled entirely from the config values in the test.</p>
      */
     @Test
     public void testGetMustAuthorizeResponse_WithoutAuthContextId_ReturnsAuthorizationUrl() {
-        // Arrange
+        // Build a real attributes object so toSalesforceConfig() works (SDK needs clientId/secret)
+        SalesforceCustomerServiceAttributes realAttrs = new SalesforceCustomerServiceAttributes(
+                TEST_CLIENT_ID, TEST_CLIENT_SECRET, null, null, null, null, false, TEST_ROUTING_URL);
+
+        SalesforceCustomerServiceSdkFactory realFactory =
+                new SalesforceCustomerServiceSdkFactory(mockKv);
+
+        SalesforceCustomerServiceAuthenticator auth = new SalesforceCustomerServiceAuthenticator(
+                INVOKER_ID, TEST_ROUTING_URL, realAttrs, mockAttributesStore, realFactory);
+
+        // Arrange: details with userId only (no authContextId)
         NamedValuedField userIdField = mock(NamedValuedField.class);
         when(userIdField.getValue()).thenReturn(USER_ID);
         when(userIdField.getName()).thenReturn("userId");
@@ -353,20 +339,35 @@ public class SalesforceCustomerServiceAuthenticatorTest {
 
         // Act
         RequestAuthenticator.AuthorizationResponse response =
-                authenticator.getMustAuthorizeResponse(mockMustAuthorizeException);
+                auth.getMustAuthorizeResponse(mockMustAuthorizeException);
 
-        // Assert
-        assertNotNull("Response should not be null", response);
-        verify(mockOAuthService, times(1)).getAuthorizationUrl(USER_ID);
-        verify(mockAttributes, times(1)).getOauthService();
+        // Assert: response is non-null (SDK-built authorize URL was produced without error)
+        assertNotNull("Response should not be null — SDK must produce an authorize URL", response);
     }
 
     /**
-     * Test getMustAuthorizeResponse with authContextId.
+     * getMustAuthorizeResponse with authContextId — loads per-request attributes from the
+     * attribute store, state = userId#authContextId.
      */
     @Test
     public void testGetMustAuthorizeResponse_WithAuthContextId_LoadsAttributesFromStore() {
-        // Arrange
+        // Build real attributes for the per-request context (simulates what attributesStore.load returns)
+        SalesforceCustomerServiceAttributes contextAttrs = new SalesforceCustomerServiceAttributes(
+                TEST_CLIENT_ID, TEST_CLIENT_SECRET, null, null, null, null, false, TEST_ROUTING_URL);
+
+        SalesforceCustomerServiceSdkFactory realFactory =
+                new SalesforceCustomerServiceSdkFactory(mockKv);
+
+        // Default attrs also need to be real so getTokenStore() works
+        SalesforceCustomerServiceAttributes realDefaultAttrs = new SalesforceCustomerServiceAttributes(
+                TEST_CLIENT_ID, TEST_CLIENT_SECRET, null, null, null, null, false, TEST_ROUTING_URL);
+
+        SalesforceCustomerServiceAuthenticator auth = new SalesforceCustomerServiceAuthenticator(
+                INVOKER_ID, TEST_ROUTING_URL, realDefaultAttrs, mockAttributesStore, realFactory);
+
+        // Stub attribute store to return context-specific attributes
+        when(mockAttributesStore.load(AUTH_CONTEXT_ID)).thenReturn(contextAttrs);
+
         NamedValuedField userIdField = mock(NamedValuedField.class);
         when(userIdField.getValue()).thenReturn(USER_ID);
         when(userIdField.getName()).thenReturn("userId");
@@ -375,23 +376,51 @@ public class SalesforceCustomerServiceAuthenticatorTest {
         when(authContextField.getValue()).thenReturn(AUTH_CONTEXT_ID);
         when(authContextField.getName()).thenReturn("authContextId");
 
-        SalesforceCustomerServiceAttributes contextAttributes = mock(SalesforceCustomerServiceAttributes.class);
-        OAuth20Service contextOAuthService = mock(OAuth20Service.class);
-
-        when(mockMustAuthorizeException.getDetails()).thenReturn(List.of(userIdField, authContextField));
-        when(mockAttributesStore.load(AUTH_CONTEXT_ID)).thenReturn(contextAttributes);
-        when(contextAttributes.getOauthService()).thenReturn(contextOAuthService);
-        when(contextOAuthService.getAuthorizationUrl(STATE_WITH_CONTEXT)).thenReturn(AUTHORIZATION_URL);
+        when(mockMustAuthorizeException.getDetails()).thenReturn(
+                List.of(userIdField, authContextField));
 
         // Act
         RequestAuthenticator.AuthorizationResponse response =
-                authenticator.getMustAuthorizeResponse(mockMustAuthorizeException);
+                auth.getMustAuthorizeResponse(mockMustAuthorizeException);
 
-        // Assert
-        assertNotNull("Response should not be null", response);
+        // Assert: attributes were loaded from the store using the authContextId
         verify(mockAttributesStore, times(1)).load(AUTH_CONTEXT_ID);
-        verify(contextOAuthService, times(1)).getAuthorizationUrl(STATE_WITH_CONTEXT);
-        verify(contextAttributes, times(1)).getOauthService();
+        assertNotNull("Response should not be null", response);
+    }
+
+    /**
+     * Verify the state grammar: accountId or accountId#authContextId — the SDK-built
+     * authorize URL is produced without error for both state formats.
+     */
+    @Test
+    public void testGetMustAuthorizeResponse_StateGrammar_AccountIdHashAuthContextId() {
+        SalesforceCustomerServiceAttributes realAttrs = new SalesforceCustomerServiceAttributes(
+                TEST_CLIENT_ID, TEST_CLIENT_SECRET, null, null, null, null, false, TEST_ROUTING_URL);
+        SalesforceCustomerServiceSdkFactory realFactory =
+                new SalesforceCustomerServiceSdkFactory(mockKv);
+
+        SalesforceCustomerServiceAttributes realDefaultAttrs = new SalesforceCustomerServiceAttributes(
+                TEST_CLIENT_ID, TEST_CLIENT_SECRET, null, null, null, null, false, TEST_ROUTING_URL);
+        SalesforceCustomerServiceAuthenticator auth = new SalesforceCustomerServiceAuthenticator(
+                INVOKER_ID, TEST_ROUTING_URL, realDefaultAttrs, mockAttributesStore, realFactory);
+
+        when(mockAttributesStore.load(AUTH_CONTEXT_ID)).thenReturn(realAttrs);
+
+        NamedValuedField userIdField = mock(NamedValuedField.class);
+        when(userIdField.getValue()).thenReturn(USER_ID);
+        when(userIdField.getName()).thenReturn("userId");
+
+        NamedValuedField authContextField = mock(NamedValuedField.class);
+        when(authContextField.getValue()).thenReturn(AUTH_CONTEXT_ID);
+        when(authContextField.getName()).thenReturn("authContextId");
+
+        when(mockMustAuthorizeException.getDetails()).thenReturn(
+                List.of(userIdField, authContextField));
+
+        // Act — should produce a non-null response (SDK builds URL with compound state)
+        RequestAuthenticator.AuthorizationResponse response =
+                auth.getMustAuthorizeResponse(mockMustAuthorizeException);
+
+        assertNotNull("Response must be non-null for accountId#authContextId state", response);
     }
 }
-

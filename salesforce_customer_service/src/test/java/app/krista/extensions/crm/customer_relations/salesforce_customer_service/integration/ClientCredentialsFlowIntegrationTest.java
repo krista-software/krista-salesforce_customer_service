@@ -38,8 +38,8 @@ import static org.junit.Assert.*;
  */
 public class ClientCredentialsFlowIntegrationTest {
 
-    private static final String CLIENT_ID = "REDACTED_SECRET_0";
-    private static final String CLIENT_SECRET = "REDACTED_SECRET_3";
+    private static final String CLIENT_ID = "3MVG95jctIhbyCprtzHqvP5ePGclhjUompupjYnVlmU84hNMeafFnbvpLnRVq_RM5.cije9EY_1yqmYBDr3KY";
+    private static final String CLIENT_SECRET = "REDACTED_SECRET";
     private static final String INSTANCE_URL = "https://test.my.salesforce.com";
     private static final String ROUTING_URL = "https://callback.example.com";
 

@@ -20,6 +20,8 @@ package app.krista.extensions.crm.customer_relations.salesforce_customer_service
 
 import app.krista.extension.authorization.RequestAuthenticator;
 import app.krista.extension.executor.Invoker;
+import app.krista.extension.request.RoutingInfo;
+import app.krista.extension.request.protos.http.HttpProtocol;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.connectors.SalesforceTokenProvider;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.connectors.SalesforceTokenProviderFactory;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.SalesforceCustomerServiceAttributesStore;
@@ -78,6 +80,12 @@ public class SalesforceCustomerServiceExtensionTest {
     @Mock
     private SalesforceTokenProvider mockTokenProvider;
 
+    @Mock
+    private SalesforceCustomerServiceSdkFactory mockSdkFactory;
+
+    @Mock
+    private RoutingInfo mockRoutingInfo;
+
     private SalesforceCustomerServiceExtension extension;
 
     /**
@@ -86,17 +94,26 @@ public class SalesforceCustomerServiceExtensionTest {
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        
+
         // Configure default mock behaviors
         when(mockProviderFactory.create(any(SalesforceCustomerServiceAttributes.class)))
                 .thenReturn(mockTokenProvider);
+
+        // Stub Invoker for the 5-arg (store-backed) constructor that builds the authenticator:
+        // SalesforceCustomerServiceAuthenticator's production constructor calls
+        // invoker.getInvokerId() and invoker.getRoutingInfo().getRoutingURL(...).
+        when(mockInvoker.getInvokerId()).thenReturn("test-invoker-id");
+        when(mockInvoker.getRoutingInfo()).thenReturn(mockRoutingInfo);
+        when(mockRoutingInfo.getRoutingURL(HttpProtocol.PROTOCOL_NAME, RoutingInfo.Type.APPLIANCE))
+                .thenReturn(ROUTING_URL);
     }
 
     // ========== Constructor Tests ==========
 
     /**
-     * Test constructor with store-backed authenticator (primary constructor).
-     * This tests the @Inject constructor that creates its own authenticator.
+     * Test constructor with store-backed authenticator (primary @Inject constructor).
+     * Verifies the 5-arg constructor builds a SalesforceCustomerServiceAuthenticator internally.
+     * As of T-M6 the constructor takes sdkFactory in addition to the previous 4 params.
      */
     @Test
     public void testConstructor_WithStoreBackedAuthenticator_Success() {
@@ -105,7 +122,8 @@ public class SalesforceCustomerServiceExtensionTest {
                 mockProviderFactory,
                 mockInvoker,
                 mockAttributes,
-                mockAttributesStore
+                mockAttributesStore,
+                mockSdkFactory
         );
 
         // Assert
@@ -203,7 +221,15 @@ public class SalesforceCustomerServiceExtensionTest {
     // ========== Custom Tabs Tests ==========
 
     /**
-     * Test customTabs returns correct documentation tab configuration.
+     * Test customTabs returns correct tab configuration.
+     *
+     * <p>As of v2.0.18 Chunk M3 the extension exposes three tabs:</p>
+     * <ul>
+     *   <li><b>Authentication</b> — the SDK-themed OAuth setup page.</li>
+     *   <li><b>Salesforce Audit Dashboard</b> — the audit dashboard served by
+     *       {@code SalesforceCustomerServiceAuditResource}.</li>
+     *   <li><b>Documentation</b> — the existing static docs tab (unchanged).</li>
+     * </ul>
      */
     @Test
     public void testCustomTabs_ReturnsDocumentationTab() {
@@ -220,7 +246,18 @@ public class SalesforceCustomerServiceExtensionTest {
 
         // Assert
         assertNotNull("Custom tabs map should not be null", tabs);
-        assertEquals("Should have exactly one tab", 1, tabs.size());
+        assertEquals("Should have exactly three tabs (Authentication + Salesforce Audit Dashboard + Documentation)",
+                3, tabs.size());
+        assertTrue("Should contain Authentication tab", tabs.containsKey("Authentication"));
+        assertEquals("Authentication tab should point to SDK auth UI path with providerName query "
+                + "param (forces oauth/app.js onto the /oauth/config?providerName=... path served "
+                + "by OAuth2ConfigResource; without the param the page falls back to a non-existent "
+                + "/oauth/metadata/{id} endpoint)",
+                "rest/salesforcecustomerservice/authentication/?providerName=salesforce-platform",
+                tabs.get("Authentication"));
+        assertTrue("Should contain Salesforce Audit Dashboard tab", tabs.containsKey("Salesforce Audit Dashboard"));
+        assertEquals("Salesforce Audit Dashboard tab should point to correct path",
+                "rest/salesforcecustomerservice/audit/", tabs.get("Salesforce Audit Dashboard"));
         assertTrue("Should contain Documentation tab", tabs.containsKey("Documentation"));
         assertEquals("Documentation tab should point to correct path",
                 "static/docs", tabs.get("Documentation"));
@@ -346,8 +383,13 @@ public class SalesforceCustomerServiceExtensionTest {
     // ========== Test Connection Tests ==========
 
     /**
-     * Test testConnection with client credentials (no username/password).
-     * Should call getSalesforceTokenForUser() when user credentials are missing.
+     * Test testConnection with no operator credentials (no username/password/instanceUrl).
+     *
+     * <p>Per PER_USER_AUTH_INVARIANTS.md Rule 2 and Violation C fix: TEST_CONNECTION is an
+     * operator-context operation and MUST always call getSalesforceTokenForAdmin(). It must
+     * never route to getSalesforceTokenForUser() regardless of credential configuration.
+     * When no operator credentials are present, getSalesforceTokenForAdmin() will throw a
+     * descriptive RuntimeException explaining that operator credentials are required.</p>
      */
     @Test
     public void testTestConnection_WithClientCredentials_Success() {
@@ -366,10 +408,10 @@ public class SalesforceCustomerServiceExtensionTest {
         // Act
         extension.testConnection();
 
-        // Assert
+        // Assert — Rule 2: testConnection is ALWAYS operator-context, NEVER per-user.
         verify(mockProviderFactory, times(1)).create(mockAttributes);
-        verify(mockTokenProvider, times(1)).getSalesforceTokenForUser();
-        verify(mockTokenProvider, never()).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, never()).getSalesforceTokenForUser();
     }
 
     /**
@@ -400,7 +442,11 @@ public class SalesforceCustomerServiceExtensionTest {
     }
 
     /**
-     * Test testConnection with blank username (should use client credentials flow).
+     * Test testConnection with blank username.
+     *
+     * <p>Per PER_USER_AUTH_INVARIANTS.md Rule 2 fix: TEST_CONNECTION is always operator-context.
+     * Regardless of whether username/password is blank, getSalesforceTokenForAdmin() is called.
+     * The SDK's HC-006 routing matrix decides which operator strategy to use (CC vs PG vs JWT).</p>
      */
     @Test
     public void testTestConnection_WithBlankUsername_UsesClientCredentials() {
@@ -419,14 +465,16 @@ public class SalesforceCustomerServiceExtensionTest {
         // Act
         extension.testConnection();
 
-        // Assert
+        // Assert — Rule 2: testConnection is ALWAYS operator-context, NEVER per-user.
         verify(mockProviderFactory, times(1)).create(mockAttributes);
-        verify(mockTokenProvider, times(1)).getSalesforceTokenForUser();
-        verify(mockTokenProvider, never()).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, never()).getSalesforceTokenForUser();
     }
 
     /**
-     * Test testConnection with blank password (should use client credentials flow).
+     * Test testConnection with blank password.
+     *
+     * <p>Per PER_USER_AUTH_INVARIANTS.md Rule 2 fix: TEST_CONNECTION is always operator-context.</p>
      */
     @Test
     public void testTestConnection_WithBlankPassword_UsesClientCredentials() {
@@ -445,14 +493,16 @@ public class SalesforceCustomerServiceExtensionTest {
         // Act
         extension.testConnection();
 
-        // Assert
+        // Assert — Rule 2: testConnection is ALWAYS operator-context, NEVER per-user.
         verify(mockProviderFactory, times(1)).create(mockAttributes);
-        verify(mockTokenProvider, times(1)).getSalesforceTokenForUser();
-        verify(mockTokenProvider, never()).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, never()).getSalesforceTokenForUser();
     }
 
     /**
-     * Test testConnection with blank security token (should use client credentials flow).
+     * Test testConnection with blank security token.
+     *
+     * <p>Per PER_USER_AUTH_INVARIANTS.md Rule 2 fix: TEST_CONNECTION is always operator-context.</p>
      */
     @Test
     public void testTestConnection_WithBlankSecurityToken_UsesClientCredentials() {
@@ -471,10 +521,10 @@ public class SalesforceCustomerServiceExtensionTest {
         // Act
         extension.testConnection();
 
-        // Assert
+        // Assert — Rule 2: testConnection is ALWAYS operator-context, NEVER per-user.
         verify(mockProviderFactory, times(1)).create(mockAttributes);
-        verify(mockTokenProvider, times(1)).getSalesforceTokenForUser();
-        verify(mockTokenProvider, never()).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, never()).getSalesforceTokenForUser();
     }
 
     /**
@@ -645,6 +695,11 @@ public class SalesforceCustomerServiceExtensionTest {
 
     /**
      * Test testConnection with all null credentials.
+     *
+     * <p>Per PER_USER_AUTH_INVARIANTS.md Rule 2 fix: TEST_CONNECTION is always operator-context
+     * and MUST call getSalesforceTokenForAdmin(). The mock will silently return (no-op) since
+     * getSalesforceTokenForAdmin is mocked. In a real deployment with AUTH_CODE-only config,
+     * the call would throw a RuntimeException with a clear message — tested separately.</p>
      */
     @Test
     public void testTestConnection_WithAllNullCredentials_UsesClientCredentials() {
@@ -663,14 +718,16 @@ public class SalesforceCustomerServiceExtensionTest {
         // Act
         extension.testConnection();
 
-        // Assert
+        // Assert — Rule 2: testConnection is ALWAYS operator-context, NEVER per-user.
         verify(mockProviderFactory, times(1)).create(mockAttributes);
-        verify(mockTokenProvider, times(1)).getSalesforceTokenForUser();
-        verify(mockTokenProvider, never()).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, never()).getSalesforceTokenForUser();
     }
 
     /**
      * Test testConnection with empty string credentials.
+     *
+     * <p>Per PER_USER_AUTH_INVARIANTS.md Rule 2 fix: TEST_CONNECTION is always operator-context.</p>
      */
     @Test
     public void testTestConnection_WithEmptyStringCredentials_UsesClientCredentials() {
@@ -689,14 +746,16 @@ public class SalesforceCustomerServiceExtensionTest {
         // Act
         extension.testConnection();
 
-        // Assert
+        // Assert — Rule 2: testConnection is ALWAYS operator-context, NEVER per-user.
         verify(mockProviderFactory, times(1)).create(mockAttributes);
-        verify(mockTokenProvider, times(1)).getSalesforceTokenForUser();
-        verify(mockTokenProvider, never()).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, never()).getSalesforceTokenForUser();
     }
 
     /**
      * Test testConnection with only username provided.
+     *
+     * <p>Per PER_USER_AUTH_INVARIANTS.md Rule 2 fix: TEST_CONNECTION is always operator-context.</p>
      */
     @Test
     public void testTestConnection_WithOnlyUsername_UsesClientCredentials() {
@@ -715,14 +774,16 @@ public class SalesforceCustomerServiceExtensionTest {
         // Act
         extension.testConnection();
 
-        // Assert
+        // Assert — Rule 2: testConnection is ALWAYS operator-context, NEVER per-user.
         verify(mockProviderFactory, times(1)).create(mockAttributes);
-        verify(mockTokenProvider, times(1)).getSalesforceTokenForUser();
-        verify(mockTokenProvider, never()).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, never()).getSalesforceTokenForUser();
     }
 
     /**
      * Test testConnection with only password provided.
+     *
+     * <p>Per PER_USER_AUTH_INVARIANTS.md Rule 2 fix: TEST_CONNECTION is always operator-context.</p>
      */
     @Test
     public void testTestConnection_WithOnlyPassword_UsesClientCredentials() {
@@ -741,10 +802,10 @@ public class SalesforceCustomerServiceExtensionTest {
         // Act
         extension.testConnection();
 
-        // Assert
+        // Assert — Rule 2: testConnection is ALWAYS operator-context, NEVER per-user.
         verify(mockProviderFactory, times(1)).create(mockAttributes);
-        verify(mockTokenProvider, times(1)).getSalesforceTokenForUser();
-        verify(mockTokenProvider, never()).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, never()).getSalesforceTokenForUser();
     }
 
     /**
@@ -772,7 +833,8 @@ public class SalesforceCustomerServiceExtensionTest {
     }
 
     /**
-     * Test getRequestAuthenticator with store-backed constructor.
+     * Test getRequestAuthenticator with store-backed constructor (5-arg @Inject variant).
+     * As of T-M6 sdkFactory is the 5th argument.
      */
     @Test
     public void testGetRequestAuthenticator_WithStoreBackedConstructor_ReturnsAuthenticator() {
@@ -781,7 +843,8 @@ public class SalesforceCustomerServiceExtensionTest {
                 mockProviderFactory,
                 mockInvoker,
                 mockAttributes,
-                mockAttributesStore
+                mockAttributesStore,
+                mockSdkFactory
         );
 
         // Act
@@ -954,7 +1017,13 @@ public class SalesforceCustomerServiceExtensionTest {
     }
 
     /**
-     * Test testConnection switching between client and user credentials.
+     * Test testConnection always routes to getSalesforceTokenForAdmin(), regardless of
+     * credential configuration.
+     *
+     * <p>Per PER_USER_AUTH_INVARIANTS.md Rule 2 fix: TEST_CONNECTION is an operator-context
+     * call and ALWAYS uses the admin/operator path. Both calls (no-creds and full-creds) must
+     * call getSalesforceTokenForAdmin(). The old routing that sent no-creds to
+     * getSalesforceTokenForUser() was the Violation B/C data-bleed precursor, now removed.</p>
      */
     @Test
     public void testTestConnection_SwitchingBetweenCredentialTypes() {
@@ -966,19 +1035,22 @@ public class SalesforceCustomerServiceExtensionTest {
                 mockAuthenticator
         );
 
-        // Act & Assert - First with client credentials
+        // Act & Assert - First call: no operator credentials set
         when(mockAttributes.getUserName()).thenReturn(null);
         when(mockAttributes.getPassword()).thenReturn(null);
         when(mockAttributes.getSecurityToken()).thenReturn(null);
         extension.testConnection();
-        verify(mockTokenProvider, times(1)).getSalesforceTokenForUser();
+        // Rule 2: always admin path — never getSalesforceTokenForUser()
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, never()).getSalesforceTokenForUser();
 
-        // Act & Assert - Then with user credentials
+        // Act & Assert - Second call: full Password Grant credentials set
         when(mockAttributes.getUserName()).thenReturn(USERNAME);
         when(mockAttributes.getPassword()).thenReturn(PASSWORD);
         when(mockAttributes.getSecurityToken()).thenReturn(SECURITY_TOKEN);
         extension.testConnection();
-        verify(mockTokenProvider, times(1)).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, times(2)).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, never()).getSalesforceTokenForUser();
     }
 
     /**
@@ -1054,6 +1126,8 @@ public class SalesforceCustomerServiceExtensionTest {
 
     /**
      * Test testConnection with mixed blank and null credentials.
+     *
+     * <p>Per PER_USER_AUTH_INVARIANTS.md Rule 2 fix: TEST_CONNECTION is always operator-context.</p>
      */
     @Test
     public void testTestConnection_WithMixedBlankAndNullCredentials() {
@@ -1072,10 +1146,10 @@ public class SalesforceCustomerServiceExtensionTest {
         // Act
         extension.testConnection();
 
-        // Assert
+        // Assert — Rule 2: testConnection is ALWAYS operator-context, NEVER per-user.
         verify(mockProviderFactory, times(1)).create(mockAttributes);
-        verify(mockTokenProvider, times(1)).getSalesforceTokenForUser();
-        verify(mockTokenProvider, never()).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, times(1)).getSalesforceTokenForAdmin();
+        verify(mockTokenProvider, never()).getSalesforceTokenForUser();
     }
 }
 

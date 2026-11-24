@@ -102,24 +102,23 @@ public class ErrorHandlingTest {
         // Arrange
         Map<String, Object> edgeCaseAttributes = new HashMap<>();
         
-        // Test with null values
+        // Test with null values (Quick Setup signature: no operator credentials saved)
         edgeCaseAttributes.put(SalesforceCustomerServiceAttributes.CLIENT_ID, null);
         edgeCaseAttributes.put(SalesforceCustomerServiceAttributes.CLIENT_SECRET, null);
-        
+
         // Act
         SalesforceCustomerServiceAttributes attributes = new SalesforceCustomerServiceAttributes(
             "https://test-routing.com", edgeCaseAttributes);
-        
-        // Assert
-        assertNull("Client ID should be null", attributes.getClientId());
-        assertNull("Client Secret should be null", attributes.getClientSecret());
-        
-        // Test validation with null values
-        SalesforceCustomerServiceAttributes.ValidationResult result = 
-            attributes.validateConfiguration(SalesforceCustomerServiceAttributes.AuthenticationFlowType.AUTO_DETECT);
-        
-        assertFalse("Validation should fail with null credentials", result.isValid());
-        assertTrue("Should have errors", result.hasErrors());
+
+        // Assert — CRIT-021 (outlook-4 pattern): null clientId+clientSecret trigger automatic
+        // fallback to Krista's Public Connected App credentials from config.properties. The
+        // attrs are flagged as publicApp so callers see the central callback URL.
+        assertNotNull("Client ID should be auto-populated from config.properties (Public fallback)",
+                attributes.getClientId());
+        assertNotNull("Client Secret should be auto-populated from config.properties (Public fallback)",
+                attributes.getClientSecret());
+        assertTrue("Public fallback should set the publicApp sentinel automatically",
+                attributes.isPublicApp());
     }
 
     /**

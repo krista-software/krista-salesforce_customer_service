@@ -9,6 +9,7 @@ Adds an update message (and optionally a file attachment) to the feed of a Sales
 - **Area**: Case Management
 - **Type**: CHANGE_SYSTEM
 - **Retry Support**: ✅ Yes - If validation fails, the user is prompted to re-enter the Case ID and/or provide a valid file
+- **Ask Agent (MCP)**: ✅ Enabled - callable by the Krista AI agent
 
 ## Input Parameters
 

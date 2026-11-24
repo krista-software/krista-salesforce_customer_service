@@ -18,9 +18,11 @@
 
 package app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl;
 
+import app.krista.extension.executor.Invoker;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.SalesforceCustomerServiceAttributes;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.connectors.SalesforceTokenProvider;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.connectors.SalesforceTokenProviderFactory;
+import app.krista.extensions.crm.customer_relations.salesforce_customer_service.impl.stores.SalesforceCustomerServiceAttributesStore;
 import app.krista.extensions.crm.customer_relations.salesforce_customer_service.util.Constants;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,6 +50,22 @@ import java.util.concurrent.ExecutionException;
  * posting feed elements (including attachments), and checking object metadata.
  * It communicates with Salesforce REST APIs using ScribeJava for OAuth authentication.
  * This class is intended to be used as a reusable Salesforce service component.
+ *
+ * <h2>Credential resolution</h2>
+ * <p>As of salesforce_customer_service 2.0.18 (Stage 2 / KV-auth migration), all token
+ * acquisition and request-signing operations resolve credentials at call time via
+ * {@link #effectiveAttributes()} rather than binding them eagerly at injection time.
+ * The resolution order is:</p>
+ * <ol>
+ *   <li>KV-stored credentials for this invokerId (set via the Authentication tab) —
+ *       primary when present and non-blank.</li>
+ *   <li>Invoker-backed {@code SalesforceCustomerServiceAttributes} — legacy fallback for
+ *       deployments that have not migrated to the Authentication tab.</li>
+ * </ol>
+ *
+ * <h2>Thread-safety</h2>
+ * <p>Instances are per-request (HK2 default scope). All fields are effectively final after
+ * construction; {@link #effectiveAttributes()} reads from an immutable KV snapshot.</p>
  */
 @Service
 public class SalesforceService {
@@ -56,14 +74,80 @@ public class SalesforceService {
     public static final String SALESFORCE_SOBJECTS_PATH = "/services/data/v53.0/sobjects/";
     public static final String FAILED_TO_ADD_UPDATE_TO_CASE = "Failed to add update to case. ";
     private static final int Bad_Request = 400;
-    private final SalesforceTokenProvider tokenProvider;
-    private final SalesforceCustomerServiceAttributes customerServiceAttributes;
     private static final Logger LOGGER = LoggerFactory.getLogger(SalesforceService.class);
 
+    private final SalesforceTokenProviderFactory providerFactory;
+    private final SalesforceCustomerServiceAttributes invokerAttributes;
+    private final SalesforceCustomerServiceAttributesStore attributesStore;
+    private final String invokerId;
+
+    /**
+     * HK2-injection constructor.
+     *
+     * @param providerFactory    factory for building per-request token providers
+     * @param invokerAttributes  Invoker-backed operator-default attributes (legacy fallback)
+     * @param attributesStore    KV-backed credential store keyed by invokerId (preferred source)
+     * @param invoker            Krista Invoker — supplies the invokerId for KV lookup
+     */
     @Inject
-    public SalesforceService(SalesforceTokenProviderFactory providerFactory, SalesforceCustomerServiceAttributes customerServiceAttributes) {
-        this.tokenProvider = providerFactory.create();
-        this.customerServiceAttributes = customerServiceAttributes;
+    public SalesforceService(SalesforceTokenProviderFactory providerFactory,
+                             SalesforceCustomerServiceAttributes invokerAttributes,
+                             SalesforceCustomerServiceAttributesStore attributesStore,
+                             Invoker invoker) {
+        this.providerFactory = providerFactory;
+        this.invokerAttributes = invokerAttributes;
+        this.attributesStore = attributesStore;
+        this.invokerId = invoker.getInvokerId();
+    }
+
+    /**
+     * Test / seam constructor — avoids the need for a live {@link Invoker} in unit tests.
+     *
+     * @param providerFactory    factory for building per-request token providers
+     * @param invokerAttributes  Invoker-backed operator-default attributes (legacy fallback)
+     * @param attributesStore    KV-backed credential store (may be null — disables KV resolution)
+     * @param invokerId          invoker identifier used for KV lookup
+     */
+    public SalesforceService(SalesforceTokenProviderFactory providerFactory,
+                             SalesforceCustomerServiceAttributes invokerAttributes,
+                             SalesforceCustomerServiceAttributesStore attributesStore,
+                             String invokerId) {
+        this.providerFactory = providerFactory;
+        this.invokerAttributes = invokerAttributes;
+        this.attributesStore = attributesStore;
+        this.invokerId = invokerId;
+    }
+
+    /**
+     * Returns the effective Salesforce credentials for this invoker.
+     *
+     * <p>KV-stored credentials (persisted via the Authentication tab) take precedence.
+     * Falls back to the Invoker-backed attributes for installs that have not migrated.</p>
+     *
+     * @return the most-specific available {@link SalesforceCustomerServiceAttributes}
+     */
+    private SalesforceCustomerServiceAttributes effectiveAttributes() {
+        if (attributesStore != null && invokerId != null) {
+            SalesforceCustomerServiceAttributes kv = attributesStore.loadByInvokerId(invokerId);
+            if (kv != null
+                    && kv.getClientId() != null && !kv.getClientId().isBlank()
+                    && kv.getClientSecret() != null && !kv.getClientSecret().isBlank()) {
+                LOGGER.debug("SalesforceService: using KV-stored credentials for invokerId={}", invokerId);
+                return kv;
+            }
+        }
+        LOGGER.debug("SalesforceService: no KV credentials for invokerId={}, using Invoker-backed fallback", invokerId);
+        return invokerAttributes;
+    }
+
+    /**
+     * Returns a per-request token provider bound to the effective credentials.
+     *
+     * <p>Called at the start of every public API method so that KV-stored credentials
+     * are always consulted, even when credentials were rotated between requests.</p>
+     */
+    private SalesforceTokenProvider tokenProvider() {
+        return providerFactory.create(effectiveAttributes());
     }
 
     /**
@@ -131,7 +215,7 @@ public class SalesforceService {
             LOGGER.error(errorMsg);
             throw new IllegalArgumentException(errorMsg);
         }
-        SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
+        SalesforceToken salesforceToken = tokenProvider().getSalesforceTokenForUser();
         String url = salesforceToken.getInstanceUrl() + Constants.SALESFORCE_SOBJECTS_PATH + subject + "/" + id;
         final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
         return getResponse(salesforceToken, request);
@@ -156,7 +240,7 @@ public class SalesforceService {
             LOGGER.error(errorMsg);
             throw new IllegalArgumentException(errorMsg);
         }
-        SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
+        SalesforceToken salesforceToken = tokenProvider().getSalesforceTokenForUser();
         String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + sobject + "/" + id;
         final OAuthRequest request = getOauthRequest(Verb.DELETE, null, url, salesforceToken);
         getResponse(salesforceToken, request);
@@ -186,7 +270,7 @@ public class SalesforceService {
             LOGGER.error(errorMsg);
             throw new IllegalArgumentException(errorMsg);
         }
-        SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
+        SalesforceToken salesforceToken = tokenProvider().getSalesforceTokenForUser();
         String url = salesforceToken.getInstanceUrl() + Constants.SALESFORCE_SOBJECTS_PATH + sobject + "/" + id + Constants.HTTP_METHOD_PATCH;
         final OAuthRequest request = getOauthRequest(Verb.POST, body, url, salesforceToken);
         getResponse(salesforceToken, request);
@@ -205,7 +289,7 @@ public class SalesforceService {
             LOGGER.error(errorMsg);
             throw new IllegalArgumentException(errorMsg);
         }
-        SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
+        SalesforceToken salesforceToken = tokenProvider().getSalesforceTokenForUser();
         String url = salesforceToken.getInstanceUrl() + Constants.SALESFORCE_QUERY_PATH;
         assert query != null;
         final String queryEncoded = URLEncoder.encode(query, StandardCharsets.UTF_8);
@@ -233,7 +317,7 @@ public class SalesforceService {
             LOGGER.error(errorMsg);
             throw new IllegalArgumentException(errorMsg);
         }
-        SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
+        SalesforceToken salesforceToken = tokenProvider().getSalesforceTokenForUser();
         String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + sobject;
         final OAuthRequest request = getOauthRequest(Verb.POST, body, url, salesforceToken);
         return getResponse(salesforceToken, request);
@@ -246,7 +330,7 @@ public class SalesforceService {
      * @return the HTTP response containing file stream
      */
     public Response getFileResponse(String downloadUrl) {
-        SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
+        SalesforceToken salesforceToken = tokenProvider().getSalesforceTokenForUser();
         String url = salesforceToken.getInstanceUrl() + downloadUrl;
         final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
         return getResponseForFile(salesforceToken, request);
@@ -261,11 +345,14 @@ public class SalesforceService {
      */
     public String getFeedsByCaseId(String caseId, Double numberOfPosts) {
         try {
-            SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
+            SalesforceToken salesforceToken = tokenProvider().getSalesforceTokenForUser();
             String url = salesforceToken.getInstanceUrl() + "/services/data/v48.0/chatter/feeds/record/" + caseId +
                     "/feed-elements?sortOrder=ASC&sortField=CreatedDate&pageSize=" + numberOfPosts.intValue();
             final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
             return getResponse(salesforceToken, request);
+        } catch (app.krista.extension.authorization.MustAuthorizeException cause) {
+            // Rule 3: rethrow BEFORE broader catches — MAE must propagate to the runtime.
+            throw cause;
         } catch (IOException cause) {
             LOGGER.error("Failed to get case feed posts. {}", cause.getMessage(), cause);
         } catch (ExecutionException | InterruptedException exception) {
@@ -283,7 +370,7 @@ public class SalesforceService {
      */
     public String createFeedPost(String postData) throws ExecutionException, InterruptedException {
         try {
-            SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
+            SalesforceToken salesforceToken = tokenProvider().getSalesforceTokenForUser();
             String url = salesforceToken.getInstanceUrl() + "/services/data/v48.0/chatter/feed-elements";
             final OAuthRequest request = getOauthRequest(Verb.POST, postData, url, salesforceToken);
             return getResponse(salesforceToken, request);
@@ -301,7 +388,7 @@ public class SalesforceService {
      */
     public String createFeedPostForFile(String postData) throws ExecutionException, InterruptedException {
         try {
-            SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
+            SalesforceToken salesforceToken = tokenProvider().getSalesforceTokenForUser();
             String url = salesforceToken.getInstanceUrl() + "/services/data/v58.0/sobjects/ContentVersion";
             final OAuthRequest request = getOauthRequest(Verb.POST, postData, url, salesforceToken);
             return getResponse(salesforceToken, request);
@@ -319,7 +406,7 @@ public class SalesforceService {
      */
     public String createFeedPostForFeedItem(String postData) throws ExecutionException, InterruptedException {
         try {
-            SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
+            SalesforceToken salesforceToken = tokenProvider().getSalesforceTokenForUser();
             String url = salesforceToken.getInstanceUrl() + "/services/data/v58.0/sobjects/FeedItem";
             final OAuthRequest request = getOauthRequest(Verb.POST, postData, url, salesforceToken);
             return getResponse(salesforceToken, request);
@@ -336,7 +423,7 @@ public class SalesforceService {
      */
     public String createFeedPostForFeedAttachment(String postData) throws ExecutionException, InterruptedException {
         try {
-            SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
+            SalesforceToken salesforceToken = tokenProvider().getSalesforceTokenForUser();
             String url = salesforceToken.getInstanceUrl() + "/services/data/v58.0/sobjects/FeedAttachment";
             final OAuthRequest request = getOauthRequest(Verb.POST, postData, url, salesforceToken);
             return getResponse(salesforceToken, request);
@@ -372,8 +459,9 @@ public class SalesforceService {
      * @return the response body
      */
     private String getResponse(SalesforceToken salesforceToken, OAuthRequest request) throws IOException, ExecutionException, InterruptedException {
-        customerServiceAttributes.getOauthService().signRequest(salesforceToken, request);
-        try (com.github.scribejava.core.model.Response response = customerServiceAttributes.getOauthService().execute(request)) {
+        com.github.scribejava.core.oauth.OAuth20Service oauthService = effectiveAttributes().getOauthService();
+        oauthService.signRequest(salesforceToken, request);
+        try (com.github.scribejava.core.model.Response response = oauthService.execute(request)) {
             if (!response.isSuccessful()) {
                 LOGGER.error("Bad Request, Incorrect input is provided. The error is{}", response.getBody());
             }
@@ -394,8 +482,9 @@ public class SalesforceService {
      * @return the response object or null in case of error
      */
     private Response getResponseForFile(SalesforceToken salesforceToken, OAuthRequest request) {
-        customerServiceAttributes.getOauthService().signRequest(salesforceToken, request);
-        try (com.github.scribejava.core.model.Response response = customerServiceAttributes.getOauthService().execute(request)) {
+        com.github.scribejava.core.oauth.OAuth20Service oauthService = effectiveAttributes().getOauthService();
+        oauthService.signRequest(salesforceToken, request);
+        try (com.github.scribejava.core.model.Response response = oauthService.execute(request)) {
             if (response.getCode() >= Bad_Request) {
                 throw new IllegalArgumentException("Salesforce API request failed (HTTP " + response.getCode() + "): " +
                         "The request was rejected by Salesforce. This typically indicates invalid data, missing required fields, " +
@@ -403,6 +492,9 @@ public class SalesforceService {
                         ". Please verify your data and permissions, then try again.");
             }
             return response;
+        } catch (app.krista.extension.authorization.MustAuthorizeException cause) {
+            // Rule 3: rethrow BEFORE broader catch — MAE must propagate to the runtime.
+            throw cause;
         } catch (IOException | InterruptedException | ExecutionException cause) {
             LOGGER.error("Exception occurred due to :{}", cause.getMessage(), cause);
         }
@@ -418,7 +510,7 @@ public class SalesforceService {
      */
     public boolean checkFieldExistsInSalesforce(String objectType, String fieldName) {
         try {
-            SalesforceToken salesforceToken = tokenProvider.getSalesforceTokenForUser();
+            SalesforceToken salesforceToken = tokenProvider().getSalesforceTokenForUser();
             String url = salesforceToken.getInstanceUrl() + SALESFORCE_SOBJECTS_PATH + objectType + "/describe";
 
             final OAuthRequest request = getOauthRequest(Verb.GET, null, url, salesforceToken);
@@ -436,6 +528,9 @@ public class SalesforceService {
                     }
                 }
             }
+        } catch (app.krista.extension.authorization.MustAuthorizeException cause) {
+            // Rule 3: rethrow BEFORE broader catch — MAE must propagate to the runtime.
+            throw cause;
         } catch (Exception cause) {
             LOGGER.error("Error checking if field exists on Salesforce object. {}", cause.getMessage(), cause);
         }

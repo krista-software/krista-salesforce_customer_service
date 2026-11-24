@@ -8,11 +8,16 @@ The Salesforce Customer Service Extension connects Krista to Salesforce, enablin
 
 ## Key Features
 
-- **Case Management**: Retrieve case feed items, share updates, and monitor case changes
+- **Case Management**: Fetch a case by id, retrieve case feed items, share updates, and monitor case changes
 - **Custom Field Operations**: Access and manage custom fields across Salesforce objects
 - **Entity Operations**: Full CRUD operations for Accounts, Cases, Contacts, Customers, and Individuals
 - **Real-time Alerts**: Automated notifications for case changes and updates
-- **OAuth 2.0 Authentication**: Secure, token-based authentication with automatic refresh
+- **Multiple Authentication Modes**:
+  - **Quick Setup** — One-click connect using Krista's managed Salesforce Connected App (no Connected App configuration required)
+  - **User Sign-In** (Authorization Code) — Each user authenticates with their own Salesforce account
+  - **Server-to-Server** (Client Credentials) — Service account authentication via the org's My Domain
+  - **Username + Password** (legacy) — For environments that still require it
+- **AI-agent Tool Calls**: Key catalog requests are marked `tool = true`, making them callable from agentic workflows
 - **Comprehensive Validation**: Input validation with user-friendly error handling
 - **Retry Support**: Built-in retry mechanisms for reliable operations
 
@@ -40,6 +45,7 @@ Try the "Get Case Feed Items By Case Id" request to verify your setup is working
 - [Creating Salesforce App](pages/CreatingSalesforceApp.md) - Connected App creation and setup
 
 ### 📋 Case Management
+- [Get Case By Id](pages/GetCaseById.md) - Fetch a single case by its Salesforce Id as a typed Case entity
 - [Get Case Feed Items By Case Id](pages/GetCaseFeedItemsByCaseId.md) - Retrieve case feed posts and comments
 - [Share Update to Case](pages/ShareUpdateToCase.md) - Add updates and files to case feeds
 - [Case Change Alert](pages/CaseChangeAlert.md) - Monitor and respond to case changes
@@ -61,10 +67,12 @@ Try the "Get Case Feed Items By Case Id" request to verify your setup is working
 
 ## Support & Resources
 
-- **Extension Version**: 2.0.15
-- **Salesforce API**: REST API v61.0
-- **Authentication**: OAuth 2.0 Authorization Code Grant
+- **Extension Version**: 2.0.18
+- **OAuth Substrate**: Krista's centralized OAuth substrate (Salesforce provider, 1.1.0)
+- **Salesforce API Versions Used**: v48.0 (Chatter), v53.0 (sObjects/SOQL), v58.0 (file attachments)
+- **Authentication Flows**: Quick Setup, Authorization Code, Client Credentials, Password Grant
 - **Java Version**: Java 21
+- **Krista APIs**: 1.0.125-sp1
 - **Supported Salesforce Objects**: Account, Case, Contact, Customer, Individual
 
 ## Need Help?

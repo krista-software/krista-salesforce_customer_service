@@ -22,7 +22,43 @@ import com.google.gson.Gson;
 
 public class Constants {
 
+    /**
+     * Callback path prefix passed to {@link
+     * app.krista.oauth.providers.salesforce.extension.AbstractSalesforceRequestAuthenticator}
+     * constructor. The full internal callback path is this value + "/callback".
+     *
+     * <p>Note: {@link #CALLBACK_URI} carries the EXTERNAL (full) callback URL path
+     * (prefixed with "/rest/" for the Krista routing layer), which is what Salesforce calls
+     * back on. This constant is the Krista-internal routing path used for state-parsing.</p>
+     */
+    public static final String CALLBACK_PATH_PREFIX = "/salesforcecustomerservice";
+
     public static final String CALLBACK_URI = "/rest/salesforcecustomerservice/callback";
+
+    // ── Public App / Quick Setup constants (mirroring outlook-4's pattern) ───────────────────
+    //
+    // DEFAULT_CALLBACK_PATH — the Krista-platform central OAuth callback endpoint.
+    // This is the redirect_uri registered in the Krista-owned Salesforce Connected App.
+    // It is NOT per-invoker; all Quick Setup flows across all customers land here first,
+    // and the platform forwards to EXTENSION_FORWARD_PATH using the state parameter.
+    //
+    // EXTENSION_FORWARD_PATH — the per-extension v3 forwarding target. The platform's central
+    // callback handler resolves the target extension from the OAuth state and POST-forwards
+    // the code+state here for per-extension code exchange and RT persistence.
+    //
+    // PUBLIC / PRIVATE — flow-type sentinels used internally to distinguish Quick Setup
+    // (Krista-managed Connected App) from Advanced / customer-supplied credentials.
+    public static final String DEFAULT_CALLBACK_PATH  = "/extension/api/rest/v3/oauth/callback";
+    public static final String EXTENSION_FORWARD_PATH = "/rest/salesforcecustomerservice/v3/oauth/callback";
+    public static final String PUBLIC  = "PUBLIC";
+    public static final String PRIVATE = "PRIVATE";
+
+    /**
+     * State-parameter separator (CRIT-016). Public flows MUST append the per-extension forward
+     * URL after a '#' so Krista's central callback handler knows which extension to forward to.
+     * Mirrors {@code OutlookConstants.HASH}.
+     */
+    public static final String HASH = "#";
 
     // OAuth 2.0 Endpoints
     public static final String OAUTH2_TOKEN_ENDPOINT = "/services/oauth2/token";

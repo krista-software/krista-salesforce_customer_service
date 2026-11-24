@@ -1,5 +1,121 @@
 # Release Notes
 
+## Version 2.0.18
+
+### Release Information
+
+- **Release Calendar Month**: June 2026
+- **Krista Service APIs Java**: 1.0.125-sp1
+- **OAuth Substrate**: Krista's centralized OAuth substrate (Salesforce provider, 1.1.0)
+- **Java Version**: 21
+- **Gradle Version**: 9.0
+
+### What's New
+
+This release migrates the extension to Krista's centralized OAuth substrate, ships a new **Quick Setup** flow that requires no Salesforce-side configuration, and adds a new **Get Case By Id** catalog request.
+
+#### Key Improvements
+
+**One-click Quick Setup**
+
+- New **Quick Setup** authentication flow uses a Krista-managed Salesforce Connected App
+- No Salesforce-side setup required — operator enters their admin email + sandbox toggle and clicks Authorize
+- Refresh tokens are stored under a stable per-admin-email identity, so multiple admins can coexist without overwriting each other's tokens
+- Best path for greenfield deployments and demos
+
+**Multiple Authentication Flows in One Tab**
+
+The Authentication tab now exposes a flow picker that supports:
+
+- **Quick Setup** (Krista-managed Connected App) — new
+- **User Sign-In** (Authorization Code) — for per-user auth
+- **Server-to-Server** (Client Credentials) — for service-account automation
+- **Username + Password** — legacy compatibility
+
+The form is themed and SDK-bundled — no more legacy Invoker form. Stored secrets are surfaced as a masked placeholder (`••••••••`) and automatically resolved back to their stored values on save, so operators don't have to re-type them.
+
+**New Catalog Request: Get Case By Id**
+
+A new catalog request **Get Case By Id** fetches a single Salesforce Case by its unique Salesforce Id and returns it as the typed `Case` entity. The request is marked `tool = true`, making it callable by Krista AI agents. See [Get Case By Id](pages/GetCaseById.md) for full input/output details.
+
+**AI-agent Tool Calls**
+
+Several existing catalog requests are now marked `tool = true` (AI-agent callable):
+
+- Get Case By Id (new)
+- Get Case Feed Items By Case Id
+- Share Update to Case
+
+This unlocks agentic workflows where the agent can autonomously decide to call these requests with model-resolved input parameters.
+
+**Authentication migrated to Krista's centralized OAuth substrate**
+
+The OAuth code path is now powered by Krista's centralized OAuth substrate:
+
+- Token acquisition, refresh, and code exchange delegated to `SalesforceOAuth2Sdk`
+- Hand-rolled ScribeJava call sites removed
+- Existing refresh tokens preserved — no customer re-authorization required on upgrade (a `LegacyKeyedSalesforceTokenStore` adapter translates between SDK and legacy KV key formats)
+- PKCE remains intentionally off to preserve compatibility with classic Connected Apps; documented migration path is available in `docs/CHANGELOG.md` for when Salesforce mandates PKCE for new ISV apps
+
+**New: Audit Dashboard tab**
+
+A new **Audit Dashboard** custom tab gives operators visibility into the extension's authentication activity without leaving Krista. It surfaces:
+
+- A table of OAuth **audit records** with a rolled-up **summary**
+- A live **health check** of the configured credentials and Salesforce connectivity
+- **Archive** management — browse archived record sets, trigger an archive on demand, and clear records within a time range
+- An all-time **global counter** of audit events
+
+The dashboard is powered by Krista's centralized OAuth substrate (`AbstractOAuth2AuditResource`) and its UI is bundled from the SDK. See [Audit Dashboard](pages/AuditDashboard.md) for details.
+
+> **Note**: In SDK v1.1.0 the bundled dashboard uses the shared (Microsoft-themed) styling; a Salesforce-themed variant is planned for a later SDK release. Functionality is unaffected.
+
+**Krista APIs Updated**
+
+- `krista-apis` 1.0.118 → **1.0.125-sp1** (unlocks `@CatalogRequest(tool = true)` for AI-agent callability)
+- Annotation processors bumped to match
+
+**Expanded Test Coverage**
+
+- 83 new Mockito unit tests added across 7 classes covering the SDK migration touchpoints
+- Suite total: **561 tests / 0 failures**
+
+### Migration Notes
+
+#### For Existing Customers
+
+This release is **transparent for existing customers**:
+
+- Saved credentials continue to work without re-entry
+- Refresh tokens are honored at their original KV keys
+- No re-authorization prompts on upgrade
+- The legacy Invoker form is replaced by the themed Auth tab, but the saved values round-trip correctly
+
+#### For New Deployments
+
+Choose **Quick Setup** for the fastest path to a working connection. No Salesforce-side configuration is required — Krista provides the Connected App.
+
+If you need per-user audit trails or a customer-owned Connected App, choose **User Sign-In** (Authorization Code) and follow the [Creating Salesforce Connected App](pages/CreatingSalesforceApp.md) guide.
+
+#### Breaking Changes
+
+There are no breaking changes in this release. All existing configurations continue to work.
+
+### Known Issues
+
+- Quick Setup's two-hop callback (Salesforce → central Krista handler → extension `/v3/oauth/callback`) requires the central handler to forward Salesforce responses. This is a platform-side capability; if the central handler is not yet updated to route Salesforce responses, Quick Setup will halt after the consent screen and the operator must complete authorization via the User Sign-In flow instead.
+
+### See Also
+
+- [Authentication Guide](pages/Authentication.md) — full details on each flow
+- [Extension Configuration](pages/ExtensionConfiguration.md) — flow-specific parameter reference
+- [Get Case By Id](pages/GetCaseById.md) — new catalog request
+- [Audit Dashboard](pages/AuditDashboard.md) — new authentication-audit tab
+- [Changelog](../../docs/CHANGELOG.md) — engineering-level changelog with PKCE migration path
+- [Troubleshooting Guide](pages/Troubleshooting.md)
+
+---
+
 ## Version 2.0.17
 
 ### Release Information

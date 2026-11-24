@@ -139,6 +139,7 @@ Understanding entity relationships is crucial for proper data management:
 - [Contact Entity Operations](pages/ContactEntity.md)
 
 ### Catalog Requests
+- [Get Case By Id](pages/GetCaseById.md) — Fetch a single Salesforce Case as the typed `Case` entity
 - [Get Case Feed Items By Case Id](pages/GetCaseFeedItemsByCaseId.md)
 - [Share Update to Case](pages/ShareUpdateToCase.md)
 - [Case Change Alert](pages/CaseChangeAlert.md)

@@ -2,25 +2,39 @@
 
 ## Overview
 
-This guide explains how to configure the Krista Salesforce Customer Service Extension to connect to your Salesforce instance. The extension supports multiple authentication methods and can connect to both production and sandbox environments.
+This guide explains how to configure the Krista Salesforce Customer Service Extension to connect to your Salesforce instance. The extension supports four authentication flows and can connect to both production and sandbox environments.
 
-## Configuration Parameters
+> **🆕 What changed in 2.0.18.** The Authentication tab is now driven by the **SDK-bundled themed Auth UI** (replacing the legacy Invoker form). The form shows different fields based on the flow you select — pick the flow first, then the required fields appear.
 
-The following table lists all configuration parameters required to set up the extension:
+## Picking a flow
+
+Before reviewing the parameter list, decide which authentication flow you want. The required fields depend on this choice. See the [Authentication](pages/Authentication.md) guide for details on each flow.
+
+| Flow | Use this when… |
+|---|---|
+| **Quick Setup** | You want one-click connect using Krista's managed Connected App — no Salesforce-side setup. |
+| **User Sign-In (Authorization Code)** | Each end user should authenticate with their own Salesforce account. |
+| **Server-to-Server (Client Credentials)** | A single service-account identity is acceptable; you have a Connected App with a "Run As User" configured. |
+| **Username + Password** | Legacy environments only. Prefer Server-to-Server for new automation. |
+
+## Configuration Parameters by Flow
+
+The Authentication tab only shows the fields that are relevant to the flow you pick. The full superset:
 
 ![Customer Service Attributes](../_media/ExtensionConfiguration_CustomerServiceAttributes.png)
 
-| Parameter      | Type    | Required     | Description                                                            | Example                               |
-|----------------|---------|--------------|------------------------------------------------------------------------|---------------------------------------|
-| Client ID      | Text    | Yes          | OAuth 2.0 client identifier from your Salesforce Connected App         | "3MVG9fTLmJ60pJ5..."                  |
-| Client Secret  | Text    | Yes          | OAuth 2.0 client secret from your Salesforce Connected App             | "1234567890ABCDEF..."                 |
-| Instance URL   | Text    | No           | Your Salesforce instance URL (optional, auto-detected if not provided) | "https://mycompany.my.salesforce.com" |
-| Username       | Text    | Conditional* | Salesforce username for Username-Password OAuth flow                   | "user@company.com"                    |
-| Password       | Text    | Conditional* | Salesforce password for Username-Password OAuth flow                   | "MyP@ssw0rd"                          |
-| Security Token | Text    | Conditional* | Salesforce security token for Username-Password OAuth flow             | "AbCdEfGhIjKlMnOp"                    |
-| Sandbox        | Boolean | No           | Set to `true` to connect to a Salesforce sandbox environment           | false                                 |
+| Parameter | Type | Quick Setup | User Sign-In | Server-to-Server | Username + Password | Description | Example |
+|---|---|---|---|---|---|---|---|
+| Email | Text | **Yes** | — | — | — | Admin email — used as the per-admin identity that owns the resulting refresh token | `admin@company.com` |
+| Client ID | Text | — | **Yes** | **Yes** | **Yes** | OAuth 2.0 client identifier from your Salesforce Connected App | `3MVG9fTLmJ60pJ5...` |
+| Client Secret | Text | — | **Yes** | **Yes** | **Yes** | OAuth 2.0 client secret from your Salesforce Connected App | `1234567890ABCDEF...` |
+| Instance URL | Text | — | — | **Yes** | — | Your Salesforce **My Domain** URL — required so the Client Credentials token request can be sent to it (Salesforce returns `invalid_grant: request not supported on this domain` if sent to `login.salesforce.com`) | `https://mycompany.my.salesforce.com` |
+| Username | Text | — | — | — | **Yes** | Salesforce username for the Username + Password flow | `user@company.com` |
+| Password | Text | — | — | — | **Yes** | Salesforce password for the Username + Password flow | `MyP@ssw0rd` |
+| Security Token | Text | — | — | — | **Yes** | Salesforce security token for the Username + Password flow | `AbCdEfGhIjKlMnOp` |
+| Sandbox | Boolean | Optional | Optional | Optional | Optional | Set to `true` to target a Salesforce sandbox (`test.salesforce.com` instead of `login.salesforce.com`) | `false` |
 
-**Conditional Requirements***: Username, Password, and Security Token are required only when using the Username-Password OAuth flow for service account authentication. They are not needed for the Authorization Code flow (user authentication).
+> **🔒 Stored-secret round-trip.** When you reopen the Authentication tab after saving, stored secrets (Client Secret, Password, Security Token) appear as `••••••••`. This is a placeholder — the real values stay in Krista's secure store. If you change a non-secret field and click Save, the masked secrets are automatically resolved back to their stored values, so you do not need to re-enter them every time.
 
 ![Input Attributes](../_media/ExtensionConfiguration_InputAttributes.png)
 
